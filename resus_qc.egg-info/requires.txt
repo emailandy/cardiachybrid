@@ -1,0 +1,9 @@
+pyyaml
+pydantic>=2
+httpx
+google-cloud-bigquery
+
+[dev]
+pytest
+ruff
+mypy

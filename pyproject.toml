@@ -24,3 +24,6 @@ markers = [
 
 [tool.mypy]
 strict = true
+
+[tool.setuptools.packages.find]
+include = ["codegen", "reducer", "ingest", "bq", "redcap", "router", "metrics", "prompts", "tests"]
