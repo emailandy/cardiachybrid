@@ -113,3 +113,11 @@ setuptools and pytest.
 Interim: venv-scoped override to pypi.org, repo-local, no global change.
 Owner: human / platform team.  Status: OPEN.  Blocks: nothing (workaround
 in place), but must be resolved before any production deployment.
+
+Q-008 Pin exact Gemini model version strings before the first production run.
+-latest aliases make historical runs unreproducible.
+  - options: specific model strings (e.g. gemini-1.5-pro-001)
+  - default: TBD
+  - owner: human
+  - status: OPEN
+  - blocks: production deployment

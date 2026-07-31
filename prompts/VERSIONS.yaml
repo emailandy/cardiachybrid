@@ -1,0 +1,56 @@
+version: 1
+requires_contract_version: 1
+requires_dict_version: "e7c08437adcef4a5"
+anchors_dir: "prompts/anchors"
+
+system_prompt: "prompts/system.txt"
+
+pass_templates:
+  pass_1: "prompts/passes/p1.txt"
+  pass_2: "prompts/passes/p2.txt"
+  pass_3: "prompts/passes/p3.txt"
+  pass_4a: "prompts/passes/p4a.txt"
+  pass_4b: "prompts/passes/p4b.txt"
+  pass_5: "prompts/passes/p5.txt"
+
+fragments:
+  frag_1: "prompts/fragments/frag1.txt"
+  frag_2: "prompts/fragments/frag2.txt"
+  frag_3: "prompts/fragments/frag3.txt"
+
+team_anchors:
+  team_1: "prompts/anchors/team_1.txt"
+  team_2: "prompts/anchors/team_2.txt"
+  team_3: "prompts/anchors/team_3.txt"
+
+model_binding:
+  pass_1:
+    model: "gemini-3-flash-<PINNED>"
+    temperature: 0.6
+    top_k: 3
+    thinking: "low"
+  pass_2:
+    model: "gemini-3-pro-<PINNED>"
+    temperature: 0.6
+    top_k: 3
+    thinking: "medium"
+  pass_3:
+    model: "gemini-3-pro-<PINNED>"
+    temperature: 0.0
+    top_k: 1
+    thinking: "high"
+  pass_4a:
+    model: "gemini-3-pro-<PINNED>"
+    temperature: 0.4
+    top_k: 3
+    thinking: "high"
+  pass_4b:
+    model: "gemini-3-pro-<PINNED>"
+    temperature: 0.4
+    top_k: 3
+    thinking: "high"
+  pass_5:
+    model: "gemini-3-pro-<PINNED>"
+    temperature: 0.3
+    top_k: 1
+    thinking: "low"

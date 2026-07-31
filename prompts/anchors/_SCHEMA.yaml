@@ -1,0 +1,9 @@
+required_keys:
+  - defining_instants
+  - audio_device
+  - speech
+  - visual
+  - required_attributes
+  - disambiguation
+  - hard_rules
+  - abstain_if

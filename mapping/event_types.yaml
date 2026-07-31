@@ -4,7 +4,6 @@ redcap_feeding:
   - airway_attempt
   - airway_confirmation
   - bed_transfer_complete
-  - cci
   - compression_interruption
   - compression_mode_change
   - cpr_initiated_ed
@@ -29,10 +28,8 @@ redcap_feeding:
   - pocus_other
   - pulse_check
   - rhythm_check
-  - rosc
   - rosc_detected
   - vascular_access
-  - vent_delay
   - ventilation_delay
   - ventilator_placement
   - vitals_reading

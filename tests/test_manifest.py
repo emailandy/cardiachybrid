@@ -1,17 +1,11 @@
 import pytest
 import yaml
 
-def test_duplicate_yaml_keys_rejected():
-    from codegen.emit_manifest import StrictLoader
-    bad_yaml = "a: 1\nb: 2\na: 3\n"
-    with pytest.raises(ValueError) as exc:
-        yaml.load(bad_yaml, Loader=StrictLoader)
-    assert "Duplicate YAML key 'a' at line 3" in str(exc.value)
+from codegen.yamlio import load_yaml
+from pathlib import Path
 
 def load_registry():
-    from codegen.emit_manifest import StrictLoader
-    with open("mapping/registry.yaml") as f:
-        return yaml.load(f, Loader=StrictLoader)
+    return load_yaml(Path("mapping/registry.yaml"))
 
 def test_pulse_location_vocabularies_are_not_shared():
     """loc_initial_pulse_check_v2 is 3=Radial 4=Brachial.
@@ -31,10 +25,7 @@ def test_ecmo_gates_use_different_not_available_codes():
     assert v["ecmo_gate_4"]["not_available"] == 4
 
 def load_event_types():
-    from codegen.emit_manifest import StrictLoader
-    import yaml
-    with open("mapping/event_types.yaml") as f:
-        return yaml.load(f, Loader=StrictLoader)
+    return load_yaml(Path("mapping/event_types.yaml"))
 
 def iter_all_rules(registry):
     for sec in registry.get("sections", []):
@@ -48,11 +39,15 @@ def test_event_types_redcap_feeding_matches_registry():
     """redcap_feeding is DERIVED, not authored. Any registry rule naming a
     new event_type must appear here or the closed vocabulary silently
     excludes it."""
-    derived = set()
-    for rule in iter_all_rules(load_registry()):
-        if et := rule.get("event_type") or rule.get("interval_type"):
-            derived.add(et)
-        derived.update(rule.get("owning_event_types", []))
+    rules = list(iter_all_rules(load_registry()))
+    event_types = {r["event_type"] for r in rules if r.get("event_type")}
+    interval_types = {r["interval_type"] for r in rules if r.get("interval_type")}
+    owning_hints = {t for r in rules for t in r.get("owning_event_types", [])}
+
+    assert not (interval_types & event_types), \
+        f"interval_type names leaked into event types: {interval_types & event_types}"
+
+    derived = event_types | owning_hints
     declared = set(load_event_types()["redcap_feeding"])
     assert declared == derived, (
         f"missing from event_types.yaml: {sorted(derived - declared)}\n"
@@ -62,5 +57,5 @@ def test_anchor_cards_required_count():
     et = load_event_types()
     required = set().union(et["redcap_feeding"], et["interval_boundary"],
                            et["negative_control"], et["context"])
-    assert len(required) == 42
+    assert len(required) == 39
     assert not (required & set(et["meta"]))   # meta needs no card

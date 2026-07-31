@@ -1,48 +1,10 @@
 import sys
-import yaml
+from codegen.yamlio import load_yaml
 import json
 import re
 from pathlib import Path
 from codegen.redcap_dict_to_code import load_dictionary
 import codegen.known_bugs as known_bugs
-
-class StrictLoader(yaml.SafeLoader):
-    pass
-
-def _no_duplicates(loader, node, deep=False):
-    mapping = {}
-    for key_node, value_node in node.value:
-        key = loader.construct_object(key_node, deep=deep)
-        if key in mapping:
-            mark = key_node.start_mark
-            raise ValueError(
-                f"Duplicate YAML key '{key}' at line {mark.line + 1}, "
-                f"column {mark.column + 1}. PyYAML would silently keep only "
-                f"the last occurrence, discarding earlier content.")
-        mapping[key] = loader.construct_object(value_node, deep=deep)
-    return mapping
-
-StrictLoader.add_constructor(
-    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _no_duplicates)
-
-class StrictLoader(yaml.SafeLoader):
-    pass
-
-def _no_duplicates(loader, node, deep=False):
-    mapping = {}
-    for key_node, value_node in node.value:
-        key = loader.construct_object(key_node, deep=deep)
-        if key in mapping:
-            mark = key_node.start_mark
-            raise ValueError(
-                f"Duplicate YAML key '{key}' at line {mark.line + 1}, "
-                f"column {mark.column + 1}. PyYAML would silently keep only "
-                f"the last occurrence, discarding earlier content.")
-        mapping[key] = loader.construct_object(value_node, deep=deep)
-    return mapping
-
-StrictLoader.add_constructor(
-    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _no_duplicates)
 
 def find_highest_index(specs, pattern):
     # Pattern e.g. "reason_cci_{i}_v2"
@@ -98,11 +60,11 @@ def main():
         print("No registry.yaml found")
         sys.exit(1)
         
-    with open(reg_path) as f:
-        registry = yaml.load(f, Loader=StrictLoader)
+    registry = load_yaml(reg_path)
 
     mapped_fields = set()
     suppressed_checkbox_codes = []
+    label_derived_vocabularies = []
     
     system_fields = {"record_id", "video_review_complete"}
     
@@ -122,8 +84,24 @@ def main():
     if group_names != expected_groups:
         errors.append(f"FAIL: groups {group_names} != {expected_groups}")
         
-    def validate_field_entry(entry, path_str=""):
+    emitted_attrs = {} # (event_type, where_hash) -> set(attrs)
+    conditional_texts = []
+    
+    def validate_field_entry(entry, path_str="", parent_group=None):
         f_name = entry.get("field")
+        
+        # Track emitted attributes
+        et = entry.get("event_type") or entry.get("interval_type")
+        if not et and parent_group:
+            et = parent_group.get("event_type") or parent_group.get("interval_type")
+        wh = frozenset(entry.get("where", {}).items())
+        
+        if emit := entry.get("emit"):
+            emitted_attrs.setdefault((et, wh), set()).add(emit)
+            
+        if entry.get("rule") == "conditional_text":
+            conditional_texts.append((entry, et, wh))
+            
         if f_name:
             if f_name not in specs and f_name not in system_fields:
                 errors.append(f"FAIL: field '{f_name}' in {path_str} does not exist in dictionary")
@@ -133,12 +111,14 @@ def main():
             f_spec = specs.get(f_name)
             if f_spec:
                 # check vocab
-                vocab = entry.get("vocab")
+                vocab = entry.get("vocab") or entry.get("vocab_override")
                 if vocab:
                     reg_vocab = registry.get("vocabularies", {}).get(vocab, {})
                     for reg_v in reg_vocab.values():
                         if str(reg_v) not in f_spec.choices and not entry.get("per_index_vocab"):
                             errors.append(f"FAIL: vocab code {reg_v} not in choices for {f_name}")
+                elif f_spec.field_type in ("checkbox", "radio", "dropdown"):
+                    label_derived_vocabularies.append(f_name)
                 
                 # check range
                 rng = entry.get("range")
@@ -213,7 +193,24 @@ def main():
                 for i in range(1, g_max + 1):
                     inst_entry = dict(f_entry)
                     inst_entry["field"] = pat.replace("{i}", str(i))
-                    validate_field_entry(inst_entry, f"groups[{g_name}]")
+                    validate_field_entry(inst_entry, f"groups[{g_name}]", parent_group=group)
+                    
+    # Validate conditional_text rules
+    for c, et, wh in conditional_texts:
+        f_name = c.get("field", "unknown")
+        if not et:
+            errors.append(f"FAIL: conditional_text {f_name} missing event_type/interval_type (or parent group missing it)")
+            continue
+        gate = c.get("gate", "")
+        m = re.match(r'^([a-zA-Z0-9_]+)\s+', gate)
+        if m:
+            attr = m.group(1)
+            avail = emitted_attrs.get((et, wh), set())
+            if attr not in avail:
+                errors.append(f"FAIL: conditional_text {f_name} gate references '{attr}' which is not emitted in event_type '{et}' where {dict(wh)}")
+        else:
+            errors.append(f"FAIL: could not parse gate '{gate}' for {f_name}")
+            
     # unmapped fields
     unmapped = []
     for f in specs.keys():
@@ -236,8 +233,7 @@ def main():
     anchor_cards_required = 0
     no_anchor_card = []
     if event_types_path.exists():
-        with open(event_types_path) as f:
-            et = yaml.load(f, Loader=StrictLoader)
+        et = load_yaml(event_types_path)
             
         req_cats = ["redcap_feeding", "interval_boundary", "negative_control", "context"]
         required_types = set()
@@ -279,6 +275,26 @@ def main():
                 req_not_ai.append(f_name)
             
     # Counts
+    # Event Types derivation
+    event_types_from_rules = set()
+    event_types_from_hints = set()
+    
+    def iter_all_rules(reg):
+        for sec in reg.get("sections", []):
+            yield from sec.get("fields", [])
+        yield from reg.get("never_ai", [])
+        for g in reg.get("groups", []):
+            yield g
+            yield from g.get("fields", [])
+            
+    for rule in iter_all_rules(registry):
+        if et := rule.get("event_type"):
+            event_types_from_rules.add(et)
+        if hints := rule.get("owning_event_types"):
+            event_types_from_hints.update(hints)
+            
+    event_types_both = event_types_from_rules & event_types_from_hints
+    
     dict_export_columns = 1891 # hardcoded based on tests for now or compute
     dict_importable_columns = 1889
     system_columns = 2
@@ -297,6 +313,10 @@ def main():
         "by_difficulty": {},
         "suppressed_checkbox_codes": sorted(suppressed_checkbox_codes),
         "unmapped": sorted(unmapped),
+        "label_derived_vocabularies": sorted(label_derived_vocabularies),
+        "event_types_from_rules": sorted(event_types_from_rules),
+        "event_types_from_hints": sorted(event_types_from_hints),
+        "event_types_both": sorted(event_types_both),
         "anchor_cards_required": anchor_cards_required,
         "no_anchor_card": no_anchor_card,
         "branching_overrides_staged": list(getattr(known_bugs, "BRANCHING_OVERRIDES", {}).keys()),
