@@ -1,0 +1,167 @@
+# ── RULE PRIMITIVES (closed set — adding a 13th requires an architecture note)
+# case_field            value resolved by P3 global adjudication
+# first_of              earliest matching event; emit timestamp or attribute
+# last_of               latest matching event (e.g. final airway attempt)
+# nth_distinct_attribute Nth distinct value of an attribute, ordered by time
+# gate_3way             1=Yes | 2=No | 3=UTD, coverage-aware
+# gate_yesno            1=Yes | 0=No   ⚠ zero, not two
+# count                 len(events), capped
+# attr                  attribute of an indexed interval/event
+# checkbox              multi-select → explicit 1/0 on every dictionary code
+# notes                 P5 narrative generator
+# team_score            P4 TEAM rating
+# const_null            always null (governance suppression)
+# conditional_text      free text, gated on a paired checkbox/radio code
+# ─────────────────────────────────────────────────────────────────────────────
+
+version: 1
+defaults:
+  source_class: AI_DIRECT
+  difficulty: MEDIUM
+  coverage_channels: [visual, speech]
+
+sections:
+- name: ed_details
+  fields:
+  - field: review_trigger
+    rule: const_null
+    source_class: HUMAN_ONLY
+    difficulty: NOT_EXTRACTABLE
+    note: "REQUIRED field. Administrative metadata; not present in video. Must be entered by the reviewer before or after the AI run."
+
+# ── never AI-populated ──────────────────────────────────────────────────────
+never_ai:
+  - {field: review_trigger,       source_class: HUMAN_ONLY}
+  - {field: review_trigger_other, source_class: HUMAN_ONLY}
+  - {field: dur_mccd_app_ed_secs_v2,     source_class: REDCAP_CALC}
+  - {field: duration_ventilator_place_v2, source_class: REDCAP_CALC}
+  - {pattern: "operator_ed_{i}_v2", range: [1,8], source_class: ROSTER_JOIN}
+  # Body-habitus assertions: ethically and technically inappropriate for a model.
+  - {field: mccd_obstacles, source_class: AI_DIRECT, difficulty: HIGH,
+     suppress_codes: [1, 2],          # obesity, cachexia -> always 0, human-only
+     note: "Codes 1/2 hard-suppressed; see governance decision GOV-07."}
+
+# ── scalar fields ───────────────────────────────────────────────────────────
+scalars:
+  - field: time_epi_ed_v2
+    rule: first_of
+    event_type: medication_administration
+    where: {drug: epinephrine}
+    emit: t_start_s
+    transform: to_redcap_datetime
+
+  - field: epi_given_ed_v2
+    rule: gate_3way                      # 1=Yes 2=No 3=UTD
+    event_type: medication_administration
+    where: {drug: epinephrine}
+    coverage_channels: [speech]          # UTD when speech coverage degraded
+    difficulty: LOW
+
+  - field: was_pt_defib_ed_v2
+    rule: gate_yesno                     # ⚠ 1/0 not 1/2 — enforced by codegen
+    event_type: defibrillation_shock
+
+  - field: num_times_defib_ed_v2
+    rule: count
+    event_type: defibrillation_shock
+    cap: 30
+
+  - field: ett_intub_confirm_time_v2
+    rule: nth_distinct_attribute
+    event_type: airway_confirmation
+    attribute: method
+    n: 2                                 # SECOND distinct method, per data dict
+    emit: t_start_s
+    transform: to_redcap_datetime
+    difficulty: HIGH
+
+  - field: rhythm_during_cci_1_v2
+    rule: attr
+    scope: interval
+    interval_type: cci
+    index: 1
+    attribute: rhythm_code
+    inference_permitted: true            # sole documented exception to the
+    note: "Data dictionary explicitly licenses inferring rhythm from the team's
+           intervention. Surfaced to the prompt via anchor card override."
+
+# ── repeating groups ────────────────────────────────────────────────────────
+groups:
+  - name: cci
+    count_field: num_cci_v2
+    max: 30
+    source: interval
+    interval_type: cci
+    order_by: t_start_s
+    truncation: longest_duration         # keep 30 longest; note true n in notes
+    min_duration_s: 3.0
+    fields:
+      - {pattern: "start_time_cci_{i}_v2", emit: t_start_s,
+         transform: to_redcap_datetime}
+      - {pattern: "end_time_cci_{i}_v2",   emit: t_end_s,
+         transform: to_redcap_datetime, blank_when_null: true}
+      - {pattern: "reason_cci_{i}_v2", kind: checkbox, emit: reasons,
+         vocab: cci_reason}
+      - {pattern: "other_reason_cci_{i}_v2", emit: other_reason_text,
+         gate: "reasons contains other"}
+      - {pattern: "sono_window_cci_{i}", emit: sono_window, vocab: sono_window,
+         gate: "reasons contains chest_us", default_when_gated: 4}
+      - {pattern: "echo_success_cci_{i}", emit: echo_success, vocab: yes_no_utd,
+         gate: "reasons contains chest_us", default_when_gated: 3}
+      - {pattern: "us_pulse_cci_{i}", emit: us_pulse_site, vocab: us_pulse_site,
+         gate: "reasons contains us_pulse", default_when_gated: 3}
+      - {pattern: "us_pulse_present_cci_{i}", emit: us_pulse_present,
+         vocab: yes_no_utd, gate: "reasons contains us_pulse",
+         default_when_gated: 3}
+      - {pattern: "aline_cci_{i}", emit: aline_present, kind: yesno_1_2}
+      - {pattern: "aline_sbp_cci_{i}", emit: aline_sbp, range: [0,200],
+         gate: "aline_present is true", difficulty: HIGH}
+      - {pattern: "aline_dbp_cci_{i}", emit: aline_dbp, range: [0,120],
+         gate: "aline_present is true", difficulty: HIGH}
+      - {pattern: "loc_pulse_check_cci_{i}", kind: checkbox,
+         emit: pulse_check_locations, vocab: pulse_loc_4,
+         gate: "reasons contains pulse_check"}
+      - {pattern: "pocus_non_pulse_cci_{i}_v2", rule: gate_3way,
+         emit: pocus_other_used}
+      - {pattern: "rhythm_during_cci_{i}_v2", emit: rhythm_code,
+         vocab: cci_rhythm, gate: "reasons contains rhythm_determination"}
+      - {pattern: "reason_mccd_adj_cci_{i}_v2", kind: checkbox,
+         emit: mccd_adjust_reasons, vocab: mccd_adjust,
+         gate: "reasons contains mccd_adjusted"}
+
+vocabularies:
+  cci_reason:
+    pulse_check: 1
+    rhythm_determination: 2
+    airway_placement: 3
+    chest_us: 4
+    us_pulse: 5
+    tee: 6
+    stretcher_transfer: 7
+    pad_placement: 8
+    defibrillation: 9
+    dual_sequential_defib: 10
+    mccd_placement: 11
+    mccd_removed: 12
+    mccd_adjusted: 13
+    central_line: 14
+    arterial_line: 15
+    ng_og: 16
+    log_roll: 17
+    ecmo: 18
+    other: 19
+    unknown: 20
+    rosc: 21          # ⚠ absent on index 1 — codegen drops it there automatically
+  mccd_adjust:
+    device_moved_up: 1
+    suction_cup_manipulated: 2
+    latch_resecured: 3
+    battery_change: 4
+    clothing_removed: 5
+    sheets_moved: 6
+    arm_adjusted: 7
+    other: 8
+  pulse_loc_4:   {carotid: 1, femoral: 2, brachial: 3, radial: 4}
+  us_pulse_site: {carotid: 1, femoral: 2, other: 3}
+  sono_window:   {subxiphoid: 1, parasternal: 2, apical: 3, unable_to_determine: 4}
+  yes_no_utd:    {yes: 1, no: 2, unable_to_determine: 3}

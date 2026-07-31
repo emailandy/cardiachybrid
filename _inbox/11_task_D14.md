@@ -1,0 +1,82 @@
+# TASK: D14
+Implement `codegen/emit_contract.py` → generated/extraction_contract.json
+and generated/extraction_contract.md. Read AGENTS.md.
+
+This artifact is the SHARED CONTRACT between the LLM prompts and the reducer.
+Both read it. A mismatch must be impossible.
+
+Derive from mapping/registry.yaml + the parsed dictionary. For every event type
+in mapping/event_types.yaml, emit:
+
+{
+  "event_type": "compression_interruption",
+  "scope": "interval",                       // event | interval | case_field
+  "defining_instants": {...},                // from the anchor card, verbatim
+  "attributes": {
+     "reasons": {
+        "kind": "multi_enum",
+        "values": ["pulse_check", "rhythm_determination", ...],   // SYMBOLIC
+        "required": true,
+        "feeds": ["reason_cci_{i}_v2"],
+        "n_export_columns": 629,
+        "difficulty": "MEDIUM"
+     },
+     "aline_sbp": {
+        "kind": "int", "range": [0,200], "required": false,
+        "gated_by": "aline_present == true",
+        "feeds": ["aline_sbp_cci_{i}"],
+        "difficulty": "HIGH", "expected_utd_floor": 0.35,
+        "detector_hint": "S4_monitor_ocr"
+     }, ...
+  },
+  "suppressed": [],                          // attributes the model must NOT emit
+  "inference_permitted": ["rhythm_code"],    // the documented exceptions
+  "coverage_channels": ["visual","speech","monitor"]
+}
+
+RULES:
+1. Attribute names come from the registry's `emit:` keys — never invented.
+2. Enum VALUES are the symbolic keys of the vocabulary (left-hand side), never
+   the REDCap integer codes. The model must never see or emit an integer code;
+   mapping symbol→int is the reducer's job. This prevents the model from
+   "helpfully" using a code it half-remembers.
+3. Omit suppressed_codes entirely from the values list (mccd_obstacles must not
+   offer obesity/cachexia as options — the model cannot select what it is not
+   shown).
+4. Where a repeating group's vocabulary differs by index (reason_cci_1_v2 lacks
+   `rosc`), emit the UNION and record `index_exceptions: {"1": ["rosc"]}`.
+   The model does not know about indices; the reducer handles the exception.
+5. `feeds` lists the REDCap field patterns each attribute populates, with the
+   total export-column count. This goes into the prompt so the model can see
+   which attributes carry the most downstream weight.
+6. Normalize gate syntax. The registry currently mixes `"aline_present == 1"`
+   and `"aline_present is true"`. Canonical form is
+   `<attr> <op> <literal>` with literals typed (true/false/int/string).
+   FAIL THE BUILD on any gate that does not parse — do not auto-correct.
+7. extraction_contract.md is the human/LLM-readable rendering, grouped by event
+   type, used directly in prompt assembly.
+
+ACCEPTANCE:
+- Every `emit:` key in registry.yaml appears in the contract exactly once per
+  owning event type.
+- Every attribute in the contract is referenced by ≥1 registry rule
+  (no orphans).
+- tests/test_contract.py asserts round-trip: for the synthetic maximal fixture,
+  every attribute the reducer reads exists in the contract, and every contract
+  attribute is produced by the fixture.
+- The gate-syntax normalizer fails on a deliberately malformed gate.
+Then add to tests/test_coverage.py:
+def test_prompt_contract_covers_every_reducer_read():
+    """The v1 failure mode: model emits attributes.foo, registry reads emit: bar,
+    field silently nulls and looks like an honest abstention."""
+    reads = {(r.event_type, r.emit) for r in REGISTRY.all_rules() if r.emit}
+    contract = {(et, a) for et, spec in CONTRACT.items()
+                        for a in spec["attributes"]}
+    assert reads <= contract, f"reducer reads attributes absent from contract: {reads - contract}"
+
+def test_no_integer_codes_in_contract():
+    for et, spec in CONTRACT.items():
+        for name, a in spec["attributes"].items():
+            if a["kind"].endswith("enum"):
+                assert not any(str(v).isdigit() for v in a["values"]), \
+                    f"{et}.{name} exposes REDCap integer codes to the model"

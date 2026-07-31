@@ -1,0 +1,26 @@
+[project]
+name = "resus_qc"
+version = "0.1.0"
+description = "resus_qc pipeline"
+requires-python = ">=3.11"
+dependencies = [
+    "pyyaml",
+    "pydantic>=2",
+    "httpx",
+    "google-cloud-bigquery"
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff", "mypy"]
+
+[tool.pytest.ini_options]
+addopts = "-m 'not integration and not network'"
+markers = [
+    "integration: marks tests as integration",
+    "network: marks tests as network"
+]
+
+[tool.ruff]
+
+[tool.mypy]
+strict = true

@@ -1,0 +1,4 @@
+/prompts/              @clinical-lead @eng-lead
+/prompts/VERSIONS.yaml @clinical-lead @eng-lead @pi
+/mapping/registry.yaml @clinical-lead @eng-lead
+/dictionary/           @clinical-lead
