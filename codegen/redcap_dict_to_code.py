@@ -37,6 +37,11 @@ class FieldSpec:
     repeat_group: Optional[str] = None
     repeat_index: Optional[int] = None
     export_columns: List[str] = field(default_factory=list)
+    val_type: str = ""
+    val_min: Optional[str] = None
+    val_max: Optional[str] = None
+    form_name: str = ""
+    required: bool = False
 
 def dict_hash(path: Path) -> str:
     """Must match scripts/hash_dict.sh: first 16 hex of sha256."""
@@ -140,6 +145,11 @@ def load_dictionary(path: Path) -> Dict[str, FieldSpec]:
         if val_type and val_type not in VALID_VALIDATION_TYPES:
             raise ValueError(f"Line {line_num}: unknown validation type '{val_type}'")
             
+        val_min = get_val(row, "textvalidationmin").strip() or None
+        val_max = get_val(row, "textvalidationmax").strip() or None
+        form_name = get_val(row, "formname").strip() or get_val(row, "form_name").strip()
+        required = get_val(row, "requiredfield").strip().lower() == "y"
+            
         field_type = get_val(row, "fieldtype").strip()
         label = strip_html(get_val(row, "fieldlabel"))
         
@@ -185,7 +195,12 @@ def load_dictionary(path: Path) -> Dict[str, FieldSpec]:
             carries_data=carries_data,
             repeat_group=rep_group,
             repeat_index=rep_idx,
-            export_columns=export_columns
+            export_columns=export_columns,
+            val_type=val_type,
+            val_min=val_min,
+            val_max=val_max,
+            form_name=form_name,
+            required=required
         )
         
     return specs

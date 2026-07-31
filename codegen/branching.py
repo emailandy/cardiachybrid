@@ -152,7 +152,7 @@ def _v(record: Dict[str, str], field: str) -> str:
 
 def _cb(record: Dict[str, str], field: str, code: str) -> str:
     col = f"{field}___{sanitize_choice_code(str(code))}"
-    return record.get(col, "")
+    return record.get(col, "0")
 
 
 def validate(src: str) -> ast.Expression:

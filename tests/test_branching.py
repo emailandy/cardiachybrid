@@ -46,8 +46,11 @@ def test_checkbox_routing():
     assert pred2({"mccd_obstacles___6": "0"}) is False
 
 def test_unknown_field_reference():
-    pred = compile_predicate("[onset_ca_occur] = '1' and [mccd_applied_ems_v2] = '1'")
-    assert pred({}) is False
+    assert compile_predicate("[onset_ca_occur]")({}) is False
+    assert compile_predicate("[onset_ca_occur] = '1'")({}) is False
+    assert compile_predicate("[onset_ca_occur] >= 1")({}) is False
+    assert compile_predicate("[nope(3)] = '1'")({}) is False
+    assert compile_predicate("[num_cci_v2] <> '1'")({}) is True
 
 def test_nested_logic():
     expr = "[a] = '1' and not ([b] = '2' or [c] = '3')"

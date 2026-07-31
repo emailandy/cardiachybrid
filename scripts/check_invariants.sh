@@ -78,7 +78,16 @@ elif ! have_yaml; then
 else
   "$PY" - <<'PY'; rc=$?
 import sys, yaml
-reg = yaml.safe_load(open("mapping/registry.yaml"))
+class StrictLoader(yaml.SafeLoader): pass
+def _no_duplicates(loader, node, deep=False):
+    mapping = {}
+    for key_node, value_node in node.value:
+        key = loader.construct_object(key_node, deep=deep)
+        if key in mapping: raise ValueError("Duplicate key")
+        mapping[key] = loader.construct_object(value_node, deep=deep)
+    return mapping
+StrictLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _no_duplicates)
+reg = yaml.load(open("mapping/registry.yaml"), Loader=StrictLoader)
 has_default = "coverage_channels" in (reg.get("defaults") or {})
 bad = []
 def walk(o, path=""):
@@ -110,12 +119,22 @@ if [[ -f generated/redcap_fields.py && -f codegen/redcap_dict_to_code.py ]]; the
   cp generated/redcap_fields.py /tmp/_inv_before.py
   "$PY" -m codegen.redcap_dict_to_code --quiet >/dev/null 2>&1 || true
   if diff -q /tmp/_inv_before.py generated/redcap_fields.py >/dev/null; then
-    green "codegen deterministic"
+    green "codegen redcap_fields deterministic"
   else
-    red "codegen NOT deterministic — generated/ differs on rebuild"
+    red "codegen redcap_fields NOT deterministic — generated/ differs on rebuild"
   fi
 else
   skip "determinism check requires D01+D04"
+fi
+
+if [[ -f generated/branching_compiled.py && -f codegen/emit_branching.py ]]; then
+  cp generated/branching_compiled.py /tmp/_inv_before_br.py
+  "$PY" -m codegen.emit_branching >/dev/null 2>&1 || true
+  if diff -q /tmp/_inv_before_br.py generated/branching_compiled.py >/dev/null; then
+    green "codegen branching deterministic"
+  else
+    red "codegen branching NOT deterministic"
+  fi
 fi
 
 echo

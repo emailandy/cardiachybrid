@@ -1,0 +1,2232 @@
+# video_review
+  - field: review_trigger # Video Review Trigger
+    source_class: UNMAPPED
+  - field: review_trigger_other # Other
+    source_class: UNMAPPED
+  - field: ohca_ihca # Was this an Out of Hospital Cardiac Arrest (OHCA), or In ED Cardiac Arrest?
+    source_class: UNMAPPED
+  - field: video_start_late # Did the video recording start after the patient's arrival to ED, or after the initiation of CPR?
+    source_class: UNMAPPED
+  - field: time_first_team_member_ent_v2 # Time first team member enters room
+
+A team member is anyone involved in the patient's care, such as a technician, nursing assistant, nurse, physician, etc.
+    source_class: UNMAPPED
+  - field: time_pt_enters_room_v2 # Time patient enters room
+    source_class: UNMAPPED
+  - field: video_brought_by_ems # Was the patient brought in by the EMS?
+    source_class: UNMAPPED
+  - field: video_ems_handoff # Was there EMS to ED handoff?
+    source_class: UNMAPPED
+  - field: time_bed_transfer_comp_v2 # Time of EMS bed transfer completed 
+    source_class: UNMAPPED
+  - field: cpr_in_progress_upon_ed_v2 # Was CPR in progress upon arrival at ED?
+    source_class: UNMAPPED
+  - field: time_cpr_initiated_in_ed_v2 # Time CPR initiated in the ED, not already in progress by EMS/ED
+    source_class: UNMAPPED
+  - field: ems_pads_switched_ed_v2 # Were EMS defibrillation pads switched by the ED team?
+    source_class: UNMAPPED
+  - field: did_ed_apply_pads_v2 # Did ED providers apply defibrillator pads?
+
+If the patient arrived with/had no pads attached and ED providers applied pads, or if the EMS pads were swapped with ED pads, choose Yes
+    source_class: UNMAPPED
+  - field: time_ed_defibrillator_pads_v2 # Time ED defibrillator pads applied and connected
+    source_class: UNMAPPED
+  - field: iv_io_in_place_arrival # Was an IV/IVO already in place upon ED arrival?
+    source_class: UNMAPPED
+  - field: video_access_type # Access Type:
+    source_class: UNMAPPED
+  - field: access_confirmed_time # Time Access Confirmed
+    source_class: UNMAPPED
+  - field: initial_ed_pad_place_v2 # Initial ED defibrillation pad placement  (https://www.ahajournals.org/doi/10.1161/CIRCULATIONAHA.122.060735)  
+    source_class: UNMAPPED
+  - field: pad_place_position_changed_v2 # Was pad placement position changed at any time throughout the resuscitation?
+    source_class: UNMAPPED
+  - field: new_pad_position # New Pad Position
+    source_class: UNMAPPED
+  - field: time_of_initial_ed_rhythm_v2 # Time of initial ED rhythm determination
+    source_class: UNMAPPED
+  - field: ems_ed_pads_switched_v2 # Was the initial rhythm assessed with EMS pads or ED pads?
+    source_class: UNMAPPED
+  - field: first_ed_rhythm_v2 # Cardiac rhythm during first rhythm check in ED
+
+(Bray et al., 2024)
+    source_class: UNMAPPED
+  - field: shockable_rhy_ed_v2 # Did the patient have a shockable rhythm at any time in the ED?
+    source_class: UNMAPPED
+  - field: time_first_shockable_v2 # Time of first shockable rhythm identified by the team or video reviewer
+    source_class: UNMAPPED
+  - field: was_pt_defib_ed_v2 # Was the patient defibrillated in the ED?
+    source_class: UNMAPPED
+  - field: num_times_defib_ed_v2 # How many times was the patient defibrillated in the ED?
+
+For dual sequential defibrillation, both shocks should be counted as one shock. 
+    source_class: UNMAPPED
+  - field: time_ed_defib_1_v2 # Time of first ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_1_v2 # Pad placement for first ED defibrillationNote: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt    (https://www.ahajournals.org/doi/10.1161/CIRCULATIONAHA.122.060735)
+    source_class: UNMAPPED
+  - field: time_ed_defib_2_v2 # Time of second ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_2_v2 # Pad placement for second ED defibrillationNote: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+    source_class: UNMAPPED
+  - field: time_ed_defib_3_v2 # Time of third ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_3_v2 # Pad placement for third ED defibrillationNote: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+    source_class: UNMAPPED
+  - field: time_ed_defib_4_v2 # Time of fourth ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_4_v2 # Pad placement for fourth ED defibrillationNote: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+    source_class: UNMAPPED
+  - field: time_ed_defib_5_v2 # Time of fifth ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_5_v2 # Pad placement for fifth ED defibrillationNote: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+    source_class: UNMAPPED
+  - field: time_ed_defib_6_v2 # Time of sixth ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_6_v2 # Pad placement for sixth ED defibrillationNote: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+    source_class: UNMAPPED
+  - field: time_ed_defib_7_v2 # Time of seventh ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_7_v2 # Pad placement for seventh ED defibrillationNote: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+    source_class: UNMAPPED
+  - field: time_ed_defib_8_v2 # Time of eighth ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_8_v2 # Pad placement for eighth ED defibrillationNote: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+    source_class: UNMAPPED
+  - field: time_ed_defib_9_v2 # Time of ninth ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_9_v2 # Pad placement for ninth ED defibrillationNote: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+    source_class: UNMAPPED
+  - field: time_ed_defib_10_v2 # Time of tenth ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_10_v2 # Pad placement for tenth ED defibrillationNote: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+    source_class: UNMAPPED
+  - field: time_ed_defib_11_v2 # Time of eleventh ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_11_v2 # Pad placement for eleventh ED defibrillationNote: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+    source_class: UNMAPPED
+  - field: time_ed_defib_12_v2 # Time of twelfth ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_12_v2 # Pad placement for twelfth ED defibrillationNote: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+    source_class: UNMAPPED
+  - field: time_ed_defib_13_v2 # Time of thirteenth ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_13_v2 # Pad placement for thirteenth ED defibrillationNote: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+    source_class: UNMAPPED
+  - field: time_ed_defib_14_v2 # Time of fourteenth ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_14_v2 # Pad placement for fourteenth ED defibrillationNote: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt  
+    source_class: UNMAPPED
+  - field: time_ed_defib_15_v2 # Time of fifteenth ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_15_v2 # Pad placement for fifteenth ED defibrillation
+
+Note: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+
+    source_class: UNMAPPED
+  - field: time_ed_defib_16_v2 # Time of sixteenth ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_16_v2 # Pad placement for sixteenth ED defibrillation
+
+Note: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+
+    source_class: UNMAPPED
+  - field: time_ed_defib_17_v2 # Time of seventeenth ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_17_v2 # Pad placement for seventeenth ED defibrillation
+
+Note: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+
+    source_class: UNMAPPED
+  - field: time_ed_defib_18_v2 # Time of eighteenth ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_18_v2 # Pad placement for eighteenth ED defibrillation
+
+Note: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+
+    source_class: UNMAPPED
+  - field: time_ed_defib_19_v2 # Time of nineteenth ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_19_v2 # Pad placement for nineteenth ED defibrillation
+
+Note: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+
+
+    source_class: UNMAPPED
+  - field: time_ed_defib_20_v2 # Time of twentieth ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_20_v2 # Pad placement for twentieth ED defibrillation
+
+Note: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+
+    source_class: UNMAPPED
+  - field: time_ed_defib_21_v2 # Time of 21st ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_21_v2 # Pad placement for 21st ED defibrillation
+
+Note: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+    source_class: UNMAPPED
+  - field: time_ed_defib_22_v2 # Time of 22nd ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_22_v2 # Pad placement for 22nd ED defibrillation
+
+Note: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+    source_class: UNMAPPED
+  - field: time_ed_defib_23_v2 # Time of 23rd ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_23_v2 # Pad placement for 23rd ED defibrillation
+
+Note: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+
+    source_class: UNMAPPED
+  - field: time_ed_defib_24_v2 # Time of 24th ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_24_v2 # Pad placement for 24th ED defibrillation
+
+Note: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+
+    source_class: UNMAPPED
+  - field: time_ed_defib_25_v2 # Time of 25th ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_25_v2 # Pad placement for 25th ED defibrillation
+
+Note: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+
+    source_class: UNMAPPED
+  - field: time_ed_defib_26_v2 # Time of 26th ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_26_v2 # Pad placement for 26th ED defibrillation
+
+Note: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+
+    source_class: UNMAPPED
+  - field: time_ed_defib_27_v2 # Time of 27th ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_27_v2 # Pad placement for 27th ED defibrillation
+
+Note: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+    source_class: UNMAPPED
+  - field: time_ed_defib_28_v2 # Time of 28th ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_28_v2 # Pad placement for 28th ED defibrillation
+
+Note: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+    source_class: UNMAPPED
+  - field: time_ed_defib_29_v2 # Time of 29th ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_29_v2 # Pad placement for 29th ED defibrillation
+
+Note: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+    source_class: UNMAPPED
+  - field: time_ed_defib_30_v2 # Time of 30th ED defibrillation
+    source_class: UNMAPPED
+  - field: position_ed_defib_30_v2 # Pad placement for 30th ED defibrillation
+
+Note: since pad repositioning often occurs prior to defibrillation attempt, please pay close attention to any changes and choose the option most accurately reflect the position of pads for this attempt
+    source_class: UNMAPPED
+  - field: ed_defib_notes_v2 # Use this section to document any relevant details not captured by the fields above regarding ED pad placement and defibrillation
+
+    source_class: UNMAPPED
+  - field: mccd_applied_ems_v2 # Was a mechanical chest compression device applied prior to ED arrival?
+    source_class: UNMAPPED
+  - field: mccd_type_ems_v2 # What kind of mechanical chest compression device was used by EMS?
+    source_class: UNMAPPED
+  - field: other_mccd_used_ems_v2 # Specify other type of mechanical chest compression device used by EMS
+
+    source_class: UNMAPPED
+  - field: mccd_used_in_the_ed_v2 # Was a MCCD used in the ED?
+    source_class: UNMAPPED
+  - field: how_mccd_used_in_ed_v2 # How was the MCCD used in the ED?
+    source_class: UNMAPPED
+  - field: ed_mccd_success # ED MCCD placement:
+    source_class: UNMAPPED
+  - field: mccd_type_ed_v2 # What kind of mechanical chest compression device was used in the ED?
+    source_class: UNMAPPED
+  - field: specify_other_mccd_ed_v2 # Specify other type of mechanical chest compression device used in the ED
+    source_class: UNMAPPED
+  - field: backboard_prior_transf # Was the mechanical chest compression device backboard placed on the hospital bed prior to placing the patient on the hospital bed?
+    source_class: UNMAPPED
+  - field: starttime_mccd_app_ed_v2 # Time of start of mechanical chest compression device application in the ED
+
+Start time is defined as the moment the MCCD is deployed (e.g., if the backboard of the LUCAS device is placed under the patient during one pause, and the top part of the LUCAS device is placed during a second pause, the start time should be when the backboard was placed). 
+
+If the LUCAS device backboard was already placed on the stretcher prior to the patient's arrival, the start time should be the time when the LUCAS device is latched on one side.
+    source_class: UNMAPPED
+  - field: endtime_mccd_app_ed_v2 # Time of end of mechanical chest compression device application in the ED
+
+End time is defined as the moment when all adjustments are done and the MCCD is performing chest compressions properly, or the moment the placement was abandoned completely.  If the MCCD is deployed but chest compressions are not being performed properly and the team adjusts the MCCD, record the time AFTER further adjustments are made and appropriate chest compressions start. 
+    source_class: UNMAPPED
+  - field: dur_mccd_app_ed_secs_v2 # Duration of MCCD application in the ED (seconds)   If returned value is negative, please verify the times entered.
+    source_class: UNMAPPED
+  - field: mccd_obstacles # Was there any difficulty in MCCD placement due to:
+    source_class: UNMAPPED
+  - field: mccd_obstacle_other # Difficulty in MCCD placement (other):
+    source_class: UNMAPPED
+  - field: mccd_ad_yesno_v2 # Were any adjustments made during the initial application of the MCCD in the ED, such as adjusting the patient's position, adjusting the MCCD piston, or troubleshooting the MCCD components?
+
+    source_class: UNMAPPED
+  - field: type_adjust_mccd_v2 # What types of adjustments to the MCCD were made?
+
+Check all that apply.
+    source_class: UNMAPPED
+  - field: other_mccd_adjust_v2 # Please specify other type(s) of MCCD adjustment(s).
+    source_class: UNMAPPED
+  - field: starttime_mccd_adj_ed_v2 # What was the start time of adjustments?
+
+The time must be AFTER the start time of application and BEFORE the end time of application, as it captures the portion of the total application time spent only on adjustment). 
+    source_class: UNMAPPED
+  - field: endtime_mccd_adj_ed_v2 # What was the end  time of adjustments?
+
+The time must be AFTER the start time of application and BEFORE the end time of application, as it captures the portion of the total application time spent only on adjustment). 
+    source_class: UNMAPPED
+  - field: mechanical_to_manual_v2 # Were mechanical chest compressions switched to manual chest compressions at ANY time while in the ED?
+    source_class: UNMAPPED
+  - field: time_mechanical_chest_comp_v2 # Time mechanical chest compressions were switched to manual chest compressions for the initial instance only
+    source_class: UNMAPPED
+  - field: ed_details_notes_v2 # Use this section to document any relevant details not captured by the fields above regarding the emergency department resuscitation
+    source_class: UNMAPPED
+  - field: time_initial_pulse_check_v2 # Time of INITIAL pulse check
+    source_class: UNMAPPED
+  - field: loc_initial_pulse_check_v2 # Location of INITIAL pulse check
+
+Check all that apply, if multiple people checked for an INITIAL pulse
+    source_class: UNMAPPED
+  - field: num_cci_v2 # How many chest compression interruptions (3+ seconds) were there in the ED?
+    source_class: UNMAPPED
+  - field: start_time_cci_1_v2 # Start time of chest compression interruption #1
+    source_class: UNMAPPED
+  - field: end_time_cci_1_v2 # End time of chest compression interruption #1
+    source_class: UNMAPPED
+  - field: reason_cci_1_v2 # Check all events that occurred during chest compression interruption #1
+    source_class: UNMAPPED
+  - field: other_reason_cci_1_v2 # Specify other reason for chest compression interruption #1
+    source_class: UNMAPPED
+  - field: sono_window_cci_1 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_1 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_1 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_1 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_1 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_1 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_1 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_1 # Location of pulse check during chest compression interruption #1
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_1_v2 # Was point-of-care ultrasound used at all during chest compression interruption #1 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_1_v2 # What was the rhythm during chest compression interruption #1?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_1_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #1? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_2_v2 # Start time of chest compression interruption #2
+    source_class: UNMAPPED
+  - field: end_time_cci_2_v2 # End time of chest compression interruption #2
+    source_class: UNMAPPED
+  - field: reason_cci_2_v2 # Check all events that occurred during chest compression interruption #2
+    source_class: UNMAPPED
+  - field: other_reason_cci_2_v2 # Specify other reason for chest compression interruption #2
+    source_class: UNMAPPED
+  - field: sono_window_cci_2 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_2 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_2 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_2 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_2 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_2 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_2 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_2 # Location of pulse check during chest compression interruption #2
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_2_v2 # Was point-of-care ultrasound used at all during chest compression interruption #2 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_2_v2 # What was the rhythm during chest compression interruption #2?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_2_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #2? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_3_v2 # Start time of chest compression interruption #3
+    source_class: UNMAPPED
+  - field: end_time_cci_3_v2 # End time of chest compression interruption #3
+    source_class: UNMAPPED
+  - field: reason_cci_3_v2 # Check all events that occurred during chest compression interruption #3
+    source_class: UNMAPPED
+  - field: other_reason_cci_3_v2 # Specify other reason for chest compression interruption #3
+    source_class: UNMAPPED
+  - field: sono_window_cci_3 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_3 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_3 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_3 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_3 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_3 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_3 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_3 # Location of pulse check during chest compression interruption #3
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_3_v2 # Was point-of-care ultrasound used at all during chest compression interruption #3 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_3_v2 # What was the rhythm during chest compression interruption #3?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_3_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #3? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_4_v2 # Start time of chest compression interruption #4
+    source_class: UNMAPPED
+  - field: end_time_cci_4_v2 # End time of chest compression interruption #4
+    source_class: UNMAPPED
+  - field: reason_cci_4_v2 # Check all events that occurred during chest compression interruption #4
+    source_class: UNMAPPED
+  - field: other_reason_cci_4_v2 # Specify other reason for chest compression interruption #4
+    source_class: UNMAPPED
+  - field: sono_window_cci_4 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_4 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_4 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_4 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_4 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_4 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_4 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_4 # Location of pulse check during chest compression interruption #4
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_4_v2 # Was point-of-care ultrasound used at all during chest compression interruption #4 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_4_v2 # What was the rhythm during chest compression interruption #4?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_4_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #4? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_5_v2 # Start time of chest compression interruption #5
+    source_class: UNMAPPED
+  - field: end_time_cci_5_v2 # End time of chest compression interruption #5
+    source_class: UNMAPPED
+  - field: reason_cci_5_v2 # Check all events that occurred during chest compression interruption #5
+    source_class: UNMAPPED
+  - field: other_reason_cci_5_v2 # Specify other reason for chest compression interruption #5
+    source_class: UNMAPPED
+  - field: sono_window_cci_5 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_5 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_5 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_5 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_5 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_5 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_5 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_5 # Location of pulse check during chest compression interruption #5
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_5_v2 # Was point-of-care ultrasound used at all during chest compression interruption #5 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_5_v2 # What was the rhythm during chest compression interruption #5?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_5_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #5? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_6_v2 # Start time of chest compression interruption #6
+    source_class: UNMAPPED
+  - field: end_time_cci_6_v2 # End time of chest compression interruption #6
+    source_class: UNMAPPED
+  - field: reason_cci_6_v2 # Check all events that occurred during chest compression interruption #6
+    source_class: UNMAPPED
+  - field: other_reason_cci_6_v2 # Specify other reason for chest compression interruption #6
+    source_class: UNMAPPED
+  - field: sono_window_cci_6 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_6 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_6 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_6 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_6 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_6 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_6 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_6 # Location of pulse check during chest compression interruption #6
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_6_v2 # Was point-of-care ultrasound used at all during chest compression interruption #6 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_6_v2 # What was the rhythm during chest compression interruption #6?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_6_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #6? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_7_v2 # Start time of chest compression interruption #7
+    source_class: UNMAPPED
+  - field: end_time_cci_7_v2 # End time of chest compression interruption #7
+    source_class: UNMAPPED
+  - field: reason_cci_7_v2 # Check all events that occurred during chest compression interruption #7
+    source_class: UNMAPPED
+  - field: other_reason_cci_7_v2 # Specify other reason for chest compression interruption #7
+    source_class: UNMAPPED
+  - field: sono_window_cci_7 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_7 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_7 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_7 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_7 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_7 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_7 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_7 # Location of pulse check during chest compression interruption #7
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_7_v2 # Was point-of-care ultrasound used at all during chest compression interruption #7 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_7_v2 # What was the rhythm during chest compression interruption #7?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_7_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #7? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_8_v2 # Start time of chest compression interruption #8
+    source_class: UNMAPPED
+  - field: end_time_cci_8_v2 # End time of chest compression interruption #8
+    source_class: UNMAPPED
+  - field: reason_cci_8_v2 # Check all events that occurred during chest compression interruption #8
+
+    source_class: UNMAPPED
+  - field: other_reason_cci_8_v2 # Specify other reason for chest compression interruption #8
+    source_class: UNMAPPED
+  - field: sono_window_cci_8 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_8 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_8 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_8 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_8 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_8 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_8 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_8 # Location of pulse check during chest compression interruption #8
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_8_v2 # Was point-of-care ultrasound used at all during chest compression interruption #8 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_8_v2 # What was the rhythm during chest compression interruption #8?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_8_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #8? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_9_v2 # Start time of chest compression interruption #9
+    source_class: UNMAPPED
+  - field: end_time_cci_9_v2 # End time of chest compression interruption #9
+    source_class: UNMAPPED
+  - field: reason_cci_9_v2 # Check all events that occurred during chest compression interruption #9
+    source_class: UNMAPPED
+  - field: other_reason_cci_9_v2 # Specify other reason for chest compression interruption #9
+    source_class: UNMAPPED
+  - field: sono_window_cci_9 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_9 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_9 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_9 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_9 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_9 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_9 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_9 # Location of pulse check during chest compression interruption #9
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_9_v2 # Was point-of-care ultrasound used at all during chest compression interruption #9 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_9_v2 # What was the rhythm during chest compression interruption #9?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_9_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #9? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_10_v2 # Start time of chest compression interruption #10
+    source_class: UNMAPPED
+  - field: end_time_cci_10_v2 # End time of chest compression interruption #10
+    source_class: UNMAPPED
+  - field: reason_cci_10_v2 # Check all events that occurred during chest compression interruption #10
+    source_class: UNMAPPED
+  - field: other_reason_cci_10_v2 # Specify other reason for chest compression interruption #10
+    source_class: UNMAPPED
+  - field: sono_window_cci_10 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_10 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_10 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_10 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_10 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_10 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_10 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_10 # Location of pulse check during chest compression interruption #10
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_10_v2 # Was point-of-care ultrasound used at all during chest compression interruption #10 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_10_v2 # What was the rhythm during chest compression interruption #10?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_10_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #10? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_11_v2 # Start time of chest compression interruption #11
+    source_class: UNMAPPED
+  - field: end_time_cci_11_v2 # End time of chest compression interruption #11
+    source_class: UNMAPPED
+  - field: reason_cci_11_v2 # Check all events that occurred during chest compression interruption #11
+    source_class: UNMAPPED
+  - field: other_reason_cci_11_v2 # Specify other reason for chest compression interruption #11
+    source_class: UNMAPPED
+  - field: sono_window_cci_11 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_11 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_11 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_11 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_11 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_11 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_11 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_11 # Location of pulse check during chest compression interruption #11
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_11_v2 # Was point-of-care ultrasound used at all during chest compression interruption #11 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_11_v2 # What was the rhythm during chest compression interruption #11?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_11_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #11? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_12_v2 # Start time of chest compression interruption #12
+    source_class: UNMAPPED
+  - field: end_time_cci_12_v2 # End time of chest compression interruption #12
+    source_class: UNMAPPED
+  - field: reason_cci_12_v2 # Check all events that occurred during chest compression interruption #12
+    source_class: UNMAPPED
+  - field: other_reason_cci_12_v2 # Specify other reason for chest compression interruption #12
+    source_class: UNMAPPED
+  - field: sono_window_cci_12 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_12 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_12 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_12 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_12 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_12 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_12 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_12 # Location of pulse check during chest compression interruption #12
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_12_v2 # Was point-of-care ultrasound used at all during chest compression interruption #12 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_12_v2 # What was the rhythm during chest compression interruption #12?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_12_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #12? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_13_v2 # Start time of chest compression interruption #13
+    source_class: UNMAPPED
+  - field: end_time_cci_13_v2 # End time of chest compression interruption #13
+    source_class: UNMAPPED
+  - field: reason_cci_13_v2 # Check all events that occurred during chest compression interruption #13
+    source_class: UNMAPPED
+  - field: other_reason_cci_13_v2 # Specify other reason for chest compression interruption #13
+    source_class: UNMAPPED
+  - field: sono_window_cci_13 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_13 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_13 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_13 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_13 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_13 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_13 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_13 # Location of pulse check during chest compression interruption #13
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_13_v2 # Was point-of-care ultrasound used at all during chest compression interruption #13 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_13_v2 # What was the rhythm during chest compression interruption #13?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_13_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #13? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_14_v2 # Start time of chest compression interruption #14
+    source_class: UNMAPPED
+  - field: end_time_cci_14_v2 # End time of chest compression interruption #14
+    source_class: UNMAPPED
+  - field: reason_cci_14_v2 # Check all events that occurred during chest compression interruption #14
+    source_class: UNMAPPED
+  - field: other_reason_cci_14_v2 # Specify other reason for chest compression interruption #14
+    source_class: UNMAPPED
+  - field: sono_window_cci_14 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_14 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_14 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_14 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_14 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_14 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_14 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_14 # Location of pulse check during chest compression interruption #14
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_14_v2 # Was point-of-care ultrasound used at all during chest compression interruption #14 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_14_v2 # What was the rhythm during chest compression interruption #14?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_14_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #14? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_15_v2 # Start time of chest compression interruption #15
+    source_class: UNMAPPED
+  - field: end_time_cci_15_v2 # End time of chest compression interruption #15
+    source_class: UNMAPPED
+  - field: reason_cci_15_v2 # Check all events that occurred during chest compression interruption #15
+    source_class: UNMAPPED
+  - field: other_reason_cci_15_v2 # Specify other reason for chest compression interruption #15
+    source_class: UNMAPPED
+  - field: sono_window_cci_15 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_15 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_15 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_15 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_15 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_15 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_15 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_15 # Location of pulse check during chest compression interruption #15
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_15_v2 # Was point-of-care ultrasound used at all during chest compression interruption #15 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_15_v2 # What was the rhythm during chest compression interruption #15?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_15_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #15? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_16_v2 # Start time of chest compression interruption #16
+    source_class: UNMAPPED
+  - field: end_time_cci_16_v2 # End time of chest compression interruption #16
+    source_class: UNMAPPED
+  - field: reason_cci_16_v2 # Check all events that occurred during chest compression interruption #16
+    source_class: UNMAPPED
+  - field: other_reason_cci_16_v2 # Specify other reason for chest compression interruption #16
+    source_class: UNMAPPED
+  - field: sono_window_cci_16 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_16 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_16 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_16 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_16 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_16 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_16 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_16 # Location of pulse check during chest compression interruption #16
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_16_v2 # Was point-of-care ultrasound used at all during chest compression interruption #16 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_16_v2 # What was the rhythm during chest compression interruption #16?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_16_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #16? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_17_v2 # Start time of chest compression interruption #17
+    source_class: UNMAPPED
+  - field: end_time_cci_17_v2 # End time of chest compression interruption #17
+    source_class: UNMAPPED
+  - field: reason_cci_17_v2 # Check all events that occurred during chest compression interruption #17
+    source_class: UNMAPPED
+  - field: other_reason_cci_17_v2 # Specify other reason for chest compression interruption #17
+    source_class: UNMAPPED
+  - field: sono_window_cci_17 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_17 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_17 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_17 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_17 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_17 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_17 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_17 # Location of pulse check during chest compression interruption #17
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_17_v2 # Was point-of-care ultrasound used at all during chest compression interruption #17 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_17_v2 # What was the rhythm during chest compression interruption #17?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_17_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #17? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_18_v2 # Start time of chest compression interruption #18
+    source_class: UNMAPPED
+  - field: end_time_cci_18_v2 # End time of chest compression interruption #18
+    source_class: UNMAPPED
+  - field: reason_cci_18_v2 # Check all events that occurred during chest compression interruption #18
+    source_class: UNMAPPED
+  - field: other_reason_cci_18_v2 # Specify other reason for chest compression interruption #18
+    source_class: UNMAPPED
+  - field: sono_window_cci_18 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_18 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_18 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_18 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_18 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_18 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_18 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_18 # Location of pulse check during chest compression interruption #18
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_18_v2 # Was point-of-care ultrasound used at all during chest compression interruption #18 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_18_v2 # What was the rhythm during chest compression interruption #18?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_18_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #18? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_19_v2 # Start time of chest compression interruption #19
+    source_class: UNMAPPED
+  - field: end_time_cci_19_v2 # End time of chest compression interruption #19
+    source_class: UNMAPPED
+  - field: reason_cci_19_v2 # Check all events that occurred during chest compression interruption #19
+    source_class: UNMAPPED
+  - field: other_reason_cci_19_v2 # Specify other reason for chest compression interruption #19
+    source_class: UNMAPPED
+  - field: sono_window_cci_19 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_19 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_19 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_19 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_19 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_19 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_19 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_19 # Location of pulse check during chest compression interruption #19
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_19_v2 # Was point-of-care ultrasound used at all during chest compression interruption #19 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_19_v2 # What was the rhythm during chest compression interruption #19?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_19_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #19? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_20_v2 # Start time of chest compression interruption #20
+    source_class: UNMAPPED
+  - field: end_time_cci_20_v2 # End time of chest compression interruption #20
+    source_class: UNMAPPED
+  - field: reason_cci_20_v2 # Check all events that occurred during chest compression interruption #20
+    source_class: UNMAPPED
+  - field: other_reason_cci_20_v2 # Specify other reason for chest compression interruption #20
+    source_class: UNMAPPED
+  - field: sono_window_cci_20 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_20 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_20 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_20 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_20 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_20 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_20 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_20 # Location of pulse check during chest compression interruption #20
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_20_v2 # Was point-of-care ultrasound used at all during chest compression interruption #20 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_20_v2 # What was the rhythm during chest compression interruption #20?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_20_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #20? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_21_v2 # Start time of chest compression interruption #21
+    source_class: UNMAPPED
+  - field: end_time_cci_21_v2 # End time of chest compression interruption #21
+    source_class: UNMAPPED
+  - field: reason_cci_21_v2 # Check all events that occurred during chest compression interruption #21
+    source_class: UNMAPPED
+  - field: other_reason_cci_21_v2 # Specify other reason for chest compression interruption #21
+    source_class: UNMAPPED
+  - field: sono_window_cci_21 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_21 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_21 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_21 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_21 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_21 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_21 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_21 # Location of pulse check during chest compression interruption #21
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_21_v2 # Was point-of-care ultrasound used at all during chest compression interruption #21 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_21_v2 # What was the rhythm during chest compression interruption #21?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_21_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #21? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_22_v2 # Start time of chest compression interruption #22
+    source_class: UNMAPPED
+  - field: end_time_cci_22_v2 # End time of chest compression interruption #22
+    source_class: UNMAPPED
+  - field: reason_cci_22_v2 # Check all events that occurred during chest compression interruption #22
+    source_class: UNMAPPED
+  - field: other_reason_cci_22_v2 # Specify other reason for chest compression interruption #22
+    source_class: UNMAPPED
+  - field: sono_window_cci_22 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_22 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_22 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_22 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_22 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_22 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_22 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_22 # Location of pulse check during chest compression interruption #22
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_22_v2 # Was point-of-care ultrasound used at all during chest compression interruption #22 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_22_v2 # What was the rhythm during chest compression interruption #22?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_22_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #22? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_23_v2 # Start time of chest compression interruption #23
+    source_class: UNMAPPED
+  - field: end_time_cci_23_v2 # End time of chest compression interruption #23
+    source_class: UNMAPPED
+  - field: reason_cci_23_v2 # Check all events that occurred during chest compression interruption #23
+    source_class: UNMAPPED
+  - field: other_reason_cci_23_v2 # Specify other reason for chest compression interruption #23
+    source_class: UNMAPPED
+  - field: sono_window_cci_23 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_23 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_23 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_23 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_23 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_23 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_23 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_23 # Location of pulse check during chest compression interruption #23
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_23_v2 # Was point-of-care ultrasound used at all during chest compression interruption #23 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_23_v2 # What was the rhythm during chest compression interruption #23?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_23_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #23? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_24_v2 # Start time of chest compression interruption #24
+    source_class: UNMAPPED
+  - field: end_time_cci_24_v2 # End time of chest compression interruption #24
+    source_class: UNMAPPED
+  - field: reason_cci_24_v2 # Check all events that occurred during chest compression interruption #24
+    source_class: UNMAPPED
+  - field: other_reason_cci_24_v2 # Specify other reason for chest compression interruption #24
+    source_class: UNMAPPED
+  - field: sono_window_cci_24 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_24 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_24 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_24 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_24 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_24 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_24 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_24 # Location of pulse check during chest compression interruption #24
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_24_v2 # Was point-of-care ultrasound used at all during chest compression interruption #24 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_24_v2 # What was the rhythm during chest compression interruption #24?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_24_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #24? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_25_v2 # Start time of chest compression interruption #25
+    source_class: UNMAPPED
+  - field: end_time_cci_25_v2 # End time of chest compression interruption #25
+    source_class: UNMAPPED
+  - field: reason_cci_25_v2 # Check all events that occurred during chest compression interruption #25
+    source_class: UNMAPPED
+  - field: other_reason_cci_25_v2 # Specify other reason for chest compression interruption #25
+    source_class: UNMAPPED
+  - field: sono_window_cci_25 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_25 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_25 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_25 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_25 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_25 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_25 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_25 # Location of pulse check during chest compression interruption #25
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_25_v2 # Was point-of-care ultrasound used at all during chest compression interruption #25 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_25_v2 # What was the rhythm during chest compression interruption #25?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_25_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #25? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_26_v2 # Start time of chest compression interruption #26
+    source_class: UNMAPPED
+  - field: end_time_cci_26_v2 # End time of chest compression interruption #26
+    source_class: UNMAPPED
+  - field: reason_cci_26_v2 # Check all events that occurred during chest compression interruption #26
+    source_class: UNMAPPED
+  - field: other_reason_cci_26_v2 # Specify other reason for chest compression interruption #26
+    source_class: UNMAPPED
+  - field: sono_window_cci_26 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_26 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_26 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_26 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_26 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_26 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_26 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_26 # Location of pulse check during chest compression interruption #26
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_26_v2 # Was point-of-care ultrasound used at all during chest compression interruption #26 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_26_v2 # What was the rhythm during chest compression interruption #26?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_26_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #26? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_27_v2 # Start time of chest compression interruption #27
+    source_class: UNMAPPED
+  - field: end_time_cci_27_v2 # End time of chest compression interruption #27
+    source_class: UNMAPPED
+  - field: reason_cci_27_v2 # Check all events that occurred during chest compression interruption #27
+    source_class: UNMAPPED
+  - field: other_reason_cci_27_v2 # Specify other reason for chest compression interruption #27
+    source_class: UNMAPPED
+  - field: sono_window_cci_27 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_27 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_27 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_27 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_27 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_27 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_27 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_27 # Location of pulse check during chest compression interruption #27
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_27_v2 # Was point-of-care ultrasound used at all during chest compression interruption #27 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_27_v2 # What was the rhythm during chest compression interruption #27?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_27_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #27? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_28_v2 # Start time of chest compression interruption #28
+    source_class: UNMAPPED
+  - field: end_time_cci_28_v2 # End time of chest compression interruption #28
+    source_class: UNMAPPED
+  - field: reason_cci_28_v2 # Check all events that occurred during chest compression interruption #28
+    source_class: UNMAPPED
+  - field: other_reason_cci_28_v2 # Specify other reason for chest compression interruption #28
+    source_class: UNMAPPED
+  - field: sono_window_cci_28 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_28 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_28 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_28 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_28 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_28 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_28 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_28 # Location of pulse check during chest compression interruption #28
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_28_v2 # Was point-of-care ultrasound used at all during chest compression interruption #28 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_28_v2 # What was the rhythm during chest compression interruption #28?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_28_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #28? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_29_v2 # Start time of chest compression interruption #29
+    source_class: UNMAPPED
+  - field: end_time_cci_29_v2 # End time of chest compression interruption #29
+    source_class: UNMAPPED
+  - field: reason_cci_29_v2 # Check all events that occurred during chest compression interruption #29
+    source_class: UNMAPPED
+  - field: other_reason_cci_29_v2 # Specify other reason for chest compression interruption #29
+    source_class: UNMAPPED
+  - field: sono_window_cci_29 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_29 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_29 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_29 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_29 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_29 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_29 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_29 # Location of pulse check during chest compression interruption #29
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_29_v2 # Was point-of-care ultrasound used at all during chest compression interruption #29 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_29_v2 # What was the rhythm during chest compression interruption #29?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_29_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #29? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: start_time_cci_30_v2 # Start time of chest compression interruption #30
+    source_class: UNMAPPED
+  - field: end_time_cci_30_v2 # End time of chest compression interruption #30
+    source_class: UNMAPPED
+  - field: reason_cci_30_v2 # Check all events that occurred during chest compression interruption #30
+    source_class: UNMAPPED
+  - field: other_reason_cci_30_v2 # Specify other reason for chest compression interruption #30
+    source_class: UNMAPPED
+  - field: sono_window_cci_30 # Cardiac Echo Sonographic Window
+    source_class: UNMAPPED
+  - field: echo_success_cci_30 # Cardiac Echo Success
+    source_class: UNMAPPED
+  - field: us_pulse_cci_30 # Ultrasound Pulse Check Site
+    source_class: UNMAPPED
+  - field: us_pulse_present_cci_30 # Ultrasound Pulse Present
+    source_class: UNMAPPED
+  - field: aline_cci_30 # Is An Arterial Line Present and Functional?
+    source_class: UNMAPPED
+  - field: aline_sbp_cci_30 # A-line Systolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: aline_dbp_cci_30 # A-line Diastolic BP during compression interruption
+    source_class: UNMAPPED
+  - field: loc_pulse_check_cci_30 # Location of pulse check during chest compression interruption #30
+    source_class: UNMAPPED
+  - field: pocus_non_pulse_cci_30_v2 # Was point-of-care ultrasound used at all during chest compression interruption #30 for something other than detecting a pulse?
+    source_class: UNMAPPED
+  - field: rhythm_during_cci_30_v2 # What was the rhythm during chest compression interruption #30?
+
+Select the rhythm based on interventions performed by the team (e.g., if patient was defibrillated, then the rhythm should be VF or pulseless VT).
+    source_class: UNMAPPED
+  - field: reason_mccd_adj_cci_30_v2 # What was the reason for adjusting the mechanical chest compression device during chest compression interruption #30? 
+
+Check all that apply. 
+
+
+    source_class: UNMAPPED
+  - field: ed_cci_notes_v2 # Use this section to document any relevant details not captured by the fields above regarding chest compression interruptions
+
+    source_class: UNMAPPED
+  - field: adv_airway_ed_arrival # What type of advanced airway was already in place upon ED arrival?
+    source_class: UNMAPPED
+  - field: adv_airway_attempted_ed_v2 # Was an advanced airway attempted in the ED?
+
+An advanced airway attempt is defined as the insertion of a laryngoscope blade (direct or video) or other airway device into the mouth, regardless of whether an attempt to pass the endotracheal tube or device is made.
+
+Supraglottic airways and endotracheal tubes should be considered advanced airways.  
+
+Oropharyngeal airways and nasopharyngeal airways should NOT be considered advanced airways. 
+    source_class: UNMAPPED
+  - field: num_ed_adv_airway_att_v2 # How many times was an advanced airway attempted in the ED?
+
+For laryngoscopy, insertion and removal of blade = 1 attempt
+
+    source_class: UNMAPPED
+  - field: cpr_ongoing_ed_intub_1_v2 # Was CPR ongoing during ED advanced airway attempt #1?
+    source_class: UNMAPPED
+  - field: type_compress_intub_1_v2 # What type of chest compressions were ongoing during advanced airway attempt #1?
+    source_class: UNMAPPED
+  - field: starttime_intub_1_v2 # Start time of advanced airway attempt #1
+
+Start time = first insertion of the laryngoscope blade/SGA device into the mouth
+    source_class: UNMAPPED
+  - field: endtime_intub_1_v2 # End time of advanced airway attempt #1
+
+End time for successful attempt = time of first effective ventilation through the placed device
+
+End time for failed attempt = time when the laryngoscope blade is removed from the mouth
+    source_class: UNMAPPED
+  - field: type_airway_ed_intub_1_v2 # Type of airway for ED advanced airway attempt #1
+    source_class: UNMAPPED
+  - field: vomiting_ed_intub_1_v2 # Was there vomiting/bleeding/aspiration during advanced airway attempt #1?
+    source_class: UNMAPPED
+  - field: intub_assist_ed_1_v2 # Were any intubation assistive devices used for airway attempt #1 in the ED?
+    source_class: UNMAPPED
+  - field: operator_ed_1_v2 # What is the operator's level of training?
+    source_class: UNMAPPED
+  - field: cpr_ongoing_ed_intub_2_v2 # Was CPR ongoing during ED advanced airway attempt #2?
+    source_class: UNMAPPED
+  - field: type_compress_intub_2_v2 # What type of chest compressions were ongoing during advanced airway attempt #2?
+    source_class: UNMAPPED
+  - field: starttime_intub_2_v2 # Start time of advanced airway attempt #2
+
+Start time = first insertion of the laryngoscope blade/SGA device into the mouth
+    source_class: UNMAPPED
+  - field: endtime_intub_2_v2 # End time of advanced airway attempt #2
+
+End time for successful attempt = time of first effective ventilation through the placed device
+
+End time for failed attempt = time when the laryngoscope blade is removed from the mouth
+    source_class: UNMAPPED
+  - field: type_airway_ed_intub_2_v2 # Type of airway for ED advanced airway attempt #2
+    source_class: UNMAPPED
+  - field: vomiting_ed_intub_2_v2 # Was there vomiting/bleeding/aspiration during advanced airway attempt #2?
+    source_class: UNMAPPED
+  - field: intub_assist_ed_2_v2 # Were any intubation assistive devices used for airway attempt #2 in the ED?
+    source_class: UNMAPPED
+  - field: operator_ed_2_v2 # What is the operator's level of training?
+    source_class: UNMAPPED
+  - field: cpr_ongoing_ed_intub_3_v2 # Was CPR ongoing during ED advanced airway attempt #3?
+    source_class: UNMAPPED
+  - field: type_compress_intub_3_v2 # What type of chest compressions were ongoing during advanced airway attempt #3?
+    source_class: UNMAPPED
+  - field: starttime_intub_3_v2 # Start time of advanced airway attempt #3
+
+Start time = first insertion of the laryngoscope blade/SGA device into the mouth
+    source_class: UNMAPPED
+  - field: endtime_intub_3_v2 # End time of advanced airway attempt #3
+
+End time for successful attempt = time of first effective ventilation through the placed device
+
+End time for failed attempt = time when the laryngoscope blade is removed from the mouth
+    source_class: UNMAPPED
+  - field: type_airway_ed_intub_3_v2 # Type of airway for ED advanced airway attempt #3
+    source_class: UNMAPPED
+  - field: vomiting_ed_intub_3_v2 # Was there vomiting/bleeding/aspiration during advanced airway attempt #3?
+    source_class: UNMAPPED
+  - field: intub_assist_ed_3_v2 # Were any intubation assistive devices used for airway attempt #3 in the ED?
+    source_class: UNMAPPED
+  - field: operator_ed_3_v2 # What is the operator's level of training?
+    source_class: UNMAPPED
+  - field: cpr_ongoing_ed_intub_4_v2 # Was CPR ongoing during ED advanced airway attempt #4?
+    source_class: UNMAPPED
+  - field: type_compress_intub_4_v2 # What type of chest compressions were ongoing during advanced airway attempt #4?
+    source_class: UNMAPPED
+  - field: starttime_intub_4_v2 # Start time of advanced airway attempt #4
+
+Start time = first insertion of the laryngoscope blade/SGA device into the mouth
+    source_class: UNMAPPED
+  - field: endtime_intub_4_v2 # End time of advanced airway attempt #4
+
+End time for successful attempt = time of first effective ventilation through the placed device
+
+End time for failed attempt = time when the laryngoscope blade is removed from the mouth
+    source_class: UNMAPPED
+  - field: type_airway_ed_intub_4_v2 # Type of airway for ED advanced airway attempt #4
+    source_class: UNMAPPED
+  - field: vomiting_ed_intub_4_v2 # Was there vomiting/bleeding/aspiration during advanced airway attempt #4?
+    source_class: UNMAPPED
+  - field: intub_assist_ed_4_v2 # Were any intubation assistive devices used for airway attempt #4 in the ED?
+    source_class: UNMAPPED
+  - field: operator_ed_4_v2 # What is the operator's level of training?
+    source_class: UNMAPPED
+  - field: cpr_ongoing_ed_intub_5_v2 # Was CPR ongoing during ED advanced airway attempt #5?
+    source_class: UNMAPPED
+  - field: type_compress_intub_5_v2 # What type of chest compressions were ongoing during advanced airway attempt #5?
+    source_class: UNMAPPED
+  - field: starttime_intub_5_v2 # Start time of advanced airway attempt #5
+
+Start time = first insertion of the laryngoscope blade/SGA device into the mouth
+    source_class: UNMAPPED
+  - field: endtime_intub_5_v2 # End time of advanced airway attempt #5
+
+End time for successful attempt = time of first effective ventilation through the placed device
+
+End time for failed attempt = time when the laryngoscope blade is removed from the mouth
+    source_class: UNMAPPED
+  - field: type_airway_ed_intub_5_v2 # Type of airway for ED advanced airway attempt #5
+    source_class: UNMAPPED
+  - field: vomiting_ed_intub_5_v2 # Was there vomiting/bleeding/aspiration during advanced airway attempt #5?
+    source_class: UNMAPPED
+  - field: intub_assist_ed_5_v2 # Were any intubation assistive devices used for airway attempt #5 in the ED?
+    source_class: UNMAPPED
+  - field: operator_ed_5_v2 # What is the operator's level of training?
+    source_class: UNMAPPED
+  - field: cpr_ongoing_ed_intub_6_v2 # Was CPR ongoing during ED advanced airway attempt #6?
+    source_class: UNMAPPED
+  - field: type_compress_intub_6_v2 # What type of chest compressions were ongoing during advanced airway attempt #6?
+    source_class: UNMAPPED
+  - field: starttime_intub_6_v2 # Start time of advanced airway attempt #6
+
+Start time = first insertion of the laryngoscope blade/SGA device into the mouth
+    source_class: UNMAPPED
+  - field: endtime_intub_6_v2 # End time of advanced airway attempt #6
+
+End time for successful attempt = time of first effective ventilation through the placed device
+
+End time for failed attempt = time when the laryngoscope blade is removed from the mouth
+    source_class: UNMAPPED
+  - field: type_airway_ed_intub_6_v2 # Type of airway for ED advanced airway attempt #6
+    source_class: UNMAPPED
+  - field: vomiting_ed_intub_6_v2 # Was there vomiting/bleeding/aspiration during advanced airway attempt #6?
+    source_class: UNMAPPED
+  - field: intub_assist_ed_6_v2 # Were any intubation assistive devices used for airway attempt #6 in the ED?
+    source_class: UNMAPPED
+  - field: operator_ed_6_v2 # What is the operator's level of training?
+    source_class: UNMAPPED
+  - field: cpr_ongoing_ed_intub_7_v2 # Was CPR ongoing during ED advanced airway attempt #7?
+    source_class: UNMAPPED
+  - field: type_compress_intub_7_v2 # What type of chest compressions were ongoing during advanced airway attempt #7?
+    source_class: UNMAPPED
+  - field: starttime_intub_7_v2 # Start time of advanced airway attempt #7
+
+Start time = first insertion of the laryngoscope blade/SGA device into the mouth
+    source_class: UNMAPPED
+  - field: endtime_intub_7_v2 # End time of advanced airway attempt #7
+
+End time for successful attempt = time of first effective ventilation through the placed device
+
+End time for failed attempt = time when the laryngoscope blade is removed from the mouth
+    source_class: UNMAPPED
+  - field: type_airway_ed_intub_7_v2 # Type of airway for ED advanced airway attempt #7
+    source_class: UNMAPPED
+  - field: vomiting_ed_intub_7_v2 # Was there vomiting/bleeding/aspiration during advanced airway attempt #7?
+    source_class: UNMAPPED
+  - field: intub_assist_ed_7_v2 # Were any intubation assistive devices used for airway attempt #7 in the ED?
+    source_class: UNMAPPED
+  - field: operator_ed_7_v2 # What is the operator's level of training?
+    source_class: UNMAPPED
+  - field: cpr_ongoing_ed_intub_8_v2 # Was CPR ongoing during ED advanced airway attempt #8?
+    source_class: UNMAPPED
+  - field: type_compress_intub_8_v2 # What type of chest compressions were ongoing during advanced airway attempt #8?
+    source_class: UNMAPPED
+  - field: starttime_intub_8_v2 # Start time of advanced airway attempt #8
+
+Start time = first insertion of the laryngoscope blade/SGA device into the mouth
+    source_class: UNMAPPED
+  - field: endtime_intub_8_v2 # End time of advanced airway attempt #8
+
+End time for successful attempt = time of first effective ventilation through the placed device
+
+End time for failed attempt = time when the laryngoscope blade is removed from the mouth
+    source_class: UNMAPPED
+  - field: type_airway_ed_intub_8_v2 # Type of airway for ED advanced airway attempt #8
+    source_class: UNMAPPED
+  - field: vomiting_ed_intub_8_v2 # Was there vomiting/bleeding/aspiration during advanced airway attempt #8?
+    source_class: UNMAPPED
+  - field: intub_assist_ed_8_v2 # Were any intubation assistive devices used for airway attempt #8 in the ED?
+    source_class: UNMAPPED
+  - field: operator_ed_8_v2 # What is the operator's level of training?
+    source_class: UNMAPPED
+  - field: airway_con_method_ed_final_v2 # Airway confirmation method used for final advanced airway attempt 
+
+Check all that apply (e.g., if the intubating team verbalizes the tube went through the vocal cords on laryngoscopy, then Laryngoscopy should be checked, even if they auscultated and used ETCO2)
+    source_class: UNMAPPED
+  - field: ett_intub_confirm_time_v2 # ETT intubation confirmation time
+
+Confirmation time is the time in which at least 2 of the methods were used to confirm placement. 
+    source_class: UNMAPPED
+  - field: ed_airway_notes_v2 # Use this section to document any relevant details not captured by the fields above regarding advanced airway attempts in the ED
+
+    source_class: UNMAPPED
+  - field: any_ventilation_delays_v2 # Were there any interruptions in ventilations that were 20+ seconds?
+
+
+    source_class: UNMAPPED
+  - field: how_many_ventilation_delay_v2 # How many ventilation delays were there?
+    source_class: UNMAPPED
+  - field: vent_delay_start_1_v2 # Ventilation delay #1 start time
+    source_class: UNMAPPED
+  - field: vent_delay_end_1_v2 # Ventilation delay #1 end time
+    source_class: UNMAPPED
+  - field: vent_delay_start_2_v2 # Ventilation delay #2 start time
+    source_class: UNMAPPED
+  - field: vent_delay_end_2_v2 # Ventilation delay #2 end time
+    source_class: UNMAPPED
+  - field: vent_delay_start_3_v2 # Ventilation delay #3 start time
+    source_class: UNMAPPED
+  - field: vent_delay_end_3_v2 # Ventilation delay #3 end time
+    source_class: UNMAPPED
+  - field: vent_delay_start_4_v2 # Ventilation delay #4 start time
+    source_class: UNMAPPED
+  - field: vent_delay_end_4_v2 # Ventilation delay #4 end time
+    source_class: UNMAPPED
+  - field: vent_delay_start_5_v2 # Ventilation delay #5 start time
+    source_class: UNMAPPED
+  - field: vent_delay_end_5_v2 # Ventilation delay #5 end time
+    source_class: UNMAPPED
+  - field: placed_vent_intraarrest_v2 # Was the patient placed on a ventilator intra-arrest?
+    source_class: UNMAPPED
+  - field: start_ventilator_place_v2 # Start time of ventilator placement
+    source_class: UNMAPPED
+  - field: end_ventilator_place_v2 # End time of ventilator placement
+
+Leave blank if patient was not taken off mechanical ventilation until ROSC or death.
+    source_class: UNMAPPED
+  - field: duration_ventilator_place_v2 # Duration of ventilator placement (seconds)   If returned value is negative, please verify the times entered.
+    source_class: UNMAPPED
+  - field: ventilation_notes_v2 # Use this section to document any relevant details not captured by the fields above regarding ventilations
+
+    source_class: UNMAPPED
+  - field: epi_given_ed_v2 # Was epinephrine/adrenaline given during resuscitation in the ED?
+
+    source_class: UNMAPPED
+  - field: time_epi_ed_v2 # What time was the first dose of epinephrine/adrenaline given during resuscitation in the ED, based on video review?
+    source_class: UNMAPPED
+  - field: lido_given_ed_v2 # Was lidocaine given during resuscitation in the ED?
+    source_class: UNMAPPED
+  - field: time_lido_ed_v2 # What time was the first dose of lidocaine given during resuscitation in the ED, based on video review?
+    source_class: UNMAPPED
+  - field: amio_given_ed_v2 # Was amiodarone given during resuscitation in the ED?
+    source_class: UNMAPPED
+  - field: time_amido_ed_v2 # What time was the first dose of amiodarone given during resuscitation in the ED, based on video review?
+    source_class: UNMAPPED
+  - field: thromb_given_ed_v2 # Was a thrombolytic given during resuscitation in the ED?
+    source_class: UNMAPPED
+  - field: name_thromb_ed_v2 # What is the name of the thrombolytic medication given during resuscitation in the ED?
+    source_class: UNMAPPED
+  - field: decision_time_thromb_ed # What time was the decision to administer the thrombolytic made?
+
+Time the decision was verbalized or time when video review captures it.
+    source_class: UNMAPPED
+  - field: time_thromb_ed_v2 # What time was the first dose of thrombolytic medication given during resuscitation in the ED, based on video review?
+
+If given as a bolus, record the time that injection is completed or verbalized by a team member ("tPA is in!"), or seen by the reviewer on camera. If an infusion is used, please document using the free text area below and use the time the bolus is completed as the end time.
+    source_class: UNMAPPED
+  - field: ed_drugs_notes_v2 # Use this section to document any details not captured by the fields above regarding ED drug administration
+    source_class: UNMAPPED
+  - field: ecmo_called_ed_v2 # Was ECMO / extracorporeal CPR called while the patient was in the ED?
+
+
+    source_class: UNMAPPED
+  - field: time_ecmo_called # What time was ECMO / extracorporeal CPR called?
+
+"Called" is defined as when a team member is confirming that the ECMO team is activated.
+    source_class: UNMAPPED
+  - field: ecmo_initiated_ed_v2 # Was ECMO/extracorporeal CPR initiated in the ED?
+
+"Initiated" is defined as the time the first percutaneous needle for cannulation is started.
+    source_class: UNMAPPED
+  - field: time_ecmo_initiated # What time was ECMO / extracorporeal CPR initiated?
+    source_class: UNMAPPED
+  - field: ecmo_success_ed_v2 # Was ECMO/extracorporeal CPR successful in the ED?
+
+"Success" is defined as the time the flow is re-established, evidenced by flow of blood through cannulae, or verbalization by the treating team.
+    source_class: UNMAPPED
+  - field: time_ecmo_success # What time was ECMO / extracorporeal CPR successfully established?
+    source_class: UNMAPPED
+  - field: any_episodes_rosc_ed_v2 # Did the patient have any episodes of ROSC after ED arrival?
+    source_class: UNMAPPED
+  - field: num_rosc_episodes_ed_v2 # How many episodes of ROSC did the patient have after ED arrival?
+    source_class: UNMAPPED
+  - field: start_rosc_1_v2 # Start time of ROSC episode #1
+
+The time when a team member detects a pulse (via palpation/ultrasound/arterial line).
+    source_class: UNMAPPED
+  - field: end_rosc_1_v2 # End time of ROSC episode #1
+
+The time when a pulse is determined to be no longer present or when CPR restarts.
+    source_class: UNMAPPED
+  - field: rhythm_rosc_1_v2 # Rhythm during ROSC episode #1
+    source_class: UNMAPPED
+  - field: pulse_check_meth_rosc_1_v2 # Pulse check method for ROSC episode #1
+    source_class: UNMAPPED
+  - field: vitals_obtained_rosc_1_v2 # Were vital signs obtained after ROSC episode #1?
+    source_class: UNMAPPED
+  - field: time_vitals_rosc_1_v2 # What time were vital signs obtained after ROSC episode #1?
+    source_class: UNMAPPED
+  - field: hr_rosc_1_v2 # Heart rate (beats per minute) during ROSC episode #1
+    source_class: UNMAPPED
+  - field: sbp_rosc_1_v2 # Systolic blood pressure (mmHg) during ROSC episode #1
+    source_class: UNMAPPED
+  - field: dbp_rosc_1_v2 # Diastolic blood pressure (mmHg) during ROSC episode #1
+    source_class: UNMAPPED
+  - field: spo2_rosc_1_v2 # SpO2 (%) during ROSC episode #1
+    source_class: UNMAPPED
+  - field: etco2_rosc_1_v2 # EtCO2 (mmHg) during ROSC episode #1
+    source_class: UNMAPPED
+  - field: start_rosc_2_v2 # Start time of ROSC episode #2
+
+The time when a team member detects a pulse (via palpation/ultrasound/arterial line).
+    source_class: UNMAPPED
+  - field: end_rosc_2_v2 # End time of ROSC episode #2
+
+The time when a pulse is determined to be no longer present or when CPR restarts.
+    source_class: UNMAPPED
+  - field: rhythm_rosc_2_v2 # Rhythm during ROSC episode #2
+    source_class: UNMAPPED
+  - field: pulse_check_meth_rosc_2_v2 # Pulse check method for ROSC episode #2
+    source_class: UNMAPPED
+  - field: vitals_obtained_rosc_2_v2 # Were vital signs obtained after ROSC episode #2?
+    source_class: UNMAPPED
+  - field: time_vitals_rosc_2_v2 # What time were vital signs obtained after ROSC episode #2?
+    source_class: UNMAPPED
+  - field: hr_rosc_2_v2 # Heart rate (beats per minute) during ROSC episode #2
+    source_class: UNMAPPED
+  - field: sbp_rosc_2_v2 # Systolic blood pressure (mmHg) during ROSC episode #2
+    source_class: UNMAPPED
+  - field: dbp_rosc_2_v2 # Diastolic blood pressure (mmHg) during ROSC episode #2
+    source_class: UNMAPPED
+  - field: spo2_rosc_2_v2 # SpO2 (%) during ROSC episode #2
+    source_class: UNMAPPED
+  - field: etco2_rosc_2_v2 # EtCO2 (mmHg) during ROSC episode #2
+    source_class: UNMAPPED
+  - field: start_rosc_3_v2 # Start time of ROSC episode #3
+
+The time when a team member detects a pulse (via palpation/ultrasound/arterial line).
+    source_class: UNMAPPED
+  - field: end_rosc_3_v2 # End time of ROSC episode #3
+
+The time when a pulse is determined to be no longer present or when CPR restarts.
+    source_class: UNMAPPED
+  - field: rhythm_rosc_3_v2 # Rhythm during ROSC episode #3
+    source_class: UNMAPPED
+  - field: pulse_check_meth_rosc_3_v2 # Pulse check method for ROSC episode #3
+    source_class: UNMAPPED
+  - field: vitals_obtained_rosc_3_v2 # Were vital signs obtained after ROSC episode #3?
+    source_class: UNMAPPED
+  - field: time_vitals_rosc_3_v2 # What time were vital signs obtained after ROSC episode #3?
+    source_class: UNMAPPED
+  - field: hr_rosc_3_v2 # Heart rate (beats per minute) during ROSC episode #3
+    source_class: UNMAPPED
+  - field: sbp_rosc_3_v2 # Systolic blood pressure (mmHg) during ROSC episode #3
+    source_class: UNMAPPED
+  - field: dbp_rosc_3_v2 # Diastolic blood pressure (mmHg) during ROSC episode #3
+    source_class: UNMAPPED
+  - field: spo2_rosc_3_v2 # SpO2 (%) during ROSC episode #3
+    source_class: UNMAPPED
+  - field: etco2_rosc_3_v2 # EtCO2 (mmHg) during ROSC episode #3
+    source_class: UNMAPPED
+  - field: start_rosc_4_v2 # Start time of ROSC episode #4
+
+The time when a team member detects a pulse (via palpation/ultrasound/arterial line).
+    source_class: UNMAPPED
+  - field: end_rosc_4_v2 # End time of ROSC episode #4
+
+The time when a pulse is determined to be no longer present or when CPR restarts.
+    source_class: UNMAPPED
+  - field: rhythm_rosc_4_v2 # Rhythm during ROSC episode #4
+    source_class: UNMAPPED
+  - field: pulse_check_meth_rosc_4_v2 # Pulse check method for ROSC episode #4
+    source_class: UNMAPPED
+  - field: vitals_obtained_rosc_4_v2 # Were vital signs obtained after ROSC episode #4?
+    source_class: UNMAPPED
+  - field: time_vitals_rosc_4_v2 # What time were vital signs obtained after ROSC episode #4?
+    source_class: UNMAPPED
+  - field: hr_rosc_4_v2 # Heart rate (beats per minute) during ROSC episode #4
+    source_class: UNMAPPED
+  - field: sbp_rosc_4_v2 # Systolic blood pressure (mmHg) during ROSC episode #4
+    source_class: UNMAPPED
+  - field: dbp_rosc_4_v2 # Diastolic blood pressure (mmHg) during ROSC episode #4
+    source_class: UNMAPPED
+  - field: spo2_rosc_4_v2 # SpO2 (%) during ROSC episode #4
+    source_class: UNMAPPED
+  - field: etco2_rosc_4_v2 # EtCO2 (mmHg) during ROSC episode #4
+    source_class: UNMAPPED
+  - field: start_rosc_5_v2 # Start time of ROSC episode #5
+
+The time when a team member detects a pulse (via palpation/ultrasound/arterial line).
+    source_class: UNMAPPED
+  - field: end_rosc_5_v2 # End time of ROSC episode #5
+
+The time when a pulse is determined to be no longer present or when CPR restarts.
+    source_class: UNMAPPED
+  - field: rhythm_rosc_5_v2 # Rhythm during ROSC episode #5
+    source_class: UNMAPPED
+  - field: pulse_check_meth_rosc_5_v2 # Pulse check method for ROSC episode #5
+    source_class: UNMAPPED
+  - field: vitals_obtained_rosc_5_v2 # Were vital signs obtained after ROSC episode #5?
+    source_class: UNMAPPED
+  - field: time_vitals_rosc_5_v2 # What time were vital signs obtained after ROSC episode #5?
+    source_class: UNMAPPED
+  - field: hr_rosc_5_v2 # Heart rate (beats per minute) during ROSC episode #5
+    source_class: UNMAPPED
+  - field: sbp_rosc_5_v2 # Systolic blood pressure (mmHg) during ROSC episode #5
+    source_class: UNMAPPED
+  - field: dbp_rosc_5_v2 # Diastolic blood pressure (mmHg) during ROSC episode #5
+    source_class: UNMAPPED
+  - field: spo2_rosc_5_v2 # SpO2 (%) during ROSC episode #5
+    source_class: UNMAPPED
+  - field: etco2_rosc_5_v2 # EtCO2 (mmHg) during ROSC episode #5
+    source_class: UNMAPPED
+  - field: start_rosc_6_v2 # Start time of ROSC episode #6
+
+The time when a team member detects a pulse (via palpation/ultrasound/arterial line).
+    source_class: UNMAPPED
+  - field: end_rosc_6_v2 # End time of ROSC episode #6
+
+The time when a pulse is determined to be no longer present or when CPR restarts.
+    source_class: UNMAPPED
+  - field: rhythm_rosc_6_v2 # Rhythm during ROSC episode #6
+    source_class: UNMAPPED
+  - field: pulse_check_meth_rosc_6_v2 # Pulse check method for ROSC episode #6
+    source_class: UNMAPPED
+  - field: vitals_obtained_rosc_6_v2 # Were vital signs obtained after ROSC episode #6?
+    source_class: UNMAPPED
+  - field: time_vitals_rosc_6_v2 # What time were vital signs obtained after ROSC episode #6?
+    source_class: UNMAPPED
+  - field: hr_rosc_6_v2 # Heart rate (beats per minute) during ROSC episode #6
+    source_class: UNMAPPED
+  - field: sbp_rosc_6_v2 # Systolic blood pressure (mmHg) during ROSC episode #6
+    source_class: UNMAPPED
+  - field: dbp_rosc_6_v2 # Diastolic blood pressure (mmHg) during ROSC episode #6
+    source_class: UNMAPPED
+  - field: spo2_rosc_6_v2 # SpO2 (%) during ROSC episode #6
+    source_class: UNMAPPED
+  - field: etco2_rosc_6_v2 # EtCO2 (mmHg) during ROSC episode #6
+    source_class: UNMAPPED
+  - field: start_rosc_7_v2 # Start time of ROSC episode #7
+
+The time when a team member detects a pulse (via palpation/ultrasound/arterial line).
+    source_class: UNMAPPED
+  - field: end_rosc_7_v2 # End time of ROSC episode #7
+
+The time when a pulse is determined to be no longer present or when CPR restarts.
+    source_class: UNMAPPED
+  - field: rhythm_rosc_7_v2 # Rhythm during ROSC episode #7
+    source_class: UNMAPPED
+  - field: pulse_check_meth_rosc_7_v2 # Pulse check method for ROSC episode #7
+    source_class: UNMAPPED
+  - field: vitals_obtained_rosc_7_v2 # Were vital signs obtained after ROSC episode #7?
+    source_class: UNMAPPED
+  - field: time_vitals_rosc_7_v2 # What time were vital signs obtained after ROSC episode #7?
+    source_class: UNMAPPED
+  - field: hr_rosc_7_v2 # Heart rate (beats per minute) during ROSC episode #7
+    source_class: UNMAPPED
+  - field: sbp_rosc_7_v2 # Systolic blood pressure (mmHg) during ROSC episode #7
+    source_class: UNMAPPED
+  - field: dbp_rosc_7_v2 # Diastolic blood pressure (mmHg) during ROSC episode #7
+    source_class: UNMAPPED
+  - field: spo2_rosc_7_v2 # SpO2 (%) during ROSC episode #7
+    source_class: UNMAPPED
+  - field: etco2_rosc_7_v2 # EtCO2 (mmHg) during ROSC episode #7
+    source_class: UNMAPPED
+  - field: start_rosc_8_v2 # Start time of ROSC episode #8
+
+The time when a team member detects a pulse (via palpation/ultrasound/arterial line).
+    source_class: UNMAPPED
+  - field: end_rosc_8_v2 # End time of ROSC episode #8
+
+The time when a pulse is determined to be no longer present or when CPR restarts.
+    source_class: UNMAPPED
+  - field: rhythm_rosc_8_v2 # Rhythm during ROSC episode #8
+    source_class: UNMAPPED
+  - field: pulse_check_meth_rosc_8_v2 # Pulse check method for ROSC episode #8
+    source_class: UNMAPPED
+  - field: vitals_obtained_rosc_8_v2 # Were vital signs obtained after ROSC episode #8?
+    source_class: UNMAPPED
+  - field: time_vitals_rosc_8_v2 # What time were vital signs obtained after ROSC episode #8?
+    source_class: UNMAPPED
+  - field: hr_rosc_8_v2 # Heart rate (beats per minute) during ROSC episode #8
+    source_class: UNMAPPED
+  - field: sbp_rosc_8_v2 # Systolic blood pressure (mmHg) during ROSC episode #8
+    source_class: UNMAPPED
+  - field: dbp_rosc_8_v2 # Diastolic blood pressure (mmHg) during ROSC episode #8
+    source_class: UNMAPPED
+  - field: spo2_rosc_8_v2 # SpO2 (%) during ROSC episode #8
+    source_class: UNMAPPED
+  - field: etco2_rosc_8_v2 # EtCO2 (mmHg) during ROSC episode #8
+    source_class: UNMAPPED
+  - field: start_rosc_9_v2 # Start time of ROSC episode #9
+
+The time when a team member detects a pulse (via palpation/ultrasound/arterial line).
+    source_class: UNMAPPED
+  - field: end_rosc_9_v2 # End time of ROSC episode #9
+
+The time when a pulse is determined to be no longer present or when CPR restarts.
+    source_class: UNMAPPED
+  - field: rhythm_rosc_9_v2 # Rhythm during ROSC episode #9
+    source_class: UNMAPPED
+  - field: pulse_check_meth_rosc_9_v2 # Pulse check method for ROSC episode #9
+    source_class: UNMAPPED
+  - field: vitals_obtained_rosc_9_v2 # Were vital signs obtained after ROSC episode #9?
+    source_class: UNMAPPED
+  - field: time_vitals_rosc_9_v2 # What time were vital signs obtained after ROSC episode #9?
+    source_class: UNMAPPED
+  - field: hr_rosc_9_v2 # Heart rate (beats per minute) during ROSC episode #9
+    source_class: UNMAPPED
+  - field: sbp_rosc_9_v2 # Systolic blood pressure (mmHg) during ROSC episode #9
+    source_class: UNMAPPED
+  - field: dbp_rosc_9_v2 # Diastolic blood pressure (mmHg) during ROSC episode #9
+    source_class: UNMAPPED
+  - field: spo2_rosc_9_v2 # SpO2 (%) during ROSC episode #9
+    source_class: UNMAPPED
+  - field: etco2_rosc_9_v2 # EtCO2 (mmHg) during ROSC episode #9
+    source_class: UNMAPPED
+  - field: start_rosc_10_v2 # Start time of ROSC episode #10
+
+The time when a team member detects a pulse (via palpation/ultrasound/arterial line).
+    source_class: UNMAPPED
+  - field: end_rosc_10_v2 # End time of ROSC episode #10
+
+The time when a pulse is determined to be no longer present or when CPR restarts.
+    source_class: UNMAPPED
+  - field: rhythm_rosc_10_v2 # Rhythm during ROSC episode #10
+    source_class: UNMAPPED
+  - field: pulse_check_meth_rosc_10_v2 # Pulse check method for ROSC episode #10
+    source_class: UNMAPPED
+  - field: vitals_obtained_rosc_10_v2 # Were vital signs obtained after ROSC episode #10?
+    source_class: UNMAPPED
+  - field: time_vitals_rosc_10_v2 # What time were vital signs obtained after ROSC episode #10?
+    source_class: UNMAPPED
+  - field: hr_rosc_10_v2 # Heart rate (beats per minute) during ROSC episode #10
+    source_class: UNMAPPED
+  - field: sbp_rosc_10_v2 # Systolic blood pressure (mmHg) during ROSC episode #10
+    source_class: UNMAPPED
+  - field: dbp_rosc_10_v2 # Diastolic blood pressure (mmHg) during ROSC episode #10
+    source_class: UNMAPPED
+  - field: spo2_rosc_10_v2 # SpO2 (%) during ROSC episode #10
+    source_class: UNMAPPED
+  - field: etco2_rosc_10_v2 # EtCO2 (mmHg) during ROSC episode #10
+    source_class: UNMAPPED
+  - field: start_rosc_11_v2 # Start time of ROSC episode #11
+
+The time when a team member detects a pulse (via palpation/ultrasound/arterial line).
+    source_class: UNMAPPED
+  - field: end_rosc_11_v2 # End time of ROSC episode #11
+
+The time when a pulse is determined to be no longer present or when CPR restarts.
+    source_class: UNMAPPED
+  - field: rhythm_rosc_11_v2 # Rhythm during ROSC episode #11
+    source_class: UNMAPPED
+  - field: pulse_check_meth_rosc_11_v2 # Pulse check method for ROSC episode #11
+    source_class: UNMAPPED
+  - field: vitals_obtained_rosc_11_v2 # Were vital signs obtained after ROSC episode #11?
+    source_class: UNMAPPED
+  - field: time_vitals_rosc_11_v2 # What time were vital signs obtained after ROSC episode #11?
+    source_class: UNMAPPED
+  - field: hr_rosc_11_v2 # Heart rate (beats per minute) during ROSC episode #11
+    source_class: UNMAPPED
+  - field: sbp_rosc_11_v2 # Systolic blood pressure (mmHg) during ROSC episode #11
+    source_class: UNMAPPED
+  - field: dbp_rosc_11_v2 # Diastolic blood pressure (mmHg) during ROSC episode #11
+    source_class: UNMAPPED
+  - field: spo2_rosc_11_v2 # SpO2 (%) during ROSC episode #11
+    source_class: UNMAPPED
+  - field: etco2_rosc_11_v2 # EtCO2 (mmHg) during ROSC episode #11
+    source_class: UNMAPPED
+  - field: start_rosc_12_v2 # Start time of ROSC episode #12
+
+The time when a team member detects a pulse (via palpation/ultrasound/arterial line).
+    source_class: UNMAPPED
+  - field: end_rosc_12_v2 # End time of ROSC episode #12
+
+The time when a pulse is determined to be no longer present or when CPR restarts.
+    source_class: UNMAPPED
+  - field: rhythm_rosc_12_v2 # Rhythm during ROSC episode #12
+    source_class: UNMAPPED
+  - field: pulse_check_meth_rosc_12_v2 # Pulse check method for ROSC episode #12
+    source_class: UNMAPPED
+  - field: vitals_obtained_rosc_12_v2 # Were vital signs obtained after ROSC episode #12?
+    source_class: UNMAPPED
+  - field: time_vitals_rosc_12_v2 # What time were vital signs obtained after ROSC episode #12?
+    source_class: UNMAPPED
+  - field: hr_rosc_12_v2 # Heart rate (beats per minute) during ROSC episode #12
+    source_class: UNMAPPED
+  - field: sbp_rosc_12_v2 # Systolic blood pressure (mmHg) during ROSC episode #12
+    source_class: UNMAPPED
+  - field: dbp_rosc_12_v2 # Diastolic blood pressure (mmHg) during ROSC episode #12
+    source_class: UNMAPPED
+  - field: spo2_rosc_12_v2 # SpO2 (%) during ROSC episode #12
+    source_class: UNMAPPED
+  - field: etco2_rosc_12_v2 # EtCO2 (mmHg) during ROSC episode #12
+    source_class: UNMAPPED
+  - field: start_rosc_13_v2 # Start time of ROSC episode #13
+
+The time when a team member detects a pulse (via palpation/ultrasound/arterial line).
+    source_class: UNMAPPED
+  - field: end_rosc_13_v2 # End time of ROSC episode #13
+
+The time when a pulse is determined to be no longer present or when CPR restarts.
+    source_class: UNMAPPED
+  - field: rhythm_rosc_13_v2 # Rhythm during ROSC episode #13
+    source_class: UNMAPPED
+  - field: pulse_check_meth_rosc_13_v2 # Pulse check method for ROSC episode #13
+    source_class: UNMAPPED
+  - field: vitals_obtained_rosc_13_v2 # Were vital signs obtained after ROSC episode #13?
+    source_class: UNMAPPED
+  - field: time_vitals_rosc_13_v2 # What time were vital signs obtained after ROSC episode #13?
+    source_class: UNMAPPED
+  - field: hr_rosc_13_v2 # Heart rate (beats per minute) during ROSC episode #13
+    source_class: UNMAPPED
+  - field: sbp_rosc_13_v2 # Systolic blood pressure (mmHg) during ROSC episode #13
+    source_class: UNMAPPED
+  - field: dbp_rosc_13_v2 # Diastolic blood pressure (mmHg) during ROSC episode #13
+    source_class: UNMAPPED
+  - field: spo2_rosc_13_v2 # SpO2 (%) during ROSC episode #13
+    source_class: UNMAPPED
+  - field: etco2_rosc_13_v2 # EtCO2 (mmHg) during ROSC episode #13
+    source_class: UNMAPPED
+  - field: start_rosc_14_v2 # Start time of ROSC episode #14
+
+The time when a team member detects a pulse (via palpation/ultrasound/arterial line).
+    source_class: UNMAPPED
+  - field: end_rosc_14_v2 # End time of ROSC episode #14
+
+The time when a pulse is determined to be no longer present or when CPR restarts.
+    source_class: UNMAPPED
+  - field: rhythm_rosc_14_v2 # Rhythm during ROSC episode #14
+    source_class: UNMAPPED
+  - field: pulse_check_meth_rosc_14_v2 # Pulse check method for ROSC episode #14
+    source_class: UNMAPPED
+  - field: vitals_obtained_rosc_14_v2 # Were vital signs obtained after ROSC episode #14?
+    source_class: UNMAPPED
+  - field: time_vitals_rosc_14_v2 # What time were vital signs obtained after ROSC episode #14?
+    source_class: UNMAPPED
+  - field: hr_rosc_14_v2 # Heart rate (beats per minute) during ROSC episode #14
+    source_class: UNMAPPED
+  - field: sbp_rosc_14_v2 # Systolic blood pressure (mmHg) during ROSC episode #14
+    source_class: UNMAPPED
+  - field: dbp_rosc_14_v2 # Diastolic blood pressure (mmHg) during ROSC episode #14
+    source_class: UNMAPPED
+  - field: spo2_rosc_14_v2 # SpO2 (%) during ROSC episode #14
+    source_class: UNMAPPED
+  - field: etco2_rosc_14_v2 # EtCO2 (mmHg) during ROSC episode #14
+    source_class: UNMAPPED
+  - field: start_rosc_15_v2 # Start time of ROSC episode #15
+
+The time when a team member detects a pulse (via palpation/ultrasound/arterial line).
+    source_class: UNMAPPED
+  - field: end_rosc_15_v2 # End time of ROSC episode #15
+
+The time when a pulse is determined to be no longer present or when CPR restarts.
+    source_class: UNMAPPED
+  - field: rhythm_rosc_15_v2 # Rhythm during ROSC episode #15
+    source_class: UNMAPPED
+  - field: pulse_check_meth_rosc_15_v2 # Pulse check method for ROSC episode #15
+    source_class: UNMAPPED
+  - field: vitals_obtained_rosc_15_v2 # Were vital signs obtained after ROSC episode #15?
+    source_class: UNMAPPED
+  - field: time_vitals_rosc_15_v2 # What time were vital signs obtained after ROSC episode #15?
+    source_class: UNMAPPED
+  - field: hr_rosc_15_v2 # Heart rate (beats per minute) during ROSC episode #15
+    source_class: UNMAPPED
+  - field: sbp_rosc_15_v2 # Systolic blood pressure (mmHg) during ROSC episode #15
+    source_class: UNMAPPED
+  - field: dbp_rosc_15_v2 # Diastolic blood pressure (mmHg) during ROSC episode #15
+    source_class: UNMAPPED
+  - field: spo2_rosc_15_v2 # SpO2 (%) during ROSC episode #15
+    source_class: UNMAPPED
+  - field: etco2_rosc_15_v2 # EtCO2 (mmHg) during ROSC episode #15
+    source_class: UNMAPPED
+  - field: start_rosc_16_v2 # Start time of ROSC episode #16
+
+The time when a team member detects a pulse (via palpation/ultrasound/arterial line).
+    source_class: UNMAPPED
+  - field: end_rosc_16_v2 # End time of ROSC episode #16
+
+The time when a pulse is determined to be no longer present or when CPR restarts.
+    source_class: UNMAPPED
+  - field: rhythm_rosc_16_v2 # Rhythm during ROSC episode #16
+    source_class: UNMAPPED
+  - field: pulse_check_meth_rosc_16_v2 # Pulse check method for ROSC episode #16
+    source_class: UNMAPPED
+  - field: vitals_obtained_rosc_16_v2 # Were vital signs obtained after ROSC episode #16?
+    source_class: UNMAPPED
+  - field: time_vitals_rosc_16_v2 # What time were vital signs obtained after ROSC episode #16?
+    source_class: UNMAPPED
+  - field: hr_rosc_16_v2 # Heart rate (beats per minute) during ROSC episode #16
+    source_class: UNMAPPED
+  - field: sbp_rosc_16_v2 # Systolic blood pressure (mmHg) during ROSC episode #16
+    source_class: UNMAPPED
+  - field: dbp_rosc_16_v2 # Diastolic blood pressure (mmHg) during ROSC episode #16
+    source_class: UNMAPPED
+  - field: spo2_rosc_16_v2 # SpO2 (%) during ROSC episode #16
+    source_class: UNMAPPED
+  - field: etco2_rosc_16_v2 # EtCO2 (mmHg) during ROSC episode #16
+    source_class: UNMAPPED
+  - field: start_rosc_17_v2 # Start time of ROSC episode #17
+
+The time when a team member detects a pulse (via palpation/ultrasound/arterial line).
+    source_class: UNMAPPED
+  - field: end_rosc_17_v2 # End time of ROSC episode #17
+
+The time when a pulse is determined to be no longer present or when CPR restarts.
+    source_class: UNMAPPED
+  - field: rhythm_rosc_17_v2 # Rhythm during ROSC episode #17
+    source_class: UNMAPPED
+  - field: pulse_check_meth_rosc_17_v2 # Pulse check method for ROSC episode #17
+    source_class: UNMAPPED
+  - field: vitals_obtained_rosc_17_v2 # Were vital signs obtained after ROSC episode #17?
+    source_class: UNMAPPED
+  - field: time_vitals_rosc_17_v2 # What time were vital signs obtained after ROSC episode #17?
+    source_class: UNMAPPED
+  - field: hr_rosc_17_v2 # Heart rate (beats per minute) during ROSC episode #17
+    source_class: UNMAPPED
+  - field: sbp_rosc_17_v2 # Systolic blood pressure (mmHg) during ROSC episode #17
+    source_class: UNMAPPED
+  - field: dbp_rosc_17_v2 # Diastolic blood pressure (mmHg) during ROSC episode #17
+    source_class: UNMAPPED
+  - field: spo2_rosc_17_v2 # SpO2 (%) during ROSC episode #17
+    source_class: UNMAPPED
+  - field: etco2_rosc_17_v2 # EtCO2 (mmHg) during ROSC episode #17
+    source_class: UNMAPPED
+  - field: start_rosc_18_v2 # Start time of ROSC episode #18
+
+The time when a team member detects a pulse (via palpation/ultrasound/arterial line).
+    source_class: UNMAPPED
+  - field: end_rosc_18_v2 # End time of ROSC episode #18
+
+The time when a pulse is determined to be no longer present or when CPR restarts.
+    source_class: UNMAPPED
+  - field: rhythm_rosc_18_v2 # Rhythm during ROSC episode #18
+    source_class: UNMAPPED
+  - field: pulse_check_meth_rosc_18_v2 # Pulse check method for ROSC episode #18
+    source_class: UNMAPPED
+  - field: vitals_obtained_rosc_18_v2 # Were vital signs obtained after ROSC episode #18?
+    source_class: UNMAPPED
+  - field: time_vitals_rosc_18_v2 # What time were vital signs obtained after ROSC episode #18?
+    source_class: UNMAPPED
+  - field: hr_rosc_18_v2 # Heart rate (beats per minute) during ROSC episode #18
+    source_class: UNMAPPED
+  - field: sbp_rosc_18_v2 # Systolic blood pressure (mmHg) during ROSC episode #18
+    source_class: UNMAPPED
+  - field: dbp_rosc_18_v2 # Diastolic blood pressure (mmHg) during ROSC episode #18
+    source_class: UNMAPPED
+  - field: spo2_rosc_18_v2 # SpO2 (%) during ROSC episode #18
+    source_class: UNMAPPED
+  - field: etco2_rosc_18_v2 # EtCO2 (mmHg) during ROSC episode #18
+    source_class: UNMAPPED
+  - field: start_rosc_19_v2 # Start time of ROSC episode #19
+
+The time when a team member detects a pulse (via palpation/ultrasound/arterial line).
+    source_class: UNMAPPED
+  - field: end_rosc_19_v2 # End time of ROSC episode #19
+
+The time when a pulse is determined to be no longer present or when CPR restarts.
+    source_class: UNMAPPED
+  - field: rhythm_rosc_19_v2 # Rhythm during ROSC episode #19
+    source_class: UNMAPPED
+  - field: pulse_check_meth_rosc_19_v2 # Pulse check method for ROSC episode #19
+    source_class: UNMAPPED
+  - field: vitals_obtained_rosc_19_v2 # Were vital signs obtained after ROSC episode #19?
+    source_class: UNMAPPED
+  - field: time_vitals_rosc_19_v2 # What time were vital signs obtained after ROSC episode #19?
+    source_class: UNMAPPED
+  - field: hr_rosc_19_v2 # Heart rate (beats per minute) during ROSC episode #19
+    source_class: UNMAPPED
+  - field: sbp_rosc_19_v2 # Systolic blood pressure (mmHg) during ROSC episode #19
+    source_class: UNMAPPED
+  - field: dbp_rosc_19_v2 # Diastolic blood pressure (mmHg) during ROSC episode #19
+    source_class: UNMAPPED
+  - field: spo2_rosc_19_v2 # SpO2 (%) during ROSC episode #19
+    source_class: UNMAPPED
+  - field: etco2_rosc_19_v2 # EtCO2 (mmHg) during ROSC episode #19
+    source_class: UNMAPPED
+  - field: start_rosc_20_v2 # Start time of ROSC episode #20
+
+The time when a team member detects a pulse (via palpation/ultrasound/arterial line).
+    source_class: UNMAPPED
+  - field: end_rosc_20_v2 # End time of ROSC episode #20
+
+The time when a pulse is determined to be no longer present or when CPR restarts.
+    source_class: UNMAPPED
+  - field: rhythm_rosc_20_v2 # Rhythm during ROSC episode #20
+    source_class: UNMAPPED
+  - field: pulse_check_meth_rosc_20_v2 # Pulse check method for ROSC episode #20
+    source_class: UNMAPPED
+  - field: vitals_obtained_rosc_20_v2 # Were vital signs obtained after ROSC episode #20?
+    source_class: UNMAPPED
+  - field: time_vitals_rosc_20_v2 # What time were vital signs obtained after ROSC episode #20?
+    source_class: UNMAPPED
+  - field: hr_rosc_20_v2 # Heart rate (beats per minute) during ROSC episode #20
+    source_class: UNMAPPED
+  - field: sbp_rosc_20_v2 # Systolic blood pressure (mmHg) during ROSC episode #20
+    source_class: UNMAPPED
+  - field: dbp_rosc_20_v2 # Diastolic blood pressure (mmHg) during ROSC episode #20
+    source_class: UNMAPPED
+  - field: spo2_rosc_20_v2 # SpO2 (%) during ROSC episode #20
+    source_class: UNMAPPED
+  - field: etco2_rosc_20_v2 # EtCO2 (mmHg) during ROSC episode #20
+    source_class: UNMAPPED
+  - field: rosc_notes_v2 # Use this section to document any relevant details not captured by the fields above regarding ROSC episodes
+
+    source_class: UNMAPPED
+  - field: was_resuscitation_stopped_v2 # Was resuscitation stopped for non-medical reasons?
+
+Non-medical reasons: Prior DNR status confirmed or made DNR
+    source_class: UNMAPPED
+  - field: reason_non_med_stop_cpr_v2 # What was the non-medical reason for stopping resuscitation?
+    source_class: UNMAPPED
+  - field: dead_ed_v2 # Was the patient pronounced dead in the emergency department?
+    source_class: UNMAPPED
+  - field: time_dead_ed_v2 # What time was the patient pronounced dead in the emergency department?
+    source_class: UNMAPPED
+  - field: ultrasound_dead_ed_v2 # Was ultrasound used for confirmation of the patient's death in the emergency department?
+    source_class: UNMAPPED
+  - field: time_vid_stop_pt_leaves_v2 # What time did the patient leave the ED or what time did the video stop (whichever occurred first)?
+    source_class: UNMAPPED
+  - field: team1_v2 # 1. The team leader let the team know what was expected of them through direction and command.
+    source_class: UNMAPPED
+  - field: team2_v2 # 2. The team leader maintained a global perspective.
+    source_class: UNMAPPED
+  - field: team3_v2 # 3. The team communicated effectively.
+    source_class: UNMAPPED
+  - field: team4_v2 # 4. The team worked together to complete tasks in a timely manner.
+    source_class: UNMAPPED
+  - field: team5_v2 # 5. The team acted with composure and control.
+    source_class: UNMAPPED
+  - field: team6_v2 # 6.The team morale was positive.
+    source_class: UNMAPPED
+  - field: team7_v2 # 7. The team adapted to changing situations.
+    source_class: UNMAPPED
+  - field: team8_v2 # 8. The team monitored and reassess the situation.
+    source_class: UNMAPPED
+  - field: team9_v2 # 9. The team anticipated potential actions.
+    source_class: UNMAPPED
+  - field: team10_v2 # 10. The team prioritized tasks.
+    source_class: UNMAPPED
+  - field: team11_v2 # 11. The team followed approved standards/guidelines.
+    source_class: UNMAPPED
+  - field: team12_v2 # 12. Global rating
+    source_class: UNMAPPED

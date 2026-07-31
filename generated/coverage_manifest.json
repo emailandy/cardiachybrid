@@ -1,0 +1,58 @@
+{
+  "dict_version": "e7c08437adcef4a5",
+  "registry_version": 1,
+  "n_variables": 911,
+  "DICT_EXPORT_COLUMNS": 1891,
+  "DICT_IMPORTABLE_COLUMNS": 1889,
+  "SYSTEM_COLUMNS": 2,
+  "SUBMISSION_COLUMNS": 1891,
+  "by_source_class": {},
+  "by_difficulty": {},
+  "suppressed_checkbox_codes": [
+    "mccd_obstacles___1",
+    "mccd_obstacles___2"
+  ],
+  "unmapped": [],
+  "no_anchor_card": [
+    "airway_attempt",
+    "airway_confirmation",
+    "bed_transfer_complete",
+    "cci",
+    "compression_mode_change",
+    "cpr_initiated_ed",
+    "death_pronounced",
+    "defibrillation_shock",
+    "dnr_confirmed",
+    "ecmo_called",
+    "ecmo_cannulation_start",
+    "ecmo_flow_established",
+    "ems_handoff_begin",
+    "first_team_member_enters",
+    "mccd_adjustment",
+    "mccd_application_start",
+    "mccd_compressions_effective",
+    "medication_administration",
+    "pad_application",
+    "pad_reposition",
+    "patient_enters_room",
+    "patient_leaves_room",
+    "pocus_cardiac",
+    "pulse_check",
+    "rhythm_check",
+    "rosc",
+    "rosc_detected",
+    "vascular_access",
+    "vent_delay",
+    "ventilation_delay",
+    "ventilator_placement"
+  ],
+  "branching_overrides_staged": [
+    "sono_window_cci_1",
+    "rhythm_rosc_15_v2"
+  ],
+  "branching_overrides_active": [],
+  "required_fields_not_ai_extractable": [
+    "review_trigger"
+  ],
+  "note": "no_anchor_card is expected to be non-empty until A03b. video_review_complete export behavior unverified."
+}
