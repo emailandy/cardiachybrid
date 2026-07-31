@@ -137,8 +137,7 @@ D01:
   - dictionary/instrument.csv
   depends:
   - D00
-  gate: "parser prints exactly `909 1889`; sanitize('-1') \u2192 '_1'; yesno asserted\
-    \ 1/0"
+  gate: "parser prints exactly `909 1891`; IMPORTABLE_COLUMNS == 1889; sanitize('-1') \u2192 '_1'; yesno asserted 1/0"
 D02:
   title: Branching logic transpiler
   creates:
@@ -164,8 +163,8 @@ D03:
   - mapping/registry.yaml
   depends:
   - D02
-  gate: manifest reports 911 vars / 1891 cols / unmapped []; 3 corrupted-registry
-    cases fail with line numbers
+  gate: "manifest reports 911 variables / 1891 export columns / 1889 importable / unmapped []; 3 corrupted-registry cases fail with line numbers"
+  gate_note: "coverage_manifest.json must carry BOTH n_export_columns (1891) and n_importable_columns (1889) as separate keys. Reporting one number is how this ambiguity got in."
 D04:
   title: Emit typed Python artifacts
   creates:
@@ -178,8 +177,7 @@ D04:
   - mapping/registry.yaml
   depends:
   - D03
-  gate: len(EXPORT_COLUMNS) == 1891; rebuild byte-identical; mypy --strict clean on
-    generated/
+  gate: "len(EXPORT_COLUMNS) == 1891; len(IMPORTABLE_COLUMNS) == 1889; rebuild byte-identical; mypy --strict clean on generated/"
 D14:
   title: "Extraction contract \u2014 the prompt\u2194reducer interface"
   creates:
@@ -308,8 +306,7 @@ D12:
   depends:
   - D05
   - D06
-  gate: "MILESTONE \u2014 every column in EXPORT_COLUMNS emitted (1891); failure message\
-    \ lists missing/phantom, first 25 each"
+  gate: "MILESTONE \u2014 every column in the derived expected set is emitted. Expected set = IMPORTABLE_COLUMNS minus HUMAN_ONLY and ROSTER_JOIN. DERIVE the number from FIELDS; do not hardcode it. Record the actual value in STATE.md when D04 lands."
 D13:
   title: CI and REDCap round-trip
   creates:
@@ -322,5 +319,5 @@ D13:
   depends:
   - D11
   - D12
-  gate: CI green on clean checkout; exportFieldNames set-equals EXPORT_COLUMNS; round-trip
-    byte-equal on scratch
+  gate: "CI green; exportFieldNames set-equals IMPORTABLE_COLUMNS (NOT EXPORT_COLUMNS \u2014 calc fields are absent from that API); round-trip byte-equal on scratch"
+  gate_note: "Whether record_id and video_review_complete appear in exportFieldNames is UNVERIFIED. record_id almost certainly does; form _complete fields may not, since they are auto-generated rather than dictionary-defined. Resolve empirically here \u2014 do not assume."
