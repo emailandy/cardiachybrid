@@ -2,19 +2,7 @@ import csv
 import json
 import hashlib
 from pathlib import Path
-import yaml
-import sys
-
-class StrictLoader(yaml.SafeLoader):
-    def construct_mapping(self, node, deep=False):
-        mapping = []
-        for key_node, value_node in node.value:
-            key = self.construct_object(key_node, deep=deep)
-            if key in [k for k, v in mapping]:
-                raise ValueError(f"Duplicate YAML key {key!r} at line {key_node.start_mark.line + 1}")
-            value = self.construct_object(value_node, deep=deep)
-            mapping.append((key, value))
-        return dict(mapping)
+from codegen.yamlio import load_yaml
 
 def parse_choices(raw: str) -> dict[str, str]:
     if not raw: return {}
@@ -43,11 +31,9 @@ def main():
         reader = csv.DictReader(f)
         dict_rows = list(reader)
         
-    with open("mapping/registry.yaml") as f:
-        registry = yaml.load(f, Loader=StrictLoader)
+    registry = load_yaml(Path("mapping/registry.yaml"))
         
-    with open("mapping/event_types.yaml") as f:
-        event_types_yaml = yaml.load(f, Loader=StrictLoader)
+    event_types_yaml = load_yaml(Path("mapping/event_types.yaml"))
         
     req_cats = ["redcap_feeding", "interval_boundary", "negative_control", "context"]
     all_event_types = set()
@@ -68,6 +54,8 @@ def main():
             "owning_event_types": tuple(info.get("owning_event_types", [])),
             "expected_utd_floor": info.get("expected_utd_floor", 0.0),
             "suppress_codes": tuple(info.get("suppress_codes", [])),
+            "vocab": info.get("vocab"),
+            "vocab_override": info.get("vocab_override"),
             "repeat_group": repeat_group,
             "repeat_index": repeat_index
         }
@@ -116,26 +104,30 @@ def main():
                 for code in choices:
                     export_columns.add(f"{field_name}___{code}")
                     importable_columns.add(f"{field_name}___{code}")
-                
-                # Add to vocab
-                v = {}
-                for code, label in choices.items():
-                    v[to_vocab_label(label)] = int(code)
-                vocab[field_name] = v
             else:
                 export_columns.add(field_name)
                 if ftype != "calc":
                     importable_columns.add(field_name)
-                
-                if ftype in ("radio", "dropdown"):
-                    choices = parse_choices(row["Choices, Calculations, OR Slider Labels"])
-                    v = {}
-                    for code, label in choices.items():
-                        v[to_vocab_label(label)] = int(code)
-                    vocab[field_name] = v
-                
+                    
         # Registry info
         reg = reg_fields.get(field_name, {})
+        
+        vocab_name = reg.get("vocab_override") or reg.get("vocab")
+        
+        # Add to vocab
+        if ftype in ("checkbox", "radio", "dropdown"):
+            choices = parse_choices(row["Choices, Calculations, OR Slider Labels"])
+            v = {}
+            if vocab_name and vocab_name in registry.get("vocabularies", {}):
+                # Use registry vocab verbatim (invert keys/values)
+                reg_vocab = registry["vocabularies"][vocab_name]
+                for key, val in reg_vocab.items():
+                    v[str(key)] = int(val)
+            else:
+                # Fallback to normalizer
+                for code, label in choices.items():
+                    v[to_vocab_label(label)] = int(code)
+            vocab[field_name] = v
         
         
         # Parse choices explicitly

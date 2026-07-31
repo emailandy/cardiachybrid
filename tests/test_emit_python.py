@@ -35,8 +35,7 @@ def test_determinism():
 def test_vocabularies():
     redcap = import_module("generated.redcap_fields")
     vocab = redcap.VOCAB
-    
-    assert len(vocab["reason_cci_1_v2"]) == 20
+    assert len(vocab["reason_cci_1_v2"]) == 21
     assert len(vocab["reason_cci_2_v2"]) == 21
     
     assert vocab["ecmo_called_ed_v2"]["not_available"] == 5

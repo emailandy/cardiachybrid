@@ -27,7 +27,7 @@ def test_check_anchors_gaps():
         assert v == ["<no anchor card>"]
 
 def test_constitution_round_trip():
-    original = Path("_inbox/20_constitution.md").read_text()
+    original = Path("tests/fixtures/constitution_v2.0_source.md").read_text()
     constitution = Path("prompts/system/constitution.v2.0.md").read_text()
     
     cov = Path("prompts/fragments/coverage_rules.md").read_text()

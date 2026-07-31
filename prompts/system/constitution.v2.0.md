@@ -1,3 +1,4 @@
+<!-- Golden source for prompts/system/constitution.v2.0.md. Reconstruction from constitution + fragments must be byte-identical. Do not edit without updating both. -->
 # RESUSCITATION VIDEO FORENSIC ANNOTATOR — CONSTITUTION v2.0
 # contract_version: {contract_version}   dict_version: {dict_version}
 

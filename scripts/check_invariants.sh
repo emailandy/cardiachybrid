@@ -77,17 +77,10 @@ elif ! have_yaml; then
   err "I5 CANNOT RUN — PyYAML absent. Run scripts/bootstrap.sh"
 else
   "$PY" - <<'PY'; rc=$?
-import sys, yaml
-class StrictLoader(yaml.SafeLoader): pass
-def _no_duplicates(loader, node, deep=False):
-    mapping = {}
-    for key_node, value_node in node.value:
-        key = loader.construct_object(key_node, deep=deep)
-        if key in mapping: raise ValueError("Duplicate key")
-        mapping[key] = loader.construct_object(value_node, deep=deep)
-    return mapping
-StrictLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, _no_duplicates)
-reg = yaml.load(open("mapping/registry.yaml"), Loader=StrictLoader)
+import sys
+from pathlib import Path
+from codegen.yamlio import load_yaml
+reg = load_yaml(Path("mapping/registry.yaml"))
 has_default = "coverage_channels" in (reg.get("defaults") or {})
 bad = []
 def walk(o, path=""):

@@ -133,7 +133,8 @@ sections:
      note: "Branching references [onset_ca_occur], absent from this instrument
             (RC-1043)."}
   - {field: other_mccd_used_ems_v2, rule: conditional_text,
-     gate: "mccd_type_ems == other", emit: device_type_other_text,
+     event_type: mccd_application_start, where: {applied_by: ems},
+     gate: "device_type == other", emit: device_type_other_text,
      source_class: CONDITIONAL}
   - {field: mccd_used_in_the_ed_v2, rule: gate_3way,
      event_type: mccd_compressions_effective, vocab_override: yes_no_1_2,
@@ -149,7 +150,8 @@ sections:
      where: {applied_by: ed_team}, emit: device_type, vocab: mccd_type,
      difficulty: LOW}
   - {field: specify_other_mccd_ed_v2, rule: conditional_text,
-     gate: "mccd_type_ed == other", emit: device_type_other_text,
+     event_type: mccd_application_start, where: {applied_by: ed_team},
+     gate: "device_type == other", emit: device_type_other_text,
      source_class: CONDITIONAL}
   - {field: backboard_prior_transf, rule: first_of,
      event_type: mccd_application_start, emit: backboard_preplaced,
@@ -168,6 +170,7 @@ sections:
      note: "GOV-07: codes 1 (obesity) and 2 (cachexia) hard-suppressed to 0.
             Body-habitus assertion is inappropriate for an automated system."}
   - {field: mccd_obstacle_other, rule: conditional_text,
+     event_type: mccd_application_start,
      gate: "obstacles contains other", emit: obstacle_other_text,
      source_class: CONDITIONAL}
   - {field: mccd_ad_yesno_v2, rule: gate_3way, event_type: mccd_adjustment,
@@ -177,8 +180,9 @@ sections:
      event_type: mccd_adjustment, emit: adjustment_categories,
      vocab: mccd_adjust_type, difficulty: MEDIUM}
   - {field: other_mccd_adjust_v2, rule: conditional_text,
-     gate: "adjustment_categories contains other", emit: adjustment_other_text,
-     source_class: CONDITIONAL}
+     event_type: mccd_adjustment,
+     gate: "adjustment_categories contains other",
+     emit: adjustment_other_text, source_class: CONDITIONAL}
   - {field: starttime_mccd_adj_ed_v2, rule: first_of, event_type: mccd_adjustment,
      emit: t_start_s, transform: to_redcap_datetime, difficulty: MEDIUM}
   - {field: endtime_mccd_adj_ed_v2, rule: last_of, event_type: mccd_adjustment,
@@ -227,7 +231,7 @@ sections:
      scope: last_of, event_type: airway_confirmation, emit: methods,
      vocab: airway_confirm_method, difficulty: MEDIUM}
   - {field: ett_intub_confirm_time_v2, rule: nth_distinct_attribute,
-     event_type: airway_confirmation, attribute: method, n: 2, emit: t_start_s,
+     event_type: airway_confirmation, attribute: method, 'n': 2, emit: t_start_s,
      transform: to_redcap_datetime, difficulty: HIGH,
      note: "Completion of the SECOND distinct confirmation method."}
   - {field: ed_airway_notes_v2, rule: notes, section: airway,
@@ -528,12 +532,12 @@ groups:
 # ═══ VOCABULARIES ════════════════════════════════════════════════════════════
 vocabularies:
 
-  yes_no_1_2:     {yes: 1, no: 2}
-  yes_no_utd:     {yes: 1, no: 2, unable_to_determine: 3}
-  yes_no_unknown: {yes: 1, no: 2, unknown: 3}
+  yes_no_1_2:     {'yes': 1, 'no': 2}
+  yes_no_utd:     {'yes': 1, 'no': 2, unable_to_determine: 3}
+  yes_no_unknown: {'yes': 1, 'no': 2, unknown: 3}
 
   ohca_ihca:      {ohca: 1, in_ed_cardiac_arrest: 2}
-  cpr_on_arrival: {yes: 1, no_no_rosc: 2, no_with_rosc: 3, unable_to_determine: 4}
+  cpr_on_arrival: {'yes': 1, no_no_rosc: 2, no_with_rosc: 3, unable_to_determine: 4}
   ems_pads_switched:
     switched_by_ed: 1
     not_switched: 2
@@ -613,8 +617,8 @@ vocabularies:
     arm_adjusted: 7
     other: 8
   mech_to_manual:
-    yes: 1
-    no: 2
+    'yes': 1
+    'no': 2
     unknown: 3
     not_applicable_no_mccd: 4
 
@@ -682,8 +686,8 @@ vocabularies:
     none: 8
 
   # ⚠ Two different "not applicable" codes across the three ECMO gates.
-  ecmo_gate_5: {yes: 1, no: 2, unable_to_determine: 3, not_available: 5}
-  ecmo_gate_4: {yes: 1, no: 2, unable_to_determine: 3, not_available: 4}
+  ecmo_gate_5: {'yes': 1, 'no': 2, unable_to_determine: 3, not_available: 5}
+  ecmo_gate_4: {'yes': 1, 'no': 2, unable_to_determine: 3, not_available: 4}
 
   rosc_rhythm_6:
     sinus: 1
