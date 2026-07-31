@@ -1,4 +1,6 @@
 # Open Questions
+
+## CLINICAL — awaiting clinical lead
 Q-001 CCI truncation policy when >30 
   - options: TBD 
   - default: 30 longest by duration
@@ -41,69 +43,8 @@ Q-006 TEAM autonomy threshold
   - status: OPEN
   - blocks: TBD
 
-## Unresolved TBDs from Task Files
-**Q001 (A01)**: What is the correct value for 'Scope: MODIFY'? (specs.yaml does not determine this).
-**Q002 (A01)**: What is the correct value for 'Scope: READ'? (specs.yaml does not determine this).
-**Q003 (A01)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
-**Q004 (A01)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
-**Q005 (A05)**: What is the correct value for 'Scope: MODIFY'? (specs.yaml does not determine this).
-**Q006 (A05)**: What is the correct value for 'Scope: READ'? (specs.yaml does not determine this).
-**Q007 (A05)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
-**Q008 (A05)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
-**Q009 (A04)**: What is the correct value for 'Scope: MODIFY'? (specs.yaml does not determine this).
-**Q010 (A04)**: What is the correct value for 'Scope: READ'? (specs.yaml does not determine this).
-**Q011 (A04)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
-**Q012 (A04)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
-**Q013 (A03)**: What is the correct value for 'Scope: MODIFY'? (specs.yaml does not determine this).
-**Q014 (A03)**: What is the correct value for 'Scope: READ'? (specs.yaml does not determine this).
-**Q015 (A03)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
-**Q016 (A03)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
-**Q017 (A02)**: What is the correct value for 'Scope: MODIFY'? (specs.yaml does not determine this).
-**Q018 (A02)**: What is the correct value for 'Scope: READ'? (specs.yaml does not determine this).
-**Q019 (A02)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
-**Q020 (A02)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
-**Q021 (A03b)**: What is the correct value for 'Scope: MODIFY'? (specs.yaml does not determine this).
-**Q022 (A03b)**: What is the correct value for 'Scope: READ'? (specs.yaml does not determine this).
-**Q023 (A03b)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
-**Q024 (A03b)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
-**Q025 (A06)**: What is the correct value for 'Scope: MODIFY'? (specs.yaml does not determine this).
-**Q026 (A06)**: What is the correct value for 'Scope: READ'? (specs.yaml does not determine this).
-**Q027 (A06)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
-**Q028 (A06)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
-
-## Unresolved TBDs from D-Task Files
-**Q029 (D07a)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
-**Q030 (D07a)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
-**Q031 (D02)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
-**Q032 (D02)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
-**Q033 (D12)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
-**Q034 (D12)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
-**Q035 (D06)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
-**Q036 (D06)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
-**Q037 (D07)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
-**Q038 (D07)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
-**Q039 (D03)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
-**Q040 (D03)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
-**Q041 (D13)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
-**Q042 (D13)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
-**Q043 (D08)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
-**Q044 (D08)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
-**Q045 (D09)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
-**Q046 (D09)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
-**Q047 (D04)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
-**Q048 (D04)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
-**Q049 (D14)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
-**Q050 (D14)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
-**Q051 (D10)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
-**Q052 (D10)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
-**Q053 (D01)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
-**Q054 (D01)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
-**Q055 (D11)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
-**Q056 (D11)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
-**Q057 (D05)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
-**Q058 (D05)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
-
-## Q-007 — Is the artifact-foundry-prod pip index an institutional control?
+## OPERATIONAL — awaiting human
+Q-007 — Is the artifact-foundry-prod pip index an institutional control?
 Inherited pip config points at
 us-python.pkg.dev/artifact-foundry-prod/ah-3p-staging-python, which lacks
 setuptools and pytest.
@@ -121,3 +62,63 @@ Q-008 Pin exact Gemini model version strings before the first production run.
   - owner: human
   - status: OPEN
   - blocks: production deployment
+
+## RESOLVED
+**T-001 (A01)**: What is the correct value for 'Scope: MODIFY'? (specs.yaml does not determine this).
+**T-002 (A01)**: What is the correct value for 'Scope: READ'? (specs.yaml does not determine this).
+**T-003 (A01)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
+**T-004 (A01)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
+**T-005 (A05)**: What is the correct value for 'Scope: MODIFY'? (specs.yaml does not determine this).
+**T-006 (A05)**: What is the correct value for 'Scope: READ'? (specs.yaml does not determine this).
+**T-007 (A05)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
+**T-008 (A05)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
+**T-009 (A04)**: What is the correct value for 'Scope: MODIFY'? (specs.yaml does not determine this).
+**T-010 (A04)**: What is the correct value for 'Scope: READ'? (specs.yaml does not determine this).
+**T-011 (A04)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
+**T-012 (A04)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
+**T-013 (A03)**: What is the correct value for 'Scope: MODIFY'? (specs.yaml does not determine this).
+**T-014 (A03)**: What is the correct value for 'Scope: READ'? (specs.yaml does not determine this).
+**T-015 (A03)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
+**T-016 (A03)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
+**T-017 (A02)**: What is the correct value for 'Scope: MODIFY'? (specs.yaml does not determine this).
+**T-018 (A02)**: What is the correct value for 'Scope: READ'? (specs.yaml does not determine this).
+**T-019 (A02)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
+**T-020 (A02)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
+**T-021 (A03b)**: What is the correct value for 'Scope: MODIFY'? (specs.yaml does not determine this).
+**T-022 (A03b)**: What is the correct value for 'Scope: READ'? (specs.yaml does not determine this).
+**T-023 (A03b)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
+**T-024 (A03b)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
+**T-025 (A06)**: What is the correct value for 'Scope: MODIFY'? (specs.yaml does not determine this).
+**T-026 (A06)**: What is the correct value for 'Scope: READ'? (specs.yaml does not determine this).
+**T-027 (A06)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
+**T-028 (A06)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
+**T-029 (D07a)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
+**T-030 (D07a)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
+**T-031 (D02)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
+**T-032 (D02)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
+**T-033 (D12)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
+**T-034 (D12)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
+**T-035 (D06)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
+**T-036 (D06)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
+**T-037 (D07)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
+**T-038 (D07)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
+**T-039 (D03)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
+**T-040 (D03)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
+**T-041 (D13)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
+**T-042 (D13)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
+**T-043 (D08)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
+**T-044 (D08)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
+**T-045 (D09)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
+**T-046 (D09)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
+**T-047 (D04)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
+**T-048 (D04)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
+**T-049 (D14)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
+**T-050 (D14)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
+**T-051 (D10)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
+**T-052 (D10)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
+**T-053 (D01)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
+**T-054 (D01)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
+**T-055 (D11)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
+**T-056 (D11)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
+**T-057 (D05)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
+**T-058 (D05)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).

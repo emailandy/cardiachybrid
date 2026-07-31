@@ -29,3 +29,7 @@ PyYAML silently evaluates unquoted 'yes' and 'no' in registry vocabularies as py
 ## 006 — Interval Type Leak in Event Types
 Date: 2026-07-31  Session: A01  Decided by: human
 `interval_type` values (cci, rosc, vent_delay) must not leak into the derived `event_types` used for `redcap_feeding`. Separate `event_types_from_rules` and `event_types_from_hints` derivation lists are introduced, and we assert that interval types never overlap with event types.
+
+## 007 — Fragment extraction and marker format
+Date: 2026-07-31  Session: A02  Decided by: human
+In `prompts/system/constitution.v2.0.md` and `prompts/fragments/*.md`, each fragment file contains the complete markdown block including its `## HEADING` line. The constitution uses `{{fragment:name}}` alone on the line where the block began. Reconstruction is a literal string replacement of `{{fragment:name}}` with the contents of the fragment file, which preserves byte-identical round-trip rendering and makes each fragment self-contained when injected individually into pass templates.

@@ -19,6 +19,15 @@
   asymmetry"` not `"updates"`.
 - Run `bash scripts/check_invariants.sh` before every commit.
 - Update `docs/STATE.md` as your LAST action. Never skip this.
+- Never bulk-close OPEN_QUESTIONS entries. Each Q-NNN closes individually,
+  with the resolution recorded in DECISIONS.md. A question with an
+  implemented interim default is still OPEN — the default is a placeholder,
+  not an answer.
+- A VERIFY or FLAG item in my instructions is a TASK, not a suggestion.
+  Report each one explicitly, in order, with its command output, BEFORE
+  moving to the next item or beginning implementation. If you cannot run
+  one, say so. Silence on a verification is treated as not done.
+- For YAML loading, A01's prompts/registry.py MUST import and use `load_yaml` from `codegen.yamlio`.
 
 ## WHEN YOU ARE UNSURE — the escalation ladder
 1. Re-read the dictionary / registry. It is the authority.

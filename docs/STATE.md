@@ -1,6 +1,6 @@
 Phase: 1 (schema spine)
-Last completed: A01
-Next task: A02
+Last completed: A02
+Next task: A03
 Verified gates: D14 tests (test_coverage.py) checked: Contract reads match registry perfectly, no integer codes exposed to model, malformed gates correctly trapped, and interval types resolved accurately. Boolean parsing from PyYAML in vocabularies corrected to 'yes'/'no'.
 Environment: Python 3.11, TBD the rest
 
@@ -21,6 +21,6 @@ Known-broken/deferred:
 - "Interval types (e.g. cci, rosc, vent_delay) must not leak into event_types. event_types_from_rules and event_types_from_hints are kept distinct in manifest derivation. anchor_cards_required is 39."
 - "NO non-existent files should be skipped in prompt_set_sha(). A partial hash is a lie about reproducibility. Raise on missing files."
 
-Session summary: Implemented A01 to set up the prompts scaffold. Created `VERSIONS.yaml` with required config, per-pass model binding, and anchor paths. Wrote `registry.py` providing strictly controlled access to these paths via the manifest, with robust missing-file failure handling in `prompt_set_sha()` and strict `EXPORT_COLUMNS` checks in `assert_no_field_names()`. Established `_SCHEMA.yaml` for anchor validation. Verified test suite for registry runs clean.
+Session summary: Implemented A02. Placed `_inbox/20_constitution.md` into `prompts/system/constitution.v2.0.md`, extracting `coverage_rules.md`, `timestamp_calibration.md`, and `failure_modes.md` into `prompts/fragments/` and replacing them with `{{fragment:name}}` markers. Registered the four files in `prompts/VERSIONS.yaml`. Verified byte-identical round-trip reconstruction, strict `assert_no_field_names` compliance on all four files, and deterministic SHA verification.
 
 <!-- Updated by the agent as the LAST action of every session. If stale, the next session will redo or skip work. -->
