@@ -102,3 +102,14 @@ Q-006 TEAM autonomy threshold
 **Q056 (D11)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
 **Q057 (D05)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
 **Q058 (D05)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
+
+## Q-007 — Is the artifact-foundry-prod pip index an institutional control?
+Inherited pip config points at
+us-python.pkg.dev/artifact-foundry-prod/ah-3p-staging-python, which lacks
+setuptools and pytest.
+(a) Deliberate supply-chain control → REVERT the venv override; request
+    upstream PyPI passthrough or explicit mirroring from the platform team.
+(b) Stale/unrelated config → the venv-scoped override is the permanent fix.
+Interim: venv-scoped override to pypi.org, repo-local, no global change.
+Owner: human / platform team.  Status: OPEN.  Blocks: nothing (workaround
+in place), but must be resolved before any production deployment.

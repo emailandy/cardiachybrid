@@ -9,11 +9,13 @@ Known-broken/deferred:
 - "dictionary/DDL_SPEC.md not yet staged — blocks D07 only. Human to paste from _inbox/40_ddl_spec.md."
 - "scripts/make_task.py UNVERIFIED — --dry-run produced no output, which does not distinguish 'works' from 'stub no-op'. Off the critical path; task bodies come from _inbox/. Verify before first real use."
 - "docs/tasks/A02.md is only 7 lines. Before running A02, confirm its Task body names _inbox/20_constitution.md as the source. If it does not, the agent will write a constitution from scratch instead of placing the staged one."
+- "pip index override in place (Q-007). Venv-scoped, repo-local. Must be resolved before production deployment."
 
 Do not repeat:
 - "Do not create prompts/ content before D14 and A01."
 - "Do not run scripts/bootstrap.sh again unless the venv is deleted."
 - "Stub modules MUST have a `if __name__ == '__main__': main()` guard that raises. A stub without one exits 0 and is indistinguishable from a working module — this defeats every build gate that depends on 'fails at the expected step'."
+- "bootstrap.sh must FAIL on incomplete install, never degrade. Fourth instance of the silent-degradation pattern — check every new script for it before committing."
 
 Session summary: Fixed silent no-op stub defect by adding __main__ guards. D00 acceptance gate is now genuinely satisfied.
 
