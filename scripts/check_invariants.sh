@@ -115,16 +115,18 @@ else
 fi
 
 # ── codegen determinism ─────────────────────────────────────────────────────
-if [[ -f generated/redcap_fields.py && -f codegen/redcap_dict_to_code.py ]]; then
-  cp generated/redcap_fields.py /tmp/_inv_before.py
-  "$PY" -m codegen.redcap_dict_to_code --quiet >/dev/null 2>&1 || true
-  if diff -q /tmp/_inv_before.py generated/redcap_fields.py >/dev/null; then
-    green "codegen redcap_fields deterministic"
+if [[ -f generated/redcap_fields.py && -f generated/models.py && -f codegen/emit_python.py ]]; then
+  cp generated/redcap_fields.py /tmp/_inv_before_fields.py
+  cp generated/models.py /tmp/_inv_before_models.py
+  "$PY" -m codegen.emit_python >/dev/null 2>&1 || true
+  if diff -q /tmp/_inv_before_fields.py generated/redcap_fields.py >/dev/null && \
+     diff -q /tmp/_inv_before_models.py generated/models.py >/dev/null; then
+    green "codegen emit_python deterministic"
   else
-    red "codegen redcap_fields NOT deterministic — generated/ differs on rebuild"
+    red "codegen emit_python NOT deterministic — generated/ differs on rebuild"
   fi
 else
-  skip "determinism check requires D01+D04"
+  skip "determinism check requires D04"
 fi
 
 if [[ -f generated/branching_compiled.py && -f codegen/emit_branching.py ]]; then

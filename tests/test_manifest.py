@@ -29,3 +29,38 @@ def test_ecmo_gates_use_different_not_available_codes():
     v = load_registry()["vocabularies"]
     assert v["ecmo_gate_5"]["not_available"] == 5
     assert v["ecmo_gate_4"]["not_available"] == 4
+
+def load_event_types():
+    from codegen.emit_manifest import StrictLoader
+    import yaml
+    with open("mapping/event_types.yaml") as f:
+        return yaml.load(f, Loader=StrictLoader)
+
+def iter_all_rules(registry):
+    for sec in registry.get("sections", []):
+        yield from sec.get("fields", [])
+    yield from registry.get("never_ai", [])
+    for g in registry.get("groups", []):
+        yield g
+        yield from g.get("fields", [])
+
+def test_event_types_redcap_feeding_matches_registry():
+    """redcap_feeding is DERIVED, not authored. Any registry rule naming a
+    new event_type must appear here or the closed vocabulary silently
+    excludes it."""
+    derived = set()
+    for rule in iter_all_rules(load_registry()):
+        if et := rule.get("event_type") or rule.get("interval_type"):
+            derived.add(et)
+        derived.update(rule.get("owning_event_types", []))
+    declared = set(load_event_types()["redcap_feeding"])
+    assert declared == derived, (
+        f"missing from event_types.yaml: {sorted(derived - declared)}\n"
+        f"declared but unreferenced: {sorted(declared - derived)}")
+
+def test_anchor_cards_required_count():
+    et = load_event_types()
+    required = set().union(et["redcap_feeding"], et["interval_boundary"],
+                           et["negative_control"], et["context"])
+    assert len(required) == 42
+    assert not (required & set(et["meta"]))   # meta needs no card

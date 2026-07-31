@@ -1,1 +1,62 @@
-# TODO: Populated by D14 from the union of registry owning_event_types.
+version: 1
+# REDCAP_FEEDING — referenced by >=1 registry rule. Anchor card REQUIRED.
+redcap_feeding:
+  - airway_attempt
+  - airway_confirmation
+  - bed_transfer_complete
+  - cci
+  - compression_interruption
+  - compression_mode_change
+  - cpr_initiated_ed
+  - death_pronounced
+  - defibrillation_shock
+  - dnr_confirmed
+  - ecmo_called
+  - ecmo_cannulation_start
+  - ecmo_flow_established
+  - ems_handoff_begin
+  - first_team_member_enters
+  - mccd_adjustment
+  - mccd_application_start
+  - mccd_compressions_effective
+  - mccd_removed
+  - medication_administration
+  - pad_application
+  - pad_reposition
+  - patient_enters_room
+  - patient_leaves_room
+  - pocus_cardiac
+  - pocus_other
+  - pulse_check
+  - rhythm_check
+  - rosc
+  - rosc_detected
+  - vascular_access
+  - vent_delay
+  - ventilation_delay
+  - ventilator_placement
+  - vitals_reading
+
+# INTERVAL_BOUNDARY — closes an interval whose START is redcap_feeding.
+# Anchor card REQUIRED (the reducer pairs them to build t_end_s).
+interval_boundary:
+  - rosc_lost
+  - compression_active_start
+  - ems_handoff_end
+
+# NEGATIVE_CONTROL — exists to PREVENT a false positive. Card REQUIRED.
+negative_control:
+  - defib_charge_aborted
+
+# CONTEXT — may appear standalone OR as a cci reason code. Card REQUIRED
+# (the model needs to know when to emit the event vs. only the reason code).
+context:
+  - stretcher_transfer
+  - log_roll
+  - tee_placement
+
+# META — pipeline signalling. NO anchor card; excluded from
+# no_anchor_card[] and from the D14 extraction contract.
+meta:
+  - sensor_dispute
+  - other_notable_event

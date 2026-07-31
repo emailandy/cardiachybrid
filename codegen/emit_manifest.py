@@ -232,27 +232,23 @@ def main():
             print(e)
         sys.exit(1)
         
-    # extract other manifest fields
-    event_types = set()
-    for sec in registry.get("sections", []):
-        for e in sec.get("fields", []):
-            if e.get("source_class", "AI_DIRECT") in ["AI_DIRECT", "AI_DERIVED"]:
-                ev = e.get("event_type")
-                if ev: event_types.add(ev)
-                
-    for e in registry.get("never_ai", []):
-        if e.get("source_class", "AI_DIRECT") in ["AI_DIRECT", "AI_DERIVED"]:
-            ev = e.get("event_type")
-            if ev: event_types.add(ev)
-                
-    for g in registry.get("groups", []):
-        ev = g.get("event_type") or g.get("interval_type")
-        if ev: event_types.add(ev)
-        
+    event_types_path = Path("mapping/event_types.yaml")
+    anchor_cards_required = 0
     no_anchor_card = []
-    for ev in sorted(list(event_types)):
-        if not Path(f"prompts/anchors/{ev}.yaml").exists():
-            no_anchor_card.append(ev)
+    if event_types_path.exists():
+        with open(event_types_path) as f:
+            et = yaml.load(f, Loader=StrictLoader)
+            
+        req_cats = ["redcap_feeding", "interval_boundary", "negative_control", "context"]
+        required_types = set()
+        for cat in req_cats:
+            required_types.update(et.get(cat, []))
+            
+        anchor_cards_required = len(required_types)
+        
+        for ev in sorted(list(required_types)):
+            if not Path(f"prompts/anchors/{ev}.yaml").exists():
+                no_anchor_card.append(ev)
             
     req_not_ai = []
     for sec in registry.get("sections", []):
@@ -301,6 +297,7 @@ def main():
         "by_difficulty": {},
         "suppressed_checkbox_codes": sorted(suppressed_checkbox_codes),
         "unmapped": sorted(unmapped),
+        "anchor_cards_required": anchor_cards_required,
         "no_anchor_card": no_anchor_card,
         "branching_overrides_staged": list(getattr(known_bugs, "BRANCHING_OVERRIDES", {}).keys()),
         "branching_overrides_active": [],
