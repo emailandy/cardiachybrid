@@ -13,7 +13,8 @@ Known-broken/deferred:
 Do not repeat:
 - "Do not create prompts/ content before D14 and A01."
 - "Do not run scripts/bootstrap.sh again unless the venv is deleted."
+- "Stub modules MUST have a `if __name__ == '__main__': main()` guard that raises. A stub without one exits 0 and is indistinguishable from a working module — this defeats every build gate that depends on 'fails at the expected step'."
 
-Session summary: verify scaffold, add build.sh, known_bugs, README
+Session summary: Fixed silent no-op stub defect by adding __main__ guards. D00 acceptance gate is now genuinely satisfied.
 
 <!-- Updated by the agent as the LAST action of every session. If stale, the next session will redo or skip work. -->

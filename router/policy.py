@@ -1,4 +1,9 @@
-"""See docs/tasks/D09.md"""
+"""Stub module. Not implemented — see docs/tasks/D09.md"""
+from __future__ import annotations
 
-def stub():
-    raise NotImplementedError("See docs/tasks/D09.md")
+def main() -> None:
+    raise NotImplementedError(
+        "router.policy is a stub. See docs/tasks/D09.md")
+
+if __name__ == "__main__":
+    main()

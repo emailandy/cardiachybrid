@@ -1,4 +1,9 @@
-"""See docs/tasks/D11.md"""
+"""Stub module. Not implemented — see docs/tasks/D11.md"""
+from __future__ import annotations
 
-def stub():
-    raise NotImplementedError("See docs/tasks/D11.md")
+def main() -> None:
+    raise NotImplementedError(
+        "redcap.assemble is a stub. See docs/tasks/D11.md")
+
+if __name__ == "__main__":
+    main()

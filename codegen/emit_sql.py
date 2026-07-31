@@ -1,4 +1,9 @@
-"""See docs/tasks/D07.md"""
+"""Stub module. Not implemented — see docs/tasks/D07.md"""
+from __future__ import annotations
 
-def stub():
-    raise NotImplementedError("See docs/tasks/D07.md")
+def main() -> None:
+    raise NotImplementedError(
+        "codegen.emit_sql is a stub. See docs/tasks/D07.md")
+
+if __name__ == "__main__":
+    main()

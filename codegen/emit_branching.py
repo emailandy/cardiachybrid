@@ -1,4 +1,9 @@
-"""See docs/tasks/D02.md"""
+"""Stub module. Not implemented — see docs/tasks/D02.md"""
+from __future__ import annotations
 
-def stub():
-    raise NotImplementedError("See docs/tasks/D02.md")
+def main() -> None:
+    raise NotImplementedError(
+        "codegen.emit_branching is a stub. See docs/tasks/D02.md")
+
+if __name__ == "__main__":
+    main()

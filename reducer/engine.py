@@ -1,4 +1,9 @@
-"""See docs/tasks/D05.md"""
+"""Stub module. Not implemented — see docs/tasks/D05.md"""
+from __future__ import annotations
 
-def stub():
-    raise NotImplementedError("See docs/tasks/D05.md")
+def main() -> None:
+    raise NotImplementedError(
+        "reducer.engine is a stub. See docs/tasks/D05.md")
+
+if __name__ == "__main__":
+    main()
