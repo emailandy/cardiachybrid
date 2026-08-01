@@ -1,0 +1,52 @@
+# Anchor card for mccd_removed
+# Audio-primary removal marker; applies ONLY to removal AFTER effective compressions (not abandonment)
+
+event_type: mccd_removed
+scope: instant
+boundary_mode: self
+
+defining_instants:
+  start: "The exact timestamp where the mechanical CPR device is unlatched and removed from the patient AFTER delivering effective compressions (the device did its job, now coming off after ROSC or transition)."
+
+audio_device:
+  - "AUDIO-PRIMARY: Rhythmic mechanical signature ceases; metallic unlatching clicks and Velcro strap removal sounds."
+  - "# CLINICAL_REVIEW: CR-004 (mechanical CPR device make/model) and CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "take the LUCAS off"
+    - "we have ROSC, remove the device"
+    - "unlatch the upper frame"
+    - "clear the mechanical CPR"
+  confirm:
+    - "LUCAS is off"
+    - "device removed"
+    - "frame is clear"
+    - "backboard out"
+  negation:
+    - "it won't fit, take it off"
+    - "can't get it latched, forget it"
+    - "abandon the LUCAS"
+    - "we'll take the LUCAS off once he's stable"
+    - "when cardiology ready we'll remove it"
+    - "EMS removed their device in the field"
+    - "LUCAS was taken off ten minutes ago"
+
+visual:
+  - "Provider unlatching mechanical CPR upper frame or cutting band and lifting device away from patient torso."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes: {}
+
+disambiguation:
+  - "AUDIO-PRIMARY: Mechanical signatures take precedence over visual occlusion. See mccd_adjustment (Card 2) for the 8-way mechanical CPR adjustment taxonomy."
+  - "If deployment is attempted and given up BEFORE effective compressions are achieved, do NOT emit mccd_removed. That is an abandoned deployment (ed_mccd_outcome = abandoned) where endtime_mccd_app_ed_v2 takes the abandonment timestamp."
+  - "Emit mccd_removed ONLY for removal AFTER effective compressions (device did its job, now coming off)."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Do NOT emit for abandonment of a failed deployment attempt before effective compressions are achieved."
+  - "2. Emit ONLY when a device that previously delivered effective compressions is unlatched and removed."
+
+abstain_if:
+  - "Audio is illegible AND removal maneuver occurs completely off-camera."

@@ -20,13 +20,10 @@ def test_assert_no_field_names():
     assert_no_field_names("This is a safe prompt with no field names", "test")
     
 def test_check_anchors_gaps():
-    # Only check types that do not have cards on disk yet
-    from prompts.registry import check_anchors, manifest
-    anchors_dir = Path(manifest().get("anchors_dir", "prompts/anchors"))
-    all_gaps = check_anchors(fail_on_gap=False)
-    for t, v in all_gaps.items():
-        if not (anchors_dir / f"{t}.yaml").exists():
-            assert v == {"_card": ["<no anchor card>"]}
+    # Verify zero gaps across all 39 required anchor cards
+    from prompts.registry import check_anchors
+    all_gaps = check_anchors(fail_on_gap=True)
+    assert all_gaps == {}, f"check_anchors reported gaps across 39 anchor cards: {all_gaps}"
 
 def test_check_anchors_flat_list_fails(tmp_path, monkeypatch):
     card = """

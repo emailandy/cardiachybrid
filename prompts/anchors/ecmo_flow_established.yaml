@@ -1,0 +1,51 @@
+# Anchor card for ecmo_flow_established
+# Procedural ECMO milestone 3; extracorporeal blood flow initiated through cannulae
+
+event_type: ecmo_flow_established
+scope: instant
+boundary_mode: self
+
+defining_instants:
+  start: "The exact timestamp where extracorporeal blood flow through the ECMO cannulae is visibly initiated or verbalized as established by the team."
+
+audio_device:
+  - "ECMO pump motor whirring sound; verbal callout of pump rpm or blood flow rate in liters per minute."
+  - "# CLINICAL_REVIEW: CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "ready to turn on pump"
+    - "open clamps"
+    - "initiating flow"
+    - "start the pump"
+  confirm:
+    - "ECMO flow established"
+    - "on pump"
+    - "we have three liters of flow"
+    - "circuit active"
+    - "good dark to red transition"
+  negation:
+    - "air in line, hold flow"
+    - "clamp circuit"
+    - "not pumping yet"
+    - "we'll initiate flow once primed"
+    - "when the cannulae are secured we start flow"
+    - "flow was established at referring hospital"
+    - "on pump since 14:00"
+
+visual:
+  - "Dark venous blood entering ECMO circuit and bright red oxygenated blood returning through arterial cannula; pump console displaying active flow rate."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes: {}
+
+disambiguation:
+  - "Distinguish establishment of extracorporeal blood flow from earlier cannulation start (ecmo_cannulation_start) or circuit priming."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Defining instant is when extracorporeal blood circulation through the cannulae begins."
+  - "2. Never emit during cannulation insertion prior to pump flow initiation."
+
+abstain_if:
+  - "ECMO pump console and tubing are off-camera AND audio does not confirm when blood flow was established."

@@ -1,0 +1,50 @@
+# Anchor card for ecmo_called
+# Speech-primary ECMO activation marker; confirms ECMO team was called/activated
+
+event_type: ecmo_called
+scope: instant
+boundary_mode: self
+
+defining_instants:
+  start: "The exact timestamp where a team member confirms that the ECMO (extracorporeal membrane oxygenation) team has been activated or called."
+
+audio_device:
+  - "Verbal confirmation of ECMO team activation or paging."
+  - "# CLINICAL_REVIEW: CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "should we call ECMO"
+    - "is ECMO an option"
+    - "check ECPR criteria"
+    - "get the ECMO attending"
+  confirm:
+    - "ECMO team is called"
+    - "cannulation team activated"
+    - "ECMO is on the way"
+    - "perfusionist paged"
+  negation:
+    - "don't call ECMO"
+    - "not an ECMO candidate"
+    - "we'll call ECMO if he doesn't get ROSC"
+    - "if he arrests again we call ECMO"
+    - "ECMO was called ten minutes ago"
+    - "they activated ECMO from the field"
+
+visual:
+  - "Team leader or unit clerk using phone/pager to activate the ECMO team."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes: {}
+
+disambiguation:
+  - "Distinguish formal confirmation of ECMO team activation from theoretical discussion of ECPR criteria."
+  - "Note that ecmo_called uses code 5 for 'not available at site' in REDCap while ecmo_cannulation_start and ecmo_flow_established use code 4. While this card uses symbolic values, humans reviewing should note the dictionary code distinction."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Defining instant is verbal confirmation that the ECMO team has been called/activated."
+  - "2. Do not emit for speculative discussion of whether the patient is an ECMO candidate."
+
+abstain_if:
+  - "Audio is illegible AND no visual confirmation of ECMO team activation is observable."

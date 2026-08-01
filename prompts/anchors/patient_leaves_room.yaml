@@ -1,0 +1,51 @@
+# Anchor card for patient_leaves_room
+# Point-in-time departure marker; rear wheels cross threshold exiting room
+
+event_type: patient_leaves_room
+scope: instant
+boundary_mode: self
+
+defining_instants:
+  start: "The exact video frame where the rear wheels of the patient's bed or stretcher cross the doorway threshold exiting the resuscitation bay."
+
+audio_device:
+  - "Stretcher rolling out; farewell banter or transport handoff chatter."
+  - "# CLINICAL_REVIEW: CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "ready for CT"
+    - "transport is here"
+    - "let's roll to ICU"
+    - "open the doors"
+  confirm:
+    - "heading to scan"
+    - "en route to ICU"
+    - "clearing the bay"
+    - "patient is out"
+  negation:
+    - "wait, monitor isn't travelling"
+    - "hold transport"
+    - "stay in the bay"
+    - "not travelling yet"
+    - "we'll take him to scan after the chest tube"
+    - "when ICU calls ready we'll transport"
+    - "he left the bay at 15:00"
+    - "patient went to CT twenty minutes ago"
+
+visual:
+  - "Patient bed or stretcher being pushed out through the doorway of the resuscitation bay."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes: {}
+
+disambiguation:
+  - "Distinguish patient departure from staff or equipment carts leaving."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Defining instant is the moment the rear wheels clear the doorway threshold exiting the room."
+  - "2. If recording ends before patient leaves the room, abstain — do not estimate departure time."
+
+abstain_if:
+  - "Recording ends while patient is still in the room OR doorway threshold exit is out of frame."

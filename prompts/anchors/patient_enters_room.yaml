@@ -1,0 +1,49 @@
+# Anchor card for patient_enters_room
+# Point-in-time arrival marker; unobservable if video_start_late
+
+event_type: patient_enters_room
+scope: instant
+boundary_mode: self
+
+defining_instants:
+  start: "The exact video frame where any part of the patient's stretcher or bed first crosses the threshold into the resuscitation bay."
+
+audio_device:
+  - "Stretcher wheels rolling onto bay floor; monitor alarms or EMS radio chatter entering the room."
+  - "# CLINICAL_REVIEW: CR-005 (microphone configuration; confirm if threshold entrance sounds are audible over ambient hallway noise)"
+
+speech:
+  precursor:
+    - "they're coming down the hall"
+    - "patient arriving"
+    - "EMS is outside"
+  confirm:
+    - "patient is in the room"
+    - "let's get them transferred"
+    - "over to the bed"
+  negation:
+    - "still in the hallway"
+    - "not here yet"
+    - "waiting on EMS"
+    - "when he gets here we'll start compressions"
+    - "if he arrives in arrest we go straight to Bay 1"
+    - "they brought him in ten minutes ago"
+    - "he entered at 14:15"
+
+visual:
+  - "Patient stretcher or bed physically crossing the doorway threshold into the room."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration; confirm doorway visibility from overhead bay cameras)"
+
+required_attributes: {}
+
+disambiguation:
+  - "Distinguish patient stretcher entering from staff or equipment carts entering."
+  - "If the recording begins after the patient is already in the bay (see video_start_late), this event is unobservable — abstain, do not infer from later state."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. If the video recording starts after the patient is already in the room, emit null/abstain with abstain_reason: 'video_start_late'. Never infer an arrival time."
+  - "2. Defining instant is threshold crossing, not when the stretcher stops or brakes are locked."
+
+abstain_if:
+  - "Video recording starts after the patient is already inside the resuscitation bay (video_start_late) OR doorway is completely out of frame and no speech confirms arrival time."

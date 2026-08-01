@@ -1,0 +1,51 @@
+# Anchor card for log_roll
+# Procedural patient positioning marker; coordinated full-body lateral turn
+
+event_type: log_roll
+scope: event
+boundary_mode: self
+
+defining_instants:
+  start: "The exact video frame where the resuscitation team begins physically turning the patient onto their side to inspect the posterior torso or remove a backboard."
+  end: "The exact video frame where the patient is returned to supine position and rolling motion stops."
+
+audio_device:
+  - "Verbal countdown for coordinated turn ('one, two, three, roll'); callouts of back inspection."
+  - "# CLINICAL_REVIEW: CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "ready to log roll"
+    - "turn him on three"
+    - "check his back"
+    - "remove the backboard"
+  confirm:
+    - "rolling"
+    - "back is clear"
+    - "board is out"
+    - "step-off on lumbar spine"
+  negation:
+    - "don't roll him yet"
+    - "spine not cleared"
+    - "leave him flat"
+    - "we'll log roll after the chest tube"
+    - "if CT is negative we'll roll him"
+    - "we rolled him earlier"
+    - "back was checked in trauma bay"
+
+visual:
+  - "Three or more team members coordinating to rotate the patient's entire body as a single unit onto their side."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes: {}
+
+disambiguation:
+  - "Distinguish a coordinated log roll (full-body rotation for posterior exam or backboard removal) from minor patient repositioning or bedding adjustments."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Count only coordinated full-body lateral turns."
+  - "2. Do not emit for minor adjustments of limbs or head."
+
+abstain_if:
+  - "Patient bed is completely obscured by staff during the maneuver AND no verbal countdown or back exam findings are heard."

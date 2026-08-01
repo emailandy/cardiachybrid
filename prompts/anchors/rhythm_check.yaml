@@ -1,0 +1,63 @@
+# Anchor card for rhythm_check
+# Procedural rhythm evaluation marker; earlier of legible monitor trace with hands off chest OR rhythm verbalized
+
+event_type: rhythm_check
+scope: instant
+boundary_mode: self
+
+defining_instants:
+  start: "The exact timestamp of the earlier of: (1) the monitor trace first legible with provider hands off the chest, OR (2) the cardiac rhythm verbalized by the team."
+
+audio_device:
+  - "Verbatim verbal declaration of underlying cardiac rhythm during compression pause."
+  - "# CLINICAL_REVIEW: CR-002 (resuscitation monitor make/model) and CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "clear for rhythm"
+    - "what's the rhythm"
+    - "look at the monitor"
+    - "checking rhythm"
+  confirm:
+    - "that's VF"
+    - "asystole"
+    - "PEA"
+    - "organized rhythm"
+    - "sinus tach"
+    - "looks like VT"
+  negation:
+    - "don't stop compressions"
+    - "still compressing"
+    - "artifact on the monitor"
+    - "we'll check rhythm at two minutes"
+    - "if he's in VF we shock"
+    - "he was in VF on arrival"
+    - "rhythm check was asystole earlier"
+
+visual:
+  - "Patient monitor screen displaying clean ECG rhythm trace without CPR artifact while provider hands are off chest."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration) and CR-002 (resuscitation monitor make/model)"
+
+required_attributes:
+  pads_source:
+    kind: enum
+    values: ['ems_pads_switched_to_ed_for_rhythm', 'ems_pads_used_for_rhythm', 'no_ems_pads_ed_pads_used', 'unable_to_determine']
+    how_to_determine: "Determine which defibrillation pads were connected to the monitor during this rhythm check. ems_pads_switched_to_ed_for_rhythm = patient arrived with EMS pads, but cable was switched/replaced with ED pads; ems_pads_used_for_rhythm = EMS pads remained connected; no_ems_pads_ed_pads_used = no EMS pads present on arrival, ED pads applied and used; unable_to_determine = cabling and pads obscured (HIGH difficulty, 0.25 UTD floor)."
+    abstain_if: "Monitor cables or pad connectors are obscured and no speech clarifies whether EMS or ED pads were used (HIGH difficulty, 0.25 UTD floor)."
+  rhythm:
+    kind: enum
+    values: ['vf', 'pulseless_vt', 'pea', 'asystole', 'rosc', 'aed_nonshockable', 'aed_shockable', 'aicd_shockable', 'aicd_nonshockable', 'unable_to_determine']
+    how_to_determine: "Identify the underlying cardiac rhythm observed or verbalized during the rhythm check. vf = ventricular fibrillation; pulseless_vt = pulseless ventricular tachycardia; pea = pulseless electrical activity; asystole = flatline; rosc = return of spontaneous circulation; aed_nonshockable / aed_shockable / aicd_shockable / aicd_nonshockable = AED or AICD device rhythms; unable_to_determine = obscured screen without verbalization."
+    abstain_if: "Monitor screen OCR is unreadable AND no verbal rhythm declaration is captured on audio."
+
+disambiguation:
+  - "Defining instant is the earlier of monitor trace legibility with hands off chest OR rhythm verbalized."
+  - "pads_source is a HIGH difficulty attribute with an expected unable-to-determine floor of 0.25; emit unable_to_determine when cables are obscured."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Defining instant is earlier of hands-off legible trace OR spoken rhythm diagnosis."
+  - "2. If pads_source cannot be reliably observed from visual cabling or speech, emit unable_to_determine (never guess)."
+
+abstain_if:
+  - "Monitor screen is completely obscured AND no team member verbalizes the rhythm."

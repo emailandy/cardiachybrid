@@ -1,0 +1,54 @@
+# Anchor card for pulse_check
+# Procedural pulse evaluation marker; manual palpation during compression pause
+
+event_type: pulse_check
+scope: instant
+boundary_mode: self
+
+defining_instants:
+  start: "The exact video frame where a provider places fingers on a pulse site (carotid, femoral, radial, brachial) while chest compressions are stopped."
+
+audio_device:
+  - "Verbal confirmation or denial of pulse presence during compression pause."
+  - "# CLINICAL_REVIEW: CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "check a pulse"
+    - "feel for a pulse"
+    - "someone on femoral"
+    - "who has carotid"
+  confirm:
+    - "checking carotid"
+    - "femoral pulse present"
+    - "no pulse felt"
+    - "I don't feel anything"
+    - "we have a pulse"
+  negation:
+    - "skip the pulse check"
+    - "don't check pulse, keep compressing"
+    - "we'll check pulse next round"
+    - "if we get ROSC check femoral"
+    - "pulse was checked ten minutes ago"
+    - "they felt a carotid pulse in the field"
+
+visual:
+  - "Provider placing two or three fingers on anterior neck lateral to trachea (carotid), inguinal crease (femoral), volar wrist thumb side (radial), or medial upper arm (brachial)."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes:
+  locations:
+    kind: multi_enum
+    values: ['carotid', 'femoral', 'radial', 'brachial']
+    how_to_determine: "Identify every anatomical site where clinical staff palpate for a pulse. Multi-select. carotid = anterior neck lateral to trachea; femoral = inguinal crease; radial = volar wrist, thumb side; brachial = medial upper arm."
+
+disambiguation:
+  - "pulse_check applies ONLY to manual palpation with fingers. Vascular Doppler examination is us_pulse (an attribute of compression_interruption), not pulse_check."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Count only manual pulse palpation during a compression pause."
+  - "2. Multi-select all locations palpated simultaneously."
+
+abstain_if:
+  - "Pulse palpation site is completely obscured AND no verbal mention of pulse check site is audible."

@@ -1,0 +1,51 @@
+# Anchor card for stretcher_transfer
+# Context category transfer marker; standalone event always emitted (reducer handles CCI reason mapping)
+
+event_type: stretcher_transfer
+scope: instant
+boundary_mode: self
+
+defining_instants:
+  start: "The exact timestamp where the patient is physically transferred between the ED resuscitation bed and another stretcher, CT table, or transport gurney during the resuscitation attempt."
+
+audio_device:
+  - "Verbal countdown for patient movement ('one, two, three, slide', 'moving to CT table')."
+  - "# CLINICAL_REVIEW: CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "get ready to transfer"
+    - "grab the slide board"
+    - "moving to transport gurney"
+    - "prepare for CT transfer"
+  confirm:
+    - "transfer complete"
+    - "patient on CT table"
+    - "moved to transport stretcher"
+    - "slide complete"
+  negation:
+    - "hold the transfer"
+    - "don't move him yet"
+    - "stay on the ED bed"
+    - "we'll transfer to CT after the line is in"
+    - "if he's stable we move him to ICU stretcher"
+    - "EMS transferred him to our bed at arrival"
+    - "he was moved to this bed twenty minutes ago"
+
+visual:
+  - "Staff physically lifting or sliding patient across a transfer board from ED bed to a transport gurney or CT table."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes: {}
+
+disambiguation:
+  - "CONTEXT CATEGORY / DUAL REPRESENTATION: Emit this standalone event whenever a stretcher transfer is observed. If the transfer happens to interrupt compressions, the downstream reducer will automatically assign it as a reason code inside compression_interruption. Never suppress the standalone event to 'avoid duplication' — the model reports observations; the reducer handles dual representation."
+  - "DISTINCT FROM bed_transfer_complete (Card 5, Batch 1): bed_transfer_complete is solely the initial EMS-stretcher-to-ED-bed handover at ED arrival. stretcher_transfer is any subsequent patient transfer during care (e.g., to a CT scanner table, operating room gurney, or transport stretcher)."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Always emit the standalone stretcher_transfer event when observed, regardless of whether CPR is paused."
+  - "2. Do not confuse with initial EMS bed_transfer_complete at ED arrival."
+
+abstain_if:
+  - "Audio is muted AND patient transfer maneuver occurs completely off-camera."

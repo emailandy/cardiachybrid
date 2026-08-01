@@ -1,0 +1,49 @@
+# Anchor card for ecmo_cannulation_start
+# Procedural ECMO milestone 2; first percutaneous needle enters skin
+
+event_type: ecmo_cannulation_start
+scope: instant
+boundary_mode: self
+
+defining_instants:
+  start: "The exact video frame or audio timestamp where the first percutaneous needle enters skin for ECMO vascular cannulation."
+
+audio_device:
+  - "Verbal announcement of cannulation start ('needle in', 'cannulating femoral artery')."
+  - "# CLINICAL_REVIEW: CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "prepping groin for ECMO"
+    - "wire ready"
+    - "starting cannulation"
+    - "ultrasound on the femoral artery"
+  confirm:
+    - "needle in femoral artery"
+    - "wire in vein"
+    - "cannulating now"
+    - "access started"
+  negation:
+    - "hold cannulation"
+    - "vessels too small"
+    - "we'll start cannulation after ultrasound"
+    - "when the perfusionist arrives we cannulate"
+    - "cannulation started before ED arrival"
+    - "we cannulated twenty minutes ago"
+
+visual:
+  - "Provider inserting vascular access needle into femoral vessels under ultrasound guidance for ECMO cannulae."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes: {}
+
+disambiguation:
+  - "Distinguish ECMO cannulation start (first needle in skin) from earlier ECMO team activation (ecmo_called) and later pump initiation (ecmo_flow_established)."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Defining instant is when the first percutaneous cannulation needle enters the patient's skin."
+  - "2. Do not emit for site prep, draping, or vessel ultrasound scanning."
+
+abstain_if:
+  - "Groin cannulation site is obscured by drapes AND no verbal announcement of cannulation start is heard."

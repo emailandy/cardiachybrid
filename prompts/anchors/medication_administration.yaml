@@ -1,0 +1,71 @@
+# Anchor card for medication_administration
+# Speech-primary medication marker; Order vs Administration trap; carries t_decision_s for thrombolytics
+
+event_type: medication_administration
+scope: event
+boundary_mode: self
+
+defining_instants:
+  start: "The exact timestamp where the drug ENTERS THE LINE — typically the 'epi is in' or 'pushed' announcement, or observed injection into a port. t_precision_s should be loose (>= 2.0 s) because verbal confirmation lags the push. For thrombolytics given as a bolus, use the moment injection COMPLETES."
+  decision: "t_decision_s is a SECOND timestamp on the same medication_administration event (applicable ONLY to thrombolytics): the exact timestamp where the decision to give a thrombolytic is verbalized by the team leader, which may precede administration by several minutes. This is ONE event with two timestamps, NOT two events."
+
+audio_device:
+  - "Verbal confirmation that a resuscitation drug was administered into the line ('epi is in', 'pushed')."
+  - "# CLINICAL_REVIEW: CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "push one of epi"
+    - "administer lidocaine"
+    - "give amio now"
+    - "push tenecteplase"
+  confirm:
+    - "epi is in"
+    - "epinephrine given"
+    - "one milligram epi pushed"
+    - "amio is in"
+    - "thrombolytic bolus complete"
+  negation:
+    - "give me an amp of epi"
+    - "draw up amio"
+    - "let's have epi ready"
+    - "hold the next epi"
+    - "we'll do epi at the next cycle"
+    - "how long since the last epi"
+    - "prepare tenecteplase"
+    - "when the timer goes off give epi"
+    - "if he's still in VF give amio"
+    - "EMS gave epi in the field"
+    - "first epi was pushed at 14:10"
+
+visual:
+  - "Provider attaching syringe to IV/IO/central line port and pushing plunger, or starting bolus infusion pump."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes:
+  drug:
+    kind: enum
+    values: ['epinephrine', 'lidocaine', 'amiodarone', 'other', 'unable_to_determine']
+    how_to_determine: "Identify the resuscitation drug administered: epinephrine, lidocaine, amiodarone, or other (including thrombolytics like alteplase/tenecteplase); unable_to_determine if drug identity is obscured."
+  drug_name_text:
+    kind: string
+    gate: "drug == other"
+    how_to_determine: "If drug is other (including thrombolytics), transcribe the specific drug name verbalized; otherwise emit null."
+  dose_number:
+    kind: int
+    how_to_determine: "Emit the verbalized dose number ONLY when clinical staff explicitly call out the sequential number of the drug administration (e.g., 'that's our third epi', 'second amp'). Otherwise emit null. Never assign or count dose numbers yourself; the reducer orders and counts."
+
+disambiguation:
+  - "t_decision_s applies to thrombolytics only. If you record a decision timestamp, drug_name_text must name a thrombolytic. If the team debates and declines thrombolysis, emit nothing — a declined decision is not a decision time."
+  - "ORDER VS. ADMINISTRATION TRAP: 'Give one of epi' is an ORDER. 'Epi is in' is ADMINISTRATION. In a real resuscitation the order is louder, clearer, and repeated; the confirmation is often a mumble from someone facing away. Never emit on an order alone."
+  - "t_decision_s is a second timestamp on this same event for thrombolytics only, indicating when the decision to treat was verbalized."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. When drug is other, drug_name_text is MANDATORY, not optional. Record the medication name exactly as verbalized — 'TNK', 'tenecteplase', 'tPA', 'alteplase', 'bicarb', 'calcium', 'mag'. Downstream classification of thrombolytics depends entirely on this string; an empty drug_name_text on an other drug silently loses the thrombolytic fields (name_thromb_ed_v2, decision_time_thromb_ed, time_thromb_ed_v2)."
+  - "2. An order is not an administration. Emit only on confirmation that the drug entered the line — a verbal 'in'/'given'/'pushed', an observed syringe emptied into a port, or an observed pump bolus start."
+  - "3. If you observe an order and never hear a confirmation, emit nothing and note the coverage gap."
+  - "4. Emit dose_number ONLY if explicitly verbalized by staff; otherwise emit null."
+
+abstain_if:
+  - "Audio is illegible AND IV/IO port injection site is off-camera such that drug administration cannot be confirmed."

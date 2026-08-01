@@ -1,0 +1,78 @@
+# Anchor card for mccd_application_start
+# Audio-primary deployment start marker; backboard placement or frame latching
+
+event_type: mccd_application_start
+scope: instant
+boundary_mode: self
+
+defining_instants:
+  start: "Per the dictionary — the backboard going under the patient. BUT if the backboard was already on the stretcher before arrival (backboard_preplaced = yes), start is the moment the upper frame latches on ONE side. Determine which applies by observing whether the backboard is slid under the torso in the ED or arrived pre-placed."
+
+audio_device:
+  - "AUDIO-PRIMARY: Rhythmic mechanical signature and device sounds penetrate full visual occlusion. Audio takes precedence over visual when they conflict, and a device running is audible even when entirely out of frame."
+  - "Metallic click of frame latching onto backboard pin; Velcro strap tearing sounds; power-on beep."
+  - "# CLINICAL_REVIEW: CR-004 (mechanical CPR device make/model) and CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "get the LUCAS"
+    - "bring the backboard"
+    - "slide the board under"
+    - "prep mechanical CPR"
+  confirm:
+    - "board is under"
+    - "latched on left"
+    - "device is on"
+    - "LUCAS applied"
+  negation:
+    - "don't put the LUCAS on"
+    - "we'll stick with manual"
+    - "take the board out"
+    - "when the next team arrives we'll apply the LUCAS"
+    - "if manual CPR tires us out we'll switch to mechanical"
+    - "LUCAS was applied in the field by EMS"
+    - "we put the backboard under twenty minutes ago"
+
+visual:
+  - "Provider sliding yellow/black backboard under patient torso, or locking upper arch/piston frame onto backboard pins."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes:
+  applied_by:
+    kind: enum
+    values: ['ed_team', 'ems_team', 'unable_to_determine']
+    how_to_determine: "Determine whether hospital resuscitation staff (ed_team) or prehospital personnel (ems_team) initiated application of the mechanical CPR device."
+  device_type:
+    kind: enum
+    values: ['lucas', 'defibtech', 'autopulse', 'other', 'unable_to_determine']
+    how_to_determine: "Identify the make/model of mechanical CPR device applied: lucas = Stryker LUCAS piston; defibtech = Defibtech RM3; autopulse = Zoll AutoPulse band; other = any other mechanical CPR device; unable_to_determine = device obscured."
+  device_type_other_text:
+    kind: string
+    gate: "device_type == other"
+    how_to_determine: "If device_type is other, transcribe or describe the brand/model name of the mechanical CPR device used; otherwise emit null."
+  backboard_preplaced:
+    kind: enum
+    values: ['yes', 'no', 'unable_to_determine']
+    how_to_determine: "Determine if the mechanical CPR backboard was already positioned under the patient prior to ED arrival (yes) or placed by staff in the ED (no)."
+    abstain_if: "Patient backboard area is obscured by blankets during transfer (HIGH difficulty)."
+  obstacles:
+    kind: multi_enum
+    values: ['backboard', 'sheets', 'clothes', 'other', 'none']
+    how_to_determine: "Identify any physical obstructions hindering MCCD application: backboard = difficulty seating board; sheets = bedding entanglements; clothes = patient clothing interference; other = non-standard obstruction; none = smooth application."
+    abstain_if: "Application maneuver is visually occluded by staff (HIGH difficulty)."
+  obstacle_other_text:
+    kind: string
+    gate: "obstacles contains other"
+    how_to_determine: "If obstacles includes other, describe any non-standard physical obstruction encountered during MCCD application; otherwise emit null."
+
+disambiguation:
+  - "AUDIO-PRIMARY: Mechanical signatures take precedence over visual occlusion. See mccd_adjustment (Card 2) for the 8-way mechanical CPR adjustment taxonomy."
+  - "If backboard arrived pre-placed (backboard_preplaced = yes), defining instant is first upper frame latch click; if placed in ED, defining instant is backboard sliding under torso."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Audio takes precedence over visual when identifying deployment cues under visual occlusion."
+  - "2. Start timestamp depends on backboard_preplaced: backboard sliding under torso (no) vs first frame latch click (yes)."
+
+abstain_if:
+  - "Audio is illegible AND visual frame is completely obstructed by staff during MCCD setup."

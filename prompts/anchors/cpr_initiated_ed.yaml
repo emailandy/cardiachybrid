@@ -1,0 +1,60 @@
+# Anchor card for cpr_initiated_ed
+# Point-in-time first ED chest compression marker; unobservable if video_start_late
+
+event_type: cpr_initiated_ed
+scope: instant
+boundary_mode: self
+
+defining_instants:
+  start: >
+    The first chest compression in the ED, applicable ONLY when compressions
+    were NOT already in progress on arrival. Two qualifying scenarios:
+    (a) the patient arrived in arrest with no CPR being performed, and the
+        ED team initiates; or
+    (b) the patient arrived with a pulse and arrests in the department.
+    If EMS compressions were ongoing at arrival and the ED assumed them
+    without cessation, this event DOES NOT OCCUR — emit nothing. A handover
+    of ongoing compressions is a compression_mode_change or nothing at all,
+    never an initiation.
+
+audio_device:
+  - "Start of rhythmic mechanical CPR thump or metronome audio cue where no CPR sound was previously audible."
+  - "# CLINICAL_REVIEW: CR-004 (mechanical CPR device make/model) and CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "start CPR"
+    - "get on the chest"
+    - "start compressions"
+    - "no pulse, compress"
+  confirm:
+    - "compressing"
+    - "good depth"
+    - "compressions started"
+  negation:
+    - "hold CPR"
+    - "don't compress, he has a pulse"
+    - "wait for the bed"
+    - "not yet, check pulse first"
+    - "if we lose the pulse, start CPR"
+    - "when he arrests we'll start compressions"
+    - "EMS started CPR in the field"
+    - "compressions were initiated prior to arrival"
+
+visual:
+  - "Compressor hands pressing downward on patient's chest or mechanical CPR piston descending for first compression in the ED where none was underway on arrival."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes: {}
+
+disambiguation:
+  - "Distinguish first ED chest compression from ongoing CPR performed by EMS while rolling into the room."
+  - "If EMS compressions were ongoing at arrival and the ED assumed them without cessation, this event DOES NOT OCCUR — emit nothing."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Do NOT emit for continuation of EMS compressions. This event marks INITIATION where none was occurring."
+  - "2. If the recording begins with compressions already underway, you cannot determine whether this was an initiation or a continuation. Abstain with abstain_reason: video_start_late."
+
+abstain_if:
+  - "Recording begins with compressions already underway (video_start_late) OR chest is completely obstructed from camera view."

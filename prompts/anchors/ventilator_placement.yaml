@@ -1,0 +1,52 @@
+# Anchor card for ventilator_placement
+# Mechanical ventilator interval marker; null t_end_s is expected when patient remains on ventilator
+
+event_type: ventilator_placement
+scope: interval
+boundary_mode: explicit
+
+defining_instants:
+  start: "The exact timestamp where mechanical ventilator tubing is connected to the patient's advanced airway and automated positive-pressure ventilation begins."
+  end: "The exact timestamp where mechanical ventilator tubing is disconnected and BVM bagging resumes or ventilation ceases. EMIT NULL if the patient remains on the mechanical ventilator until ROSC, transfer, or death pronouncement."
+
+audio_device:
+  - "Mechanical ventilator cycling sounds, alarms, or verbal confirmation ('hooked up to the vent', 'vent is running')."
+  - "# CLINICAL_REVIEW: CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "get the ventilator"
+    - "set up transport vent"
+    - "ready to connect vent"
+    - "dial in 6 mls per kg"
+  confirm:
+    - "on the ventilator"
+    - "vent is connected"
+    - "mechanical ventilation started"
+    - "cycling on the vent"
+  negation:
+    - "keep bagging by hand"
+    - "don't put him on the vent yet"
+    - "disconnect the ventilator"
+    - "we'll switch to the vent after central line placement"
+    - "if he desaturates take him off the vent"
+    - "EMS had him on a transport vent"
+    - "we put him on the vent twenty minutes ago"
+
+visual:
+  - "Provider connecting corrugated ventilator tubing to endotracheal tube/supraglottic airway and ventilator display showing active ventilation waveforms."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes: {}
+
+disambiguation:
+  - "NULL ENDTIMESTAMP IS EXPECTED AND CORRECT: Per the REDCap dictionary, if the patient remains on the ventilator until ROSC, transfer out of ED, or death pronouncement, leave t_end_s null. Do not treat a null endtimestamp as a failure to observe."
+  - "Distinguish automated mechanical ventilator placement from manual BVM bagging."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Emit null for t_end_s whenever the patient remains on the mechanical ventilator through the end of the resuscitation attempt."
+  - "2. Defining instant for start is physical connection of ventilator tubing and initiation of mechanical ventilation."
+
+abstain_if:
+  - "Airway connection site is completely obscured AND no verbal confirmation of ventilator connection is audible."

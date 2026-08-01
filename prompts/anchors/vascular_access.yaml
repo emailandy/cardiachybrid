@@ -1,0 +1,68 @@
+# Anchor card for vascular_access
+# Procedural line establishment marker; carries t_confirmed_s (first flush/med) and present_on_arrival
+
+event_type: vascular_access
+scope: event
+boundary_mode: self
+
+defining_instants:
+  start: "The exact video frame where needle/catheter insertion begins for ED-placed lines, or initial line assessment for lines present on arrival."
+  confirmed: "The exact timestamp of the first saline flush OR first medication bolus administered through the line, whichever is earlier. NOT the moment of cannulation."
+
+audio_device:
+  - "IO drill motor sound (humming/whining sound); verbal callout of line placement or successful flush."
+  - "# CLINICAL_REVIEW: CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "start an IV"
+    - "get an IO"
+    - "humeral IO"
+    - "need a femoral line"
+    - "prep the drill"
+  confirm:
+    - "line is good"
+    - "flushing easy"
+    - "IO in place"
+    - "18 gauge in left antecubital"
+    - "central line sutured"
+  negation:
+    - "line blew"
+    - "can't get access"
+    - "hold on the line"
+    - "we'll place an IO if we lose IV"
+    - "when the kit arrives we'll do a central line"
+    - "EMS placed an 18 gauge in the field"
+    - "line was established at referring hospital"
+
+visual:
+  - "Provider cannulating peripheral vein (iv), using rotary drill or needle driver on bone (io), or inserting central venous catheter (central_line)."
+  - "Saline syringe attached and flushed, or first medication syringe pushed into catheter hub (t_confirmed_s)."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes:
+  access_types:
+    kind: multi_enum
+    values: ['iv', 'io', 'central_line', 'unable_to_determine']
+    how_to_determine: "Identify every type of vascular access established or confirmed during this event. Multi-select: iv = peripheral intravenous cannula; io = intraosseous line; central_line = internal jugular, subclavian, or femoral venous catheter; unable_to_determine = site obscured by blankets or drapes."
+    abstain_if: "Anatomical access site is obscured by drapes or blankets AND no verbal confirmation of access type is audible."
+  present_on_arrival:
+    kind: bool
+    how_to_determine: "Set true if this vascular access line was already in place when the patient arrived in the ED (established prehospital by EMS or at referring facility); false if placed by the ED team after arrival. HIGH difficulty because lines are usually under blankets during transfer."
+    abstain_if: "Patient arrived under blankets and lines could not be observed during initial transfer (HIGH difficulty)."
+  confirmed:
+    kind: bool
+    how_to_determine: "Set true if this vascular access line was confirmed by a saline flush or medication bolus during the interval; false otherwise."
+    abstain_if: "Line hub and tubing are obscured from view AND no verbal confirmation is audible (HIGH difficulty)."
+
+disambiguation:
+  - "t_confirmed_s is the timestamp of the first saline flush or first medication bolus through the line, whichever is earlier — never the moment of needle insertion or cannulation."
+  - "present_on_arrival is HIGH difficulty because lines are often obscured under blankets during patient arrival and bed transfer."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Record t_confirmed_s at the first flush or medication bolus, NOT cannulation."
+  - "2. If a line arrived with the patient (present_on_arrival = true), start time is initial line assessment; confirmed time is first ED flush/medication."
+
+abstain_if:
+  - "Vascular access procedure is completely off-camera AND no verbal confirmation of line placement or flush occurs."

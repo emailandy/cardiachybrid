@@ -1,0 +1,52 @@
+# Anchor card for ems_handoff_begin
+# Point-in-time handoff start marker; speech-primary narrative anchor
+
+event_type: ems_handoff_begin
+scope: instant
+boundary_mode: self
+
+defining_instants:
+  start: "The first word of EMS-to-ED clinical information transfer, however brief or informal. A shouted 'sixty-year-old, down twenty minutes, three shocks' over ongoing compressions IS a handoff. Logistics alone ('watch the IV', 'his name is Bob') is not."
+
+audio_device:
+  - "Clear speech transition where an EMS voice begins communicating patient clinical information to the hospital team."
+  - "# CLINICAL_REVIEW: CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "let's get report"
+    - "quiet for EMS"
+    - "what do we have"
+    - "go ahead EMS"
+  confirm:
+    - "this is a 55-year-old"
+    - "we found him unresponsive"
+    - "downtime was approximately"
+    - "we gave three shocks"
+  negation:
+    - "hold report till we transfer"
+    - "wait for the attending"
+    - "don't start yet"
+    - "hang on one second"
+    - "we'll get full report once he's on the bed"
+    - "when the resident gets here give your report"
+    - "EMS gave report in the hallway"
+    - "they told us the downtime earlier"
+
+visual:
+  - "EMS provider standing at bedside communicating with the hospital team leader."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes: {}
+
+disambiguation:
+  - "The first word of EMS-to-ED clinical information transfer, however brief or informal. A shouted 'sixty-year-old, down twenty minutes, three shocks' over ongoing compressions IS a handoff. Logistics alone ('watch the IV', 'his name is Bob') is not."
+  - "If handoff began in the hallway or before video starts (video_start_late), abstain."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Defining instant is the first spoken word of clinical information transfer by EMS, however informal, not when EMS enters the bay."
+  - "2. If recording begins mid-report or after report finished, abstain — never infer start time from later discussion."
+
+abstain_if:
+  - "No audible EMS verbal report is captured on the recording OR report began before video start."

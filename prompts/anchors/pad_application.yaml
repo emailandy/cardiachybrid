@@ -1,0 +1,62 @@
+# Anchor card for pad_application
+# Procedural pad application marker; defines both start and end (t_end_s emitted by registry)
+
+event_type: pad_application
+scope: event
+boundary_mode: self
+
+defining_instants:
+  start: "The exact video frame where the provider first places a defibrillation/pacing pad onto the patient's bare skin."
+  end: "The exact video frame where BOTH pads are adhered to skin AND the pad cable is physically connected/seated into the defibrillator monitor."
+
+audio_device:
+  - "Defibrillator power-on beep or 'pads connected' voice prompt."
+  - "# CLINICAL_REVIEW: CR-003 (defibrillator make/model)"
+
+speech:
+  precursor:
+    - "get pads on him"
+    - "open the ED pads"
+    - "defib pads"
+    - "switch to our pads"
+  confirm:
+    - "pads are on"
+    - "cable connected"
+    - "pads plugged in"
+    - "ED pads connected"
+  negation:
+    - "leave the EMS pads"
+    - "don't open new pads"
+    - "repositioning the pad"
+    - "we'll put pads on after transfer"
+    - "if the pads fall off open a new set"
+    - "pads were applied by EMS in the field"
+    - "we put pads on ten minutes ago"
+
+visual:
+  - "Provider peeling backing from defibrillation pads, applying to torso, and plugging cable connector into defibrillator."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes:
+  applied_by:
+    kind: enum
+    values: ['ed_team', 'ems_team', 'unable_to_determine']
+    how_to_determine: "Determine whether hospital resuscitation staff (ed_team) or prehospital personnel (ems_team) applied these defibrillation pads."
+  position:
+    kind: enum
+    values: ['anterolateral', 'anteroposterior', 'dual_defibrillation', 'inappropriate_location', 'unable_to_determine']
+    how_to_determine: "Determine the anatomical placement of applied defibrillation/pacing pads on the patient's torso. anterolateral = right upper chest and left lower lateral ribs; anteroposterior = anterior chest and posterior back; dual_defibrillation = two separate pairs applied simultaneously; inappropriate_location = placement over clothing or grossly mispositioned; unable_to_determine = obscured by blankets or staff."
+    abstain_if: "Pads applied under clothing or blankets where anatomical placement cannot be visualized."
+
+disambiguation:
+  - "The defining instant of completion (end) requires BOTH pads adhered to skin AND the cable physically connected to the defibrillator monitor."
+  - "Removing EMS pads and applying ED pads is a new pad_application, NOT a pad_reposition."
+  - "Moving pads already adhered on the patient without replacing them is pad_reposition."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Completion timestamp (t_end_s) is when both pads are applied AND the cable is plugged into the defibrillator."
+  - "2. Replacing EMS pads with ED pads is a new pad_application, never a pad_reposition."
+
+abstain_if:
+  - "Pad application occurs completely off-camera OR under blankets such that completion of cable connection cannot be confirmed."

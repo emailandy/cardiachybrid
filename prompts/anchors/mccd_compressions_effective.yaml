@@ -1,0 +1,52 @@
+# Anchor card for mccd_compressions_effective
+# Audio-primary effectiveness marker; startup tone sequence gives way to steady rhythmic cycling
+
+event_type: mccd_compressions_effective
+scope: instant
+boundary_mode: self
+
+defining_instants:
+  start: "The exact audio frame where all mechanical adjustments are complete and the device begins delivering steady, rhythmic mechanical compressions. Audio is the primary discriminator — startup tone sequence gives way to steady rhythmic cycling (e.g. rhythmic mechanical thump or motor whine). NOT the moment the device is switched on or powered up."
+
+audio_device:
+  - "AUDIO-PRIMARY: Rhythmic mechanical signature penetrates full visual occlusion. Audio takes precedence over visual when they conflict, and a device running is audible even when entirely out of frame."
+  - "Transition from intermittent adjustment clicks or startup tones to continuous rhythmic mechanical compression thump/whine."
+  - "# CLINICAL_REVIEW: CR-004 (mechanical CPR device make/model) and CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "start the LUCAS"
+    - "active mode"
+    - "press play"
+    - "let's see if it's positioned right"
+  confirm:
+    - "good compressions"
+    - "running smooth"
+    - "LUCAS is active"
+    - "we have mechanical CPR"
+  negation:
+    - "hold on, it's slipping"
+    - "stop it, suction cup is wrong"
+    - "not effective yet"
+    - "we'll start mechanical CPR once lines are in"
+    - "when the LUCAS is latched we'll hit active"
+    - "compressions were effective in the ambulance"
+    - "it ran smoothly ten minutes ago"
+
+visual:
+  - "Mechanical piston or band rhythmically compressing patient chest with appropriate depth and recoil without shifting."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes: {}
+
+disambiguation:
+  - "AUDIO-PRIMARY: Mechanical signatures take precedence over visual occlusion. See mccd_adjustment (Card 2) for the 8-way mechanical CPR adjustment taxonomy."
+  - "Defining instant is when steady rhythmic cycling begins, NEVER when the power button is pressed or adjustment mode is active."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Audio takes precedence over visual: steady rhythmic mechanical cycling defines effective compressions."
+  - "2. Never emit at device power-on or during initial suction cup positioning."
+
+abstain_if:
+  - "Audio track is muted or illegible AND visual chest compression depth is completely obscured by staff."

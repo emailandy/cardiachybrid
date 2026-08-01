@@ -1,0 +1,54 @@
+# Anchor card for pocus_cardiac
+# Procedural cardiac ultrasound marker; discriminator vs pocus_other
+
+event_type: pocus_cardiac
+scope: event
+boundary_mode: self
+
+defining_instants:
+  start: "The exact video frame where an ultrasound probe makes contact with the patient's chest or subxiphoid region for cardiac evaluation."
+  end: "The exact video frame where the ultrasound probe is lifted off the chest/subxiphoid region and gel wiping or probe storage begins."
+
+audio_device:
+  - "Verbalization of cardiac ultrasound findings or window adequacy."
+  - "# CLINICAL_REVIEW: CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "get the probe ready"
+    - "cardiac ultrasound"
+    - "let's look at the heart"
+    - "check subxiphoid view"
+  confirm:
+    - "cardiac window obtained"
+    - "subxiphoid view"
+    - "heart is beating"
+    - "no pericardial effusion"
+    - "good cardiac activity"
+  negation:
+    - "lung ultrasound"
+    - "checking FAST"
+    - "line check with ultrasound"
+    - "using Doppler for pulse"
+    - "we'll do an echo later"
+    - "when cardiology gets here we'll scan"
+    - "probe was on ten minutes ago"
+    - "echo was completed in triage"
+
+visual:
+  - "Ultrasound probe positioned on subxiphoid, parasternal, or apical cardiac acoustic windows on the patient's torso."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes: {}
+
+disambiguation:
+  - "Cardiac windows are subxiphoid/parasternal/apical, probe on the chest or subxiphoid. Everything else — lung, FAST, IVC, aorta, line confirmation — is pocus_other."
+  - "Note that us_pulse (vascular Doppler at the neck or groin for pulse check) is neither; it is an attribute of compression_interruption, not an event."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Emit pocus_cardiac ONLY for cardiac acoustic windows (subxiphoid, parasternal, apical)."
+  - "2. Do not emit for vascular Doppler (us_pulse) or non-cardiac POCUS (pocus_other)."
+
+abstain_if:
+  - "Probe contact site is completely obscured AND no verbal mention of cardiac ultrasound window is audible."

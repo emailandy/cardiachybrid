@@ -1,0 +1,51 @@
+# Anchor card for death_pronounced
+# Speech-primary death pronouncement marker; verbal pronouncement time (not cessation of effort)
+
+event_type: death_pronounced
+scope: instant
+boundary_mode: self
+
+defining_instants:
+  start: "The exact timestamp of the VERBAL PRONOUNCEMENT of death by the physician ('time of death, 14:32'), NEVER the timestamp of the last compression and NEVER the end of the code video. The most common error is timestamping the cessation of effort. Pronouncement often occurs seconds or minutes after compressions stop."
+
+audio_device:
+  - "Verbal declaration of time of death by the attending physician or team leader."
+  - "# CLINICAL_REVIEW: CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "any objections to stopping"
+    - "let's call it"
+    - "hold CPR"
+    - "everyone agree we stop"
+  confirm:
+    - "time of death is 14:32"
+    - "patient is deceased"
+    - "calling it at 15:00"
+    - "time of death 22:15"
+  negation:
+    - "keep going for another round"
+    - "let's try one more epi"
+    - "don't call it yet"
+    - "if there's no cardiac motion on ultrasound we'll call it"
+    - "when family gets here we stop"
+    - "time of death was recorded in triage"
+    - "he was pronounced by EMS"
+
+visual:
+  - "Team stepping away from bed, removing gloves, or physician checking watch/clock to announce death."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes: {}
+
+disambiguation:
+  - "Defining instant is the VERBAL PRONOUNCEMENT of death, never the timestamp when chest compressions ceased."
+  - "Note the paired REDCap field ultrasound_dead_ed_v2, which asks whether POCUS was used within roughly 60 seconds before pronouncement. A pocus_cardiac event near a death_pronounced event is clinically meaningful; ensure timestamps accurately reflect when verbal pronouncement occurred relative to ultrasound checks."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Record the timestamp of verbal death pronouncement, never the moment compressions stopped."
+  - "2. Do not emit on discussion of stopping resuscitation until formal time of death is declared."
+
+abstain_if:
+  - "Audio is illegible AND time of death pronouncement is not observable."

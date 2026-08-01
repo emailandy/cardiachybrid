@@ -1,0 +1,54 @@
+# Anchor card for defib_charge_aborted
+# Negative control marker for defibrillation_shock; charge tone stops without discharge click or jerk
+
+event_type: defib_charge_aborted
+scope: instant
+boundary_mode: self
+
+defining_instants:
+  start: "The exact timestamp where a rising defibrillator charge tone stops or disarms WITHOUT a subsequent discharge click, myoclonic jerk, or shock delivery."
+
+audio_device:
+  - "AUDIO-PRIMARY: Rising defibrillator charge tone terminates prematurely or disarm chime sounds without discharge click."
+  - "# CLINICAL_REVIEW: CR-003 (defibrillator make/model/audio signature) and CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "charging"
+    - "charge to 200"
+    - "clear the bed"
+    - "getting ready to shock"
+  confirm:
+    - "disarm"
+    - "stand down"
+    - "hold the shock"
+    - "wait, he's moving"
+    - "dump the charge"
+    - "we have a pulse, don't shock"
+  negation:
+    - "shock delivered"
+    - "shocking on three"
+    - "shock one given"
+    - "we'll dump the charge if he wakes up"
+    - "if he gets ROSC don't shock"
+    - "we aborted the charge in the ambulance"
+    - "first charge was dumped ten minutes ago"
+
+visual:
+  - "Provider pressing speed-dial disarm button on defibrillator or monitor screen showing 'Charge Dumped / Disarmed' without patient myoclonic jerk."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes: {}
+
+disambiguation:
+  - "NEGATIVE CONTROL FOR defibrillation_shock (Card 4): Prevents a false shock call when a charge cycle is aborted."
+  - "Explicit complement to defibrillation_shock: charge tone rises and stops with no discharge click, no myoclonic jerk, and a 'disarm' / 'stand down' / 'hold the shock' utterance."
+  - "MUTUAL EXCLUSIVITY: A charge that IS followed by a discharge is defibrillation_shock, never both. These two event types are mutually exclusive for a given charge cycle."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Emit defib_charge_aborted ONLY when a defibrillator charge terminates without a shock discharge."
+  - "2. Never emit both defib_charge_aborted and defibrillation_shock for the same defibrillator charge cycle."
+
+abstain_if:
+  - "Audio track is illegible AND defibrillator monitor display is out of frame."

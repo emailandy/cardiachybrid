@@ -1,0 +1,58 @@
+# Anchor card for compression_active_start
+# S1 sensor complement; resumption of compressions bounding an interruption
+
+event_type: compression_active_start
+scope: instant
+boundary_mode: self
+
+sensor_authority: >
+  This event is the S1 sensor complement to compression_interruption — the
+  resumption of compressions bounding an interruption. It is an interval_boundary
+  category event, not redcap_feeding. Defer to sensor authority (S1 CPR sensor
+  track) for exact start timestamps; emit only when sensor track requires
+  corroboration or calibration.
+
+defining_instants:
+  start: "The exact video or audio frame where chest compressions (manual or mechanical) resume after a compression pause."
+
+audio_device:
+  - "AUDIO-PRIMARY: Rhythmic mechanical signature penetrates full visual occlusion. Audio takes precedence over visual when they conflict, and a device running is audible even when entirely out of frame."
+  - "Resumption of rhythmic mechanical compression thump/whine or manual compression vocal counting after silence."
+  - "# CLINICAL_REVIEW: CR-004 (mechanical CPR device make/model) and CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "resume CPR"
+    - "back on the chest"
+    - "continue compressions"
+    - "start compressions again"
+  confirm:
+    - "compressing"
+    - "good depth"
+    - "compressions resumed"
+  negation:
+    - "hold compressions"
+    - "still checking pulse"
+    - "stay off the chest"
+    - "we'll resume compressions after the shock"
+    - "if no pulse we restart CPR"
+    - "compressions resumed ten seconds ago"
+    - "CPR was restarted before the pulse check ended"
+
+visual:
+  - "Provider hands pressing downward on chest or mechanical piston descending after a pause."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes: {}
+
+disambiguation:
+  - "AUDIO-PRIMARY: Mechanical signatures take precedence over visual occlusion. See mccd_adjustment (Card 2) for the 8-way mechanical CPR adjustment taxonomy."
+  - "This event bounds the end of a compression_interruption interval. Do not emit during ongoing, uninterrupted compressions."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Defer to S1 CPR sensor track for primary detection and timestamps."
+  - "2. Emit only to mark the exact resumption instant bounding a compression pause."
+
+abstain_if:
+  - "Audio is muted AND chest area is completely obscured by staff."

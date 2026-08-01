@@ -1,0 +1,52 @@
+# Anchor card for bed_transfer_complete
+# Point-in-time transfer completion marker; weight transfer to hospital bed
+
+event_type: bed_transfer_complete
+scope: instant
+boundary_mode: self
+
+defining_instants:
+  start: "The exact video frame where the patient's full body weight rests entirely on the hospital resuscitation bay mattress and transfer sheet/board movement stops."
+
+audio_device:
+  - "Verbal countdown ending ('one, two, three, move'); physical thud of stretcher separation."
+  - "# CLINICAL_REVIEW: CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "ready to move"
+    - "on three"
+    - "one two three transfer"
+    - "grab the sheet"
+  confirm:
+    - "patient is over"
+    - "good transfer"
+    - "clear the EMS stretcher"
+    - "he's on our bed"
+  negation:
+    - "wait, lines are tangled"
+    - "hold transfer"
+    - "don't pull yet"
+    - "not ready"
+    - "we'll move him after we get a line"
+    - "when EMS brings the board we'll slide him"
+    - "they transferred him at 14:32"
+    - "we moved him over ten minutes ago"
+
+visual:
+  - "Patient resting on hospital bed; EMS stretcher being rolled away or separated."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes: {}
+
+disambiguation:
+  - "Distinguish completion of patient body transfer from subsequent positioning or sheet removal."
+  - "If patient arrived already on the hospital bed (e.g., inpatient room transfer), abstain."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Defining instant is when body weight is fully transferred and movement ceases, not when the countdown starts."
+  - "2. If transfer occurred before video start (video_start_late), abstain — do not guess."
+
+abstain_if:
+  - "Transfer occurred before video recording began OR bed surface is completely obscured."

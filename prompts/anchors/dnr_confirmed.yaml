@@ -1,0 +1,55 @@
+# Anchor card for dnr_confirmed
+# Speech-primary code status marker; carries dnr_basis (prior vs new decision)
+
+event_type: dnr_confirmed
+scope: instant
+boundary_mode: self
+
+defining_instants:
+  start: "The exact timestamp where a Do Not Resuscitate (DNR) order or POLST form is formally confirmed, verbalized, or agreed upon by the resuscitation team leader."
+
+audio_device:
+  - "Verbal confirmation of DNR code status or POLST documentation."
+  - "# CLINICAL_REVIEW: CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "do we have a POLST"
+    - "check code status"
+    - "call the family about DNR"
+    - "look up his advanced directives"
+  confirm:
+    - "we have a signed DNR"
+    - "code status is DNR"
+    - "family wants DNR"
+    - "make him DNR"
+    - "POLST confirmed do not resuscitate"
+  negation:
+    - "patient is full code"
+    - "no DNR on file"
+    - "continue full resuscitation"
+    - "if family arrives we'll ask about DNR"
+    - "when cardiology comes down we discuss code status"
+    - "DNR was confirmed in triage"
+    - "he was made DNR yesterday"
+
+visual:
+  - "Team leader inspecting signed POLST/DNR document or charting code status change."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes:
+  dnr_basis:
+    kind: multi_enum
+    values: ['prior_dnr_confirmed', 'made_dnr']
+    how_to_determine: "Identify the clinical basis for DNR confirmation: prior_dnr_confirmed = pre-existing POLST/DNR order verified; made_dnr = new decision by family/team during resuscitation to transition to DNR."
+
+disambiguation:
+  - "Distinguish formal confirmation of DNR status from exploratory questions asking if a POLST exists."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Defining instant is formal agreement or confirmation of DNR code status."
+  - "2. Do not emit when staff merely ask whether the patient has advanced directives."
+
+abstain_if:
+  - "Audio is muted AND no visual documentation of DNR confirmation is readable."

@@ -116,9 +116,9 @@ def prompt_set_sha(strict: bool = True) -> str:
             
     return h.hexdigest()[:16]
 
-def check_anchors(types=None, fail_on_gap: bool = False) -> dict[str, dict[str, list[str]]]:
+def check_anchors(types=None, fail_on_gap: bool = True) -> dict[str, dict[str, list[str]]]:
     """Returns {event_type: {attr: [uncovered reasons]}}.
-    fail_on_gap=False during A01-A03; A03b's acceptance flips it True.
+    fail_on_gap=False during A01-A03; A03b's acceptance flipped it True.
     Gaps are reported against generated/extraction_contract.json — every
     card as a detailed mapping.
     

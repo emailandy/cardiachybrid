@@ -1,0 +1,49 @@
+# Anchor card for ems_handoff_end
+# Point-in-time handoff conclusion marker; speech-primary acknowledgment
+
+event_type: ems_handoff_end
+scope: instant
+boundary_mode: self
+
+defining_instants:
+  start: "The exact audio frame where the EMS provider concludes their clinical report and the hospital team leader acknowledges or takes over verbal direction."
+
+audio_device:
+  - "Resumption of multi-voice hospital team banter after single-voice EMS narrative ends."
+  - "# CLINICAL_REVIEW: CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "any questions for EMS"
+    - "anything else"
+    - "last dose of epi was when"
+  confirm:
+    - "thank you EMS"
+    - "we've got it from here"
+    - "thanks guys"
+    - "any questions? no, thank you"
+  negation:
+    - "wait, one more thing"
+    - "hold on, what about his meds"
+    - "still giving report"
+    - "we'll wrap up report after we transfer"
+    - "when you finish report I'll sign the sheet"
+    - "EMS finished report before the attending walked in"
+    - "report ended ten minutes ago"
+
+visual:
+  - "EMS provider stepping back from bedside or putting away clipboard/tablet."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes: {}
+
+disambiguation:
+  - "Distinguish conclusion of handoff report from a brief conversational pause mid-report."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Defining instant is the concluding acknowledgment by the team ('thanks EMS', 'we got him'), not when EMS physically leaves the room."
+  - "2. Never infer handoff end timestamp if the audio is muted or illegible."
+
+abstain_if:
+  - "Audio is illegible at report conclusion OR recording ends before handoff finishes."

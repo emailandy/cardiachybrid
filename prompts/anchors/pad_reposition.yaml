@@ -1,0 +1,57 @@
+# Anchor card for pad_reposition
+# Procedural pad reposition marker; moving existing pads already on patient
+
+event_type: pad_reposition
+scope: event
+boundary_mode: self
+
+defining_instants:
+  start: "The exact video frame where a provider begins peeling back or shifting an existing defibrillation pad already adhered to the patient's skin."
+  end: "The exact video frame where the repositioned pad is fully re-adhered in its new location on the patient's torso."
+
+audio_device:
+  - "Verbal instruction or confirmation of pad adjustment on the torso."
+  - "# CLINICAL_REVIEW: CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "move that pad"
+    - "reposition the apex pad"
+    - "slide the pad over"
+    - "pad is too low"
+  confirm:
+    - "pad moved"
+    - "better contact now"
+    - "repositioned"
+    - "apex pad moved up"
+  negation:
+    - "putting new ED pads on"
+    - "taking off EMS pads"
+    - "leave the pad where it is"
+    - "we'll adjust the pad later"
+    - "if the pad slides we'll fix it"
+    - "pad was moved earlier"
+    - "repositioned ten minutes ago"
+
+visual:
+  - "Provider peeling up an edge or sliding an existing defibrillation pad to a new anatomical site on the patient's skin."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes:
+  position:
+    kind: enum
+    values: ['anterolateral', 'anteroposterior', 'dual_defibrillation', 'inappropriate_location']
+    how_to_determine: "Determine the resulting anatomical placement after existing pads already on the patient are peeled back and moved. anterolateral = right upper chest and left lower lateral ribs; anteroposterior = anterior chest and posterior back; dual_defibrillation = two separate pairs; inappropriate_location = placement over clothing or grossly mispositioned."
+    abstain_if: "Patient torso is obscured by blankets or staff such that pad movement cannot be observed."
+
+disambiguation:
+  - "pad_reposition applies ONLY to moving pads that are already adhered to the patient."
+  - "Removing EMS pads and applying ED pads is a new pad_application, NOT a pad_reposition."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Never emit pad_reposition when replacing EMS pads with ED pads; that is a pad_application."
+  - "2. Emit only when existing adhered pads are lifted and moved to a new anatomical site."
+
+abstain_if:
+  - "Pad movement is completely obscured by blankets or clinical staff."

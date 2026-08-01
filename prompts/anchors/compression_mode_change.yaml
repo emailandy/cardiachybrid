@@ -1,0 +1,60 @@
+# Anchor card for compression_mode_change
+# Audio-primary mode transition marker; emits every manual<->mechanical switch (reducer takes first)
+
+event_type: compression_mode_change
+scope: instant
+boundary_mode: self
+
+defining_instants:
+  start: "The exact timestamp where chest compressions transition from manual to mechanical mode, or from mechanical to manual mode."
+
+audio_device:
+  - "AUDIO-PRIMARY: Rhythmic mechanical signature penetrates full visual occlusion. Audio takes precedence over visual when they conflict, and a device running is audible even when entirely out of frame."
+  - "Clear acoustic transition from manual compression sounds (e.g. bed squeaking, vocal counting) to rhythmic mechanical motor whine/thump, or vice versa."
+  - "# CLINICAL_REVIEW: CR-004 (mechanical CPR device make/model) and CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "switch to mechanical"
+    - "start the LUCAS"
+    - "device is failing, go manual"
+    - "take over compressions by hand"
+  confirm:
+    - "mechanical CPR active"
+    - "back on manual compressions"
+    - "switched to LUCAS"
+    - "manual CPR resumed"
+  negation:
+    - "keep doing manual"
+    - "don't switch yet"
+    - "pause for pulse check"
+    - "we'll switch to mechanical after the next rhythm check"
+    - "if the battery dies we'll switch to manual"
+    - "they switched to mechanical in the ambulance"
+    - "we went back to manual ten minutes ago"
+
+visual:
+  - "Provider hands lifting off chest as mechanical piston engages, or provider hands resuming chest compressions as mechanical piston retracts."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes:
+  from:
+    kind: enum
+    values: ['manual', 'mechanical', 'unable_to_determine']
+    how_to_determine: "Identify the CPR compression mode in use immediately before the change: manual = provider hands; mechanical = automated device; unable_to_determine = obscured."
+  to:
+    kind: enum
+    values: ['manual', 'mechanical', 'unable_to_determine']
+    how_to_determine: "Identify the CPR compression mode established immediately after the change: manual = provider hands; mechanical = automated device; unable_to_determine = obscured."
+
+disambiguation:
+  - "AUDIO-PRIMARY: Mechanical signatures take precedence over visual occlusion. See mccd_adjustment (Card 2) for the 8-way mechanical CPR adjustment taxonomy."
+  - "Manual->mechanical is the normal deployment path; mechanical->manual usually signals device failure and feeds time_mechanical_chest_comp_v2, which records the FIRST such switch only. Emit EVERY switch observed; the downstream reducer selects the first relevant transition."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Emit every observed transition between manual and mechanical compression modes."
+  - "2. Audio takes precedence over visual when confirming mode transitions under visual occlusion."
+
+abstain_if:
+  - "Audio is illegible AND visual chest area is completely obscured during the transition."

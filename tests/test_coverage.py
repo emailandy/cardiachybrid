@@ -62,3 +62,11 @@ def test_normalize_gate_malformed():
     # unknown attribute
     with pytest.raises(ValueError, match="unknown attribute"):
         normalize_gate("bar == 1", attr)
+
+def test_no_derived_where_keys_in_contract():
+    from codegen.emit_contract import DERIVED_WHERE_KEYS
+    contract = json.loads(Path("generated/extraction_contract.json").read_text())
+    for et, spec in contract.get("event_types", {}).items():
+        for attr_name in spec.get("attributes", {}):
+            assert attr_name not in DERIVED_WHERE_KEYS, \
+                f"{et}.{attr_name} is a derived where-key ({DERIVED_WHERE_KEYS[attr_name]}) and must not be a model attribute"

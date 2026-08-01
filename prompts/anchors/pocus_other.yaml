@@ -1,0 +1,57 @@
+# Anchor card for pocus_other
+# Procedural non-cardiac ultrasound marker; lung, FAST, IVC, aorta, line confirmation
+
+event_type: pocus_other
+scope: event
+boundary_mode: self
+
+defining_instants:
+  start: "The exact video frame where an ultrasound probe makes contact with the patient's skin for non-cardiac evaluation (lung, FAST, IVC, aorta, line confirmation)."
+  end: "The exact video frame where the ultrasound probe is lifted off the skin after non-cardiac evaluation."
+
+audio_device:
+  - "Verbalization of non-cardiac ultrasound findings (e.g., lung sliding, FAST exam, line confirmation)."
+  - "# CLINICAL_REVIEW: CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "lung sliding"
+    - "FAST exam"
+    - "check IVC"
+    - "ultrasound for line"
+    - "scan the lungs"
+  confirm:
+    - "good lung sliding"
+    - "no free fluid on FAST"
+    - "line confirmed with ultrasound"
+    - "IVC is flat"
+    - "no pneumothorax on ultrasound"
+  negation:
+    - "cardiac view"
+    - "subxiphoid"
+    - "using Doppler for pulse"
+    - "we'll scan the lungs next"
+    - "if his pressure drops check a FAST"
+    - "FAST exam was done in triage"
+    - "lung ultrasound was normal earlier"
+
+visual:
+  - "Ultrasound probe applied to anterior/lateral chest (lungs), abdomen/flanks (FAST/IVC/aorta), or peripheral vascular sites for line confirmation."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes:
+  pocus_other_used:
+    kind: bool
+    how_to_determine: "Set true if any non-cardiac ultrasound examination (lung, FAST, IVC, aorta, line confirmation) occurred during this interval; false otherwise."
+
+disambiguation:
+  - "Non-cardiac ultrasound windows include lung, FAST, IVC, aorta, and line confirmation. Cardiac windows (subxiphoid/parasternal/apical) are pocus_cardiac."
+  - "Vascular Doppler at neck or groin during a pulse check is us_pulse (an attribute of compression_interruption), not pocus_other."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Emit pocus_other for any ultrasound examination outside cardiac windows and vascular Doppler pulse checks."
+  - "2. If both cardiac and non-cardiac POCUS are performed sequentially, emit distinct intervals for each."
+
+abstain_if:
+  - "Ultrasound probe site is completely obscured from view AND audio does not identify which organ system is being evaluated."

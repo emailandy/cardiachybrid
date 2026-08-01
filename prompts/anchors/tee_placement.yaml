@@ -1,0 +1,52 @@
+# Anchor card for tee_placement
+# Context category TEE procedure marker; standalone event always emitted (reducer handles CCI reason mapping)
+
+event_type: tee_placement
+scope: instant
+boundary_mode: self
+
+defining_instants:
+  start: "The exact timestamp where a Transesophageal Echocardiography (TEE) probe is inserted into the patient's esophagus during the resuscitation attempt."
+
+audio_device:
+  - "Verbal announcement of TEE probe insertion or TEE imaging commands ('TEE going in', 'probe in esophagus', 'four-chamber view on TEE')."
+  - "# CLINICAL_REVIEW: CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "get the TEE probe"
+    - "prep transesophageal echo"
+    - "ready for TEE insertion"
+    - "lubricate the TEE probe"
+  confirm:
+    - "TEE probe is in"
+    - "TEE placed"
+    - "probe in esophagus"
+    - "we have TEE views"
+    - "mid-esophageal view clear"
+  negation:
+    - "hold TEE placement"
+    - "can't pass the TEE probe"
+    - "stick with transthoracic echo"
+    - "we'll place TEE after he's intubated"
+    - "if we can't see on POCUS we'll do TEE"
+    - "TEE was placed before ED arrival"
+    - "TEE probe was removed ten minutes ago"
+
+visual:
+  - "Physician inserting semi-rigid TEE probe into patient mouth/esophagus and manipulating control handle while viewing echo monitor."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes: {}
+
+disambiguation:
+  - "CONTEXT CATEGORY / DUAL REPRESENTATION: Emit this standalone event whenever TEE probe placement is observed. If the placement maneuver interrupts compressions, the downstream reducer will automatically assign it as a reason code inside compression_interruption. Never suppress the standalone event to 'avoid duplication' — the model reports observations; the reducer handles dual representation."
+  - "Distinguish Transesophageal Echocardiography (TEE probe into esophagus) from surface Transthoracic Echocardiography / POCUS (probe on chest/abdomen)."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Always emit the standalone tee_placement event when observed, regardless of whether CPR is paused."
+  - "2. Do not confuse TEE probe insertion with standard surface POCUS."
+
+abstain_if:
+  - "Audio is muted AND airway/head area is completely obscured by staff during probe insertion."

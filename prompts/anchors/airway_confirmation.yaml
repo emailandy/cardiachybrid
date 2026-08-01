@@ -1,0 +1,67 @@
+# Anchor card for airway_confirmation
+# Procedural airway confirmation marker; emit ONE event per method observed (reducer takes 2nd)
+
+event_type: airway_confirmation
+scope: instant
+boundary_mode: self
+
+defining_instants:
+  start: >
+    The completion timestamp of the specific airway confirmation method observed. Emit ONE airway_confirmation event PER METHOD observed, each with its own t_start_s. Do not bundle methods into a single event and do not attempt to identify which is second — the downstream reducer sorts all confirmation timestamps and selects the second distinct method for time_airway_2nd_conf_v2.
+    Per-method defining instants:
+    - waveform_etco2: first sustained square-wave capnograph tracing on monitor, or verbalized "we have good CO2" / "end-tidal is 35".
+    - colorimetric_etco2: detector visibly changes color (purple to yellow), or verbalized "color change" / "yellow on colorimetric".
+    - auscultation: stethoscope placed on chest with provider listening (bilateral chest then epigastrium), or verbalized "bilateral breath sounds".
+    - laryngoscopy: intubator states the tube passed the cords ("tube through cords"). Per dictionary, this counts even if spoken during the intubation attempt itself.
+    - ultrasound: probe on anterior neck at trachea or on chest for lung sliding, or verbalized "tracheal ultrasound confirmed".
+    - bronchoscopy: visualization of carina/cords via bronchoscope camera or verbal confirmation.
+
+audio_device:
+  - "Verbal confirmation of breath sounds, end-tidal CO2 waveform/number, colorimetric yellow, or cords seen."
+  - "# CLINICAL_REVIEW: CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "listen to lung sounds"
+    - "hook up end tidal"
+    - "check colorimetric"
+    - "let's ultrasound the trachea"
+  confirm:
+    - "we have good CO2"
+    - "end-tidal is 35"
+    - "color change purple to yellow"
+    - "bilateral breath sounds"
+    - "tube passed cords"
+    - "lung sliding on ultrasound"
+  negation:
+    - "no color change"
+    - "I don't hear breath sounds on the left"
+    - "end tidal is flat"
+    - "we'll check end tidal after we secure the tube"
+    - "when RT brings the capnograph we'll confirm"
+    - "EMS confirmed with colorimetric in the field"
+    - "tube was confirmed ten minutes ago"
+
+visual:
+  - "Square-wave capnograph trace on monitor; colorimetric detector turning yellow; stethoscope auscultation sequence; anterior neck ultrasound scanning."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes:
+  methods:
+    kind: multi_enum
+    values: ['waveform_etco2', 'colorimetric_etco2', 'auscultation', 'laryngoscopy', 'ultrasound', 'bronchoscopy', 'unable_to_determine', 'none']
+    how_to_determine: "Identify the specific airway confirmation method observed at this timestamp: waveform_etco2 = monitor capnography; colorimetric_etco2 = color-change detector; auscultation = stethoscope lung sounds; laryngoscopy = verbalized tube through cords; ultrasound = tracheal/pleural ultrasound; bronchoscopy = bronchoscope visualization. Select only the method(s) confirmed at this specific timestamp."
+    abstain_if: "Airway check is obscured by staff AND no verbal confirmation of the method is heard (HIGH difficulty)."
+
+disambiguation:
+  - "Emit one event per distinct confirmation method with its exact completion time. Never bundle multiple methods occurring at different times into a single event."
+  - "Do not determine which method is first or second; report each method independently."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Emit ONE airway_confirmation event PER METHOD observed, each with its own t_start_s."
+  - "2. Never bundle distinct confirmation methods into a single event."
+  - "3. Record laryngoscopy confirmation when the intubator verbalizes 'tube through cords', even if spoken during intubation."
+
+abstain_if:
+  - "Audio is illegible AND no visual confirmation maneuver (monitor trace, colorimetric change, auscultation) can be identified."

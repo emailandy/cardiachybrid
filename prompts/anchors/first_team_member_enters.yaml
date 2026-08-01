@@ -1,0 +1,51 @@
+# Anchor card for first_team_member_enters
+# Point-in-time arrival marker; unobservable if video_start_late
+
+event_type: first_team_member_enters
+scope: instant
+boundary_mode: self
+
+defining_instants:
+  start: "The exact video frame where the first clinical resuscitation team member crosses the doorway threshold into the room."
+
+audio_device:
+  - "Footsteps entering bay; verbal sign-in or initial team huddle banter."
+  - "# CLINICAL_REVIEW: CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "who's primary"
+    - "let's get set up"
+    - "team briefing in Bay 1"
+  confirm:
+    - "I'm here"
+    - "ready in the bay"
+    - "let's huddle"
+  negation:
+    - "waiting for the doctor"
+    - "nobody in the room yet"
+    - "where is the nurse"
+    - "when the attending gets here we'll start"
+    - "if more staff arrive, have them scrub in"
+    - "the tech came in five minutes before EMS"
+    - "team arrived at 14:10"
+
+visual:
+  - "First identifiable hospital care team member walking into the bay."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes: {}
+
+disambiguation:
+  - "Anyone involved in the patient's care: technician, nursing assistant, nurse, physician, respiratory therapist, pharmacist, scribe. Excludes only non-care personnel — security, environmental services, family."
+  - "Excludes EMS personnel arriving with the patient."
+  - "If team members are already present when recording starts (video_start_late), do not guess entrance timestamp."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. If staff are already in the room when recording begins, emit null/abstain — do not infer from later state."
+  - "2. Count anyone involved in the patient's care (technician, nursing assistant, nurse, physician, RT, pharmacist, scribe). Exclude non-care personnel."
+  - "3. Do not count EMS personnel arriving with the patient."
+
+abstain_if:
+  - "Video starts after team members are already in the bay OR doorway is out of frame."

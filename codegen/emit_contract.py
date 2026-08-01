@@ -5,6 +5,16 @@ import json
 import re
 from pathlib import Path
 
+# where-keys that are DERIVED by the reducer, not observed by the model.
+# A where-key becomes a model attribute only if independently observable.
+# If it is computable from another attribute, the reducer computes it —
+# otherwise the model can emit a contradictory pair that nothing validates.
+DERIVED_WHERE_KEYS = {
+    "drug_class":       "derived from `drug` by the reducer's drug taxonomy",
+    "rhythm_shockable": "derived from `rhythm` ∈ {vf, pulseless_vt, "
+                        "aed_shockable, aicd_shockable}",
+}
+
 def load_registry():
     return load_yaml(Path("mapping/registry.yaml"))
 
@@ -122,6 +132,7 @@ def main():
     all_event_types = set()
     for cat in req_cats:
         all_event_types.update(et_yaml.get(cat, []))
+    all_event_types = sorted(list(all_event_types))
     
     # Initialize the 42 event types
     for et in all_event_types:
@@ -227,6 +238,42 @@ def main():
                     if gf.get("pattern") == rule.get("pattern"):
                         et = g.get("event_type") or g.get("interval_type")
                         
+        if et and isinstance(rule.get("where"), dict):
+            for k in sorted(rule["where"]):
+                if k in DERIVED_WHERE_KEYS:
+                    continue
+                if k not in contract["event_types"][et]["attributes"]:
+                    kind = "string"
+                    values = None
+                    if k in ("confirmed", "present_on_arrival", "rhythm_shockable", "pocus_other_used", "aline_present", "vitals_obtained"):
+                        kind = "bool"
+                        values = [True, False]
+                    elif k == "applied_by":
+                        kind = "enum"
+                        values = ["ed_team", "ems_team", "unable_to_determine"]
+                    elif k in ("from", "to"):
+                        kind = "enum"
+                        values = ["manual", "mechanical", "unable_to_determine"]
+                    elif k == "drug":
+                        kind = "enum"
+                        values = ["epinephrine", "lidocaine", "amiodarone", "other", "unable_to_determine"]
+                    elif k == "drug_class":
+                        kind = "enum"
+                        values = ["vasopressor", "antiarrhythmic", "thrombolytic", "other", "unable_to_determine"]
+
+                    contract["event_types"][et]["attributes"][k] = {
+                        "kind": kind,
+                        "required": False,
+                        "feeds": [f_name],
+                        "n_export_columns": 1,
+                        "difficulty": rule.get("difficulty", "HIGH")
+                    }
+                    if values:
+                        contract["event_types"][et]["attributes"][k]["values"] = values
+                else:
+                    if f_name not in contract["event_types"][et]["attributes"][k]["feeds"]:
+                        contract["event_types"][et]["attributes"][k]["feeds"].append(f_name)
+
         if emit and et:
             # It's an attribute!
             kind = "string"

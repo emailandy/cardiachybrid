@@ -1,0 +1,54 @@
+# Anchor card for rosc_lost
+# Loss of ROSC / re-arrest marker; consistent with rosc_detected; earlier of CPR resume or verbal loss
+
+event_type: rosc_lost
+scope: interval
+boundary_mode: explicit
+
+defining_instants:
+  start: "The exact timestamp where sustained ROSC is lost (re-arrest), defined as the earlier of: (1) chest compressions resume per the S1 CPR sensor track, OR (2) loss of pulse/ROSC is verbalized by the team."
+  end: "The exact timestamp where ROSC is subsequently re-established (a new rosc_detected event). Emit null if re-arrest persists until death pronouncement or the end of the video recording."
+
+audio_device:
+  - "Verbal announcement of pulse loss or re-arrest ('lost the pulse', 'no pulse, start CPR')."
+  - "# CLINICAL_REVIEW: CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "pressure is dropping"
+    - "check his pulse again"
+    - "he's bradycardic"
+    - "I don't like this femoral line trace"
+  confirm:
+    - "we lost the pulse, back on the chest"
+    - "no pulse, resume CPR"
+    - "re-arrested"
+    - "back on compressions"
+    - "lost ROSC"
+  negation:
+    - "I think we're losing him"
+    - "pulse is weak but present"
+    - "still have a pulse"
+    - "pressure is 60 over 40"
+    - "if we lose ROSC start the LUCAS"
+    - "when the arterial line drops below 50 check a pulse"
+    - "he re-arrested ten minutes ago"
+    - "we lost ROSC in the elevator"
+
+visual:
+  - "Provider hands resuming chest compressions or mechanical CPR device restarting after a period of ROSC."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes: {}
+
+disambiguation:
+  - "Must be exactly consistent with rosc_detected (Card 6). Defining instant is earlier of CPR resumption per sensor track OR verbalized loss of pulse."
+  - "NEAR-MISS EXCLUSION: 'I think we're losing him', 'pulse is weak', and 'pressure is dropping' are NOT loss of ROSC. Emit only on confirmed pulselessness or CPR resumption."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Defining instant is the earlier of compressions resuming (S1 sensor track) or verbal confirmation of pulse loss."
+  - "2. Never emit on near-miss statements or transient hypotension while a pulse remains present."
+
+abstain_if:
+  - "Audio is muted AND CPR resumption is completely obscured from camera view."

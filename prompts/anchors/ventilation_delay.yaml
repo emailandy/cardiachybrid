@@ -1,0 +1,53 @@
+# Anchor card for ventilation_delay
+# Interval boundary marker; 20+ second interruption in ventilation; high-abstention rule
+
+event_type: ventilation_delay
+scope: interval
+boundary_mode: explicit
+
+defining_instants:
+  start: "The exact timestamp where ventilation (BVM bagging or mechanical ventilation) ceases, marking the start of a 20+ second interruption without delivered breaths."
+  end: "The exact timestamp where BVM bagging or mechanical ventilator cycling resumes after a 20+ second delay."
+
+audio_device:
+  - "Verbal recognition of a pause in ventilation ('why aren't we bagging?', 'apneic for 30 seconds', 'bag him')."
+  - "# CLINICAL_REVIEW: CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "hold bagging"
+    - "disconnect the BVM"
+    - "pause ventilation for suction"
+    - "why aren't we bagging"
+  confirm:
+    - "we haven't bagged in 30 seconds"
+    - "resume bagging"
+    - "back on the ventilator"
+    - "apneic pause ended"
+  negation:
+    - "bag him every six seconds"
+    - "good chest rise"
+    - "keep bagging"
+    - "we'll pause bagging when the ET tube is ready"
+    - "if he desaturates bag faster"
+    - "he wasn't bagged for five minutes by EMS"
+    - "we had a bagging pause ten minutes ago"
+
+visual:
+  - "BVM resting unattended on bed/patient without squeezing for >=20 seconds, or continuous flatline on ETCO2 waveform despite CPR."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes: {}
+
+disambiguation:
+  - "HIGH-ABSTENTION EVENT TYPE: Detecting the absence of ventilation is extremely difficult when BVM or ventilator is off-camera."
+  - "A ventilation delay is ONLY claimable when the airway and BVM/ventilator are CONTINUOUSLY VISIBLE for the full >=20 second interval, OR when the monitor capnograph waveform visibly flatlines and then resumes."
+  - "Absence of evidence of ventilation is NOT evidence of a ventilation delay. If the bag is out of frame or occluded, ABSTAIN and emit a coverage_note for the airway channel rather than guessing."
+  - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
+
+hard_rules:
+  - "1. Do NOT claim ventilation_delay unless airway and BVM/ventilator are continuously visible for >=20 seconds OR capnography flatlines."
+  - "2. Absence of evidence of bagging is NOT evidence of a delay; if BVM is out of frame, abstain and emit an airway coverage_note."
+
+abstain_if:
+  - "The BVM or mechanical ventilator is off-camera or occluded by staff during the suspected delay interval."
