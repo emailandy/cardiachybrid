@@ -1,0 +1,2 @@
+ccf_denominator_mode: "first_compression_to_termination_excluding_rosc"  # Q-012 interim default (c)
+ccf_epoch_seconds: 120.0  # 2-minute run chart epoch

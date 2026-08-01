@@ -48,6 +48,13 @@ production use. Structural validation (check_anchors) passes; clinical
 validation has not occurred. Blocks: first production run, not development.
 Owner: clinical lead.  Status: OPEN.
 
+Q-012 CCF denominator definition
+  - options: (a) first compression -> last compression, (b) patient arrival -> termination or ROSC, (c) first compression -> termination, excluding sustained-ROSC periods
+  - default: candidate (c) first compression -> termination excluding sustained ROSC (configured in config/metrics.yaml)
+  - owner: clinical lead
+  - status: OPEN
+  - blocks: D10 clinical sign-off
+
 ## OPERATIONAL — awaiting human
 Q-007 — Is the artifact-foundry-prod pip index an institutional control?
 Inherited pip config points at

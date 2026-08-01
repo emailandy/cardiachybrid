@@ -1,0 +1,173 @@
+chest_compression_fraction:
+  version: "1.0.0"
+  statement: >
+    (total_case_time - sum(cci_durations)) / total_case_time, where
+    total_case_time spans the first compression to termination or the last
+    compression, EXCLUDING periods of sustained ROSC. See Q-012.
+  numerator: "total_case_time - sum(cci_durations)"
+  denominator: "total_case_time"
+  null_when: "no compressions detected or total case time is zero"
+
+ccf_by_2min_epoch:
+  version: "1.0.0"
+  statement: >
+    Array of chest compression fraction values calculated across sequential
+    120-second non-overlapping windows from case start to termination.
+  numerator: "window_duration - sum(cci_durations_in_window)"
+  denominator: "window_duration (120.0s)"
+  null_when: "case duration shorter than window or no compressions in case"
+
+n_cci_over_10s:
+  version: "1.0.0"
+  statement: >
+    Count of compression-interruption intervals (CCIs) with duration strictly greater than 10.0 seconds.
+  numerator: "count(cci where duration_s > 10.0)"
+  denominator: "count(cci)"
+  null_when: "no CCIs detected in case"
+
+longest_cci_s:
+  version: "1.0.0"
+  statement: >
+    Maximum duration in seconds among all compression-interruption intervals (CCIs).
+  numerator: "max(cci.duration_s)"
+  denominator: "1"
+  null_when: "no CCIs detected in case"
+
+median_cci_s:
+  version: "1.0.0"
+  statement: >
+    Median duration in seconds across all compression-interruption intervals (CCIs).
+  numerator: "median(cci.duration_s)"
+  denominator: "count(cci)"
+  null_when: "no CCIs detected in case"
+
+peri_shock_pause_pre_s:
+  version: "1.0.0"
+  statement: >
+    Array of pre-shock pause durations in seconds per defibrillation shock, measured
+    from the start of the preceding compression interruption to the shock timestamp.
+  numerator: "t_shock - t_start_of_preceding_cci"
+  denominator: "count(shocks)"
+  null_when: "zero shocks in case"
+
+peri_shock_pause_post_s:
+  version: "1.0.0"
+  statement: >
+    Array of post-shock pause durations in seconds per defibrillation shock, measured
+    from the shock timestamp to the resumption of compressions (end of CCI).
+  numerator: "t_end_of_cci - t_shock"
+  denominator: "count(shocks)"
+  null_when: "zero shocks in case"
+
+median_peri_shock_pause_pre_s:
+  version: "1.0.0"
+  statement: >
+    Median pre-shock pause duration in seconds across all defibrillation shocks in the case.
+  numerator: "median(pre_shock_pauses)"
+  denominator: "count(shocks)"
+  null_when: "zero shocks in case"
+
+median_peri_shock_pause_post_s:
+  version: "1.0.0"
+  statement: >
+    Median post-shock pause duration in seconds across all defibrillation shocks in the case.
+  numerator: "median(post_shock_pauses)"
+  denominator: "count(shocks)"
+  null_when: "zero shocks in case"
+
+pre_charged_shock_rate:
+  version: "1.0.0"
+  statement: >
+    Fraction of defibrillation shocks where capacitor charging started prior to
+    the start of the peri-shock compression interruption (pre-charging).
+  numerator: "count(shocks where charge_start < cci_start)"
+  denominator: "count(shocks)"
+  null_when: "zero shocks in case"
+
+arrival_to_pads_s:
+  version: "1.0.0"
+  statement: >
+    Elapsed time in seconds from patient arrival in ED to initial defibrillator pad application.
+  numerator: "t_first_pad_application - t_arrival"
+  denominator: "1"
+  null_when: "pad application event absent from stream"
+
+arrival_to_first_epi_s:
+  version: "1.0.0"
+  statement: >
+    Elapsed time in seconds from patient arrival in ED to initial epinephrine administration.
+  numerator: "t_first_epinephrine - t_arrival"
+  denominator: "1"
+  null_when: "epinephrine administration event absent from stream"
+
+shockable_to_first_shock_s:
+  version: "1.0.0"
+  statement: >
+    Elapsed time in seconds from initial shockable rhythm determination (VF/VT) to initial defibrillation shock.
+  numerator: "t_first_shock - t_first_shockable_rhythm"
+  denominator: "1"
+  null_when: "shockable rhythm or defibrillation shock absent from stream"
+
+n_airway_attempts:
+  version: "1.0.0"
+  statement: >
+    Total count of advanced airway insertion attempts (endotracheal intubation or SGA placement).
+  numerator: "count(airway_attempt)"
+  denominator: "1"
+  null_when: "no airway attempt events present"
+
+first_pass_success:
+  version: "1.0.0"
+  statement: >
+    Fraction of cases achieving successful advanced airway placement on the initial attempt.
+  numerator: "1 if first attempt successful else 0"
+  denominator: "1 if any attempt else 0"
+  null_when: "zero airway attempts in case"
+
+cci_seconds_attributable_to_airway:
+  version: "1.0.0"
+  statement: >
+    Total cumulative duration in seconds of compression interruptions overlapping with an airway attempt.
+  numerator: "sum(duration_s of cci overlapping airway_attempt)"
+  denominator: "count(cci)"
+  null_when: "no CCIs or no airway attempts in case"
+
+mccd_deployment_noflow_s:
+  version: "1.0.0"
+  statement: >
+    Duration in seconds of the compression interruption during which a mechanical chest compression device (MCCD) was deployed.
+  numerator: "duration_s of cci during mccd deployment"
+  denominator: "1"
+  null_when: "mccd not deployed in case"
+
+closed_loop_completion_rate:
+  version: "1.0.0"
+  statement: >
+    Proportion of verbal clinical directives that receive explicit closed-loop verbal acknowledgment.
+  numerator: "count(acknowledged directives)"
+  denominator: "count(total directives)"
+  null_when: "requires S7 diarized ASR"
+
+n_unacknowledged_directives:
+  version: "1.0.0"
+  statement: >
+    Count of verbal clinical directives without closed-loop acknowledgment.
+  numerator: "count(unacknowledged directives)"
+  denominator: "count(total directives)"
+  null_when: "requires S7 diarized ASR"
+
+dur_mccd_app_ed_secs_v2:
+  version: "1.0.0"
+  statement: >
+    Total duration in seconds of mechanical chest compression device (MCCD) application in ED.
+  numerator: "sum(mccd interval durations)"
+  denominator: "1"
+  null_when: "mccd not applied in ED"
+
+duration_ventilator_place_v2:
+  version: "1.0.0"
+  statement: >
+    Total duration in seconds of mechanical ventilator placement interval in ED.
+  numerator: "sum(ventilator placement interval durations)"
+  denominator: "1"
+  null_when: "ventilator not placed in ED"

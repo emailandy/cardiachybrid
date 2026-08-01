@@ -85,6 +85,15 @@ Date: 2026-08-01  Session: D09  Decided by: human, agent
 4. **Objective-First Queue Ordering**: `ReviewQueue.next_item()` sorts unreviewed items by `(queue_class == 'subjective', not required, -difficulty_rank, confidence)` ascending. Subjective TEAM ratings (`queue_class = 'subjective'`) are ordered after objective timestamp/UTD items (`queue_class = 'objective'`), ensuring subjective ratings are evaluated with the whole case in mind.
 5. **A3 Exemplar Few-Shot Feedback Loop**: Every human correction (`submit()`) where `human_value != ai_value` writes an `ExemplarRecord` (`{case_id, event_id, field_name, event_type, ai_value, human_value, clip_t0, clip_t1}`) retrievable by `event_type` to close the HITL learning loop.
 
+## 019 — D10 Derived QI metrics layer, interim CCF denominator (Q-012), NULL vs zero representation, and declarative formula versioning
+Date: 2026-08-01  Session: D10  Decided by: human, agent
+1. **Interim Default CCF Denominator Option (c)**: CCF denominator candidate (c) (*first compression -> termination, excluding sustained-ROSC periods*) is implemented as the interim default (`Q-012`). This is configurable via `ccf_denominator_mode` in `config/metrics.yaml` so changing candidates is a 1-line change.
+2. **NULL vs 0 Contract**: Non-computable metrics (e.g., peri-shock pauses when zero shocks occurred, first-pass success when zero airway attempts occurred) explicitly emit a `MetricRow` with `value = None` (`NULL`) and a descriptive `null_reason`. A value of `0` is strictly reserved for measured quantities that evaluate to zero.
+3. **Numerator & Denominator Recording**: Every ratio or fraction metric records both `numerator` and `denominator` explicitly on the `MetricRow` so case aggregations sum numerators and denominators rather than averaging ratios.
+4. **S7 Diarized ASR Dependencies**: ASR-dependent metrics (`closed_loop_completion_rate` and `n_unacknowledged_directives`) emit `value = None` with `null_reason: "requires S7 diarized ASR"`, ensuring prompt schema assembly finds all enumerated metric keys without KeyError.
+5. **REDCap Calc Field Replacements**: The two REDCap server-computed calc fields (`dur_mccd_app_ed_secs_v2` and `duration_ventilator_place_v2`) are computed independently in `fact_metric` (`source = "REDCAP_CALC_REPLACEMENT"`), dynamically resolved from `FIELDS` by `source_class == "REDCAP_CALC"` to avoid field-name literals.
+6. **Declarative Formula Versioning**: All QI formula specifications reside in prose in `metrics/definitions.yaml`. `metric_definition_version` is an 8-character SHA-256 hash computed over the prose statements only, so refactoring Python code without changing formulas leaves the version unchanged.
+
 
 
 
