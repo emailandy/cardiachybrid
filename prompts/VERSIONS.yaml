@@ -8,10 +8,10 @@ system_prompt: "prompts/system/constitution.v2.0.md"
 pass_templates:
   pass_1: "prompts/passes/p1_harvest.v2.0.md"
   pass_2: "prompts/passes/p2_verify.v2.0.md"
-  pass_3: "prompts/passes/p3.txt"
-  pass_4a: "prompts/passes/p4a.txt"
-  pass_4b: "prompts/passes/p4b.txt"
-  pass_5: "prompts/passes/p5.txt"
+  pass_3: "prompts/passes/p3_adjudicate.v2.0.md"
+  pass_4a: "prompts/passes/p4a_team_items.v2.0.md"
+  pass_4b: "prompts/passes/p4b_team_global.v2.0.md"
+  pass_5: "prompts/passes/p5_notes.v2.0.md"
 
 fragments:
   coverage_rules: "prompts/fragments/coverage_rules.md"

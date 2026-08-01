@@ -9,7 +9,7 @@ def test_prompt_set_sha_strict():
     with pytest.raises(FileNotFoundError) as exc:
         prompt_set_sha(strict=True)
     assert "Missing 4 files:" in str(exc.value)
-    assert "prompts/passes/p3.txt" in str(exc.value)
+    assert "prompts/passes/p3_adjudicate.v2.0.md" in str(exc.value)
 
 def test_assert_no_field_names():
     with pytest.raises(ValueError) as exc:
