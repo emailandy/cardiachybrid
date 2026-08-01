@@ -33,6 +33,7 @@ class FieldValue:
     validation_passed: bool = True
     validation_error: str | None = None
     routed_to_human: bool = False
+    ensemble_spread_s: float = 0.0
 
 
 @dataclass(slots=True, frozen=True)
@@ -192,7 +193,7 @@ def _map_vocab(val: Any, f_spec: rf.FieldSpec | None) -> Any:
 def _emit_fv(
     field_name: str, val: Any, label: str, source_class: str, ids: list[str],
     fields_spec: dict[str, rf.FieldSpec], is_null: bool = False, routed: bool = False,
-    abstained: bool = False, abstain_reason: str | None = None,
+    abstained: bool = False, abstain_reason: str | None = None, ensemble_spread_s: float = 0.0,
 ) -> FieldValue:
     f_spec = fields_spec.get(field_name) or fields_spec.get(field_name.split('___')[0])
     col = f_spec.export_columns[0] if f_spec and f_spec.export_columns else field_name
@@ -206,6 +207,7 @@ def _emit_fv(
         is_null=is_null or (val is None), abstained=abstained, abstain_reason=abstain_reason,
         confidence=1.0 if (not is_null and val is not None) else 0.0,
         source_class=src, source_event_ids=ids, routed_to_human=routed,
+        ensemble_spread_s=ensemble_spread_s,
     )
     if f_spec:
         _validate_field_value(fv, f_spec)
@@ -446,14 +448,14 @@ def reduce_stream(
     for group in registry.get('groups', []):
         values.extend(_process_repeating_group(group, stream, fields_spec))
 
+    spread_map = {_get_item_id(e): float(getattr(e, 'attributes', {}).get('ensemble_spread_s', 0.0)) for e in stream.events if getattr(e, 'attributes', None)}
     record: dict[str, Any] = {}
     for fv in values:
-        if not fv.is_null and fv.value is not None:
-            record[fv.export_column] = fv.value
-            record[fv.field_name] = fv.value
-        else:
-            record[fv.export_column] = ''
-            record[fv.field_name] = ''
+        if fv.source_event_ids:
+            fv.ensemble_spread_s = max((spread_map.get(i_id, 0.0) for i_id in fv.source_event_ids), default=0.0)
+        val = fv.value if (not fv.is_null and fv.value is not None) else ''
+        record[fv.export_column] = val
+        record[fv.field_name] = val
 
     for fv in values:
         pred = bc.PREDICATES.get(fv.field_name) or bc.PREDICATES.get(fv.export_column)

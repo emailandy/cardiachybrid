@@ -26,6 +26,7 @@ from fixtures.synthetic_streams import (
     get_all_synthetic_streams,
     get_maximal_stream,
     get_degraded_stream,
+    get_sparse_stream,
     get_overflow_stream,
     get_contradictory_stream,
 )
@@ -226,6 +227,19 @@ def test_deferred_derivations():
     assert val_map.get("thromb_given_ed_v2") == "1"
     # Rhythm was VF -> shockable_rhy_ed_v2 is '1' (Yes)
     assert val_map.get("shockable_rhy_ed_v2") == "1"
+
+
+def test_all_choice_fields_emit_codes_not_symbols():
+    """Assert that every emitted FieldValue for radio/dropdown choice fields emits a valid code, never a symbol."""
+    for stream_func in (get_maximal_stream, get_degraded_stream, get_sparse_stream, get_overflow_stream):
+        field_values, _, _ = reduce_stream(stream_func())
+        bad = []
+        for fv in field_values:
+            spec = rf.FIELDS.get(fv.field_name) or rf.FIELDS.get(fv.field_name.split("___")[0])
+            if spec and spec.field_type in ("radio", "dropdown") and spec.choices and fv.value not in (None, ""):
+                if str(fv.value) not in spec.choices:
+                    bad.append((fv.field_name, fv.value, list(spec.choices)[:4]))
+        assert not bad, f"Found fields emitting symbolic values instead of choice codes: {bad}"
 
 
 def test_interim_defaults_labeled():

@@ -89,7 +89,7 @@ def should_route(
         return True, "truncated group"
 
     # 5. Ensemble spread > spread_threshold_s
-    spread = float(getattr(fv, "ensemble_spread_s", ensemble_spread_s))
+    spread = float(fv.ensemble_spread_s) if fv.ensemble_spread_s > 0.0 else float(ensemble_spread_s)
     spread_thresh = float(config.get("spread_threshold_s", 3.0))
     if spread > spread_thresh:
         return True, "spread > 3.0s"
