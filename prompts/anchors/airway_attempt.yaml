@@ -1,0 +1,80 @@
+# Anchor card for airway_attempt
+# Defines attempt boundaries by lips/teeth contact to ventilation/exit
+
+event_type: airway_attempt
+scope: interval
+boundary_mode: self
+
+defining_instants:
+  start: "First contact of blade or supraglottic device with lips/teeth. NOT device pickup, NOT pre-oxygenation, NOT OPA/NPA insertion."
+  end: "SUCCESS: first effective ventilation through the placed device (visible chest rise on BVM squeeze, or first capnography tracing). FAILURE: the instant the blade fully exits the mouth."
+
+audio_device:
+  - "Sudden loud continuous suction sound indicating active airway clearance of blood or vomitus (vomit_blood_aspiration)."
+  - "BVM squeeze sound or ventilator cycling sound upon successful tube placement."
+  - "# CLINICAL_REVIEW: CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "intubating"
+    - "going in"
+    - "blade"
+    - "suction"
+  confirm:
+    - "tube is in"
+    - "good chest rise"
+    - "color change on CO2"
+    - "we have end tidal"
+  negation:
+    - "pulling out"
+    - "couldn't get a view"
+    - "bag him again"
+
+visual:
+  - "Provider inserting laryngoscope blade or supraglottic airway into patient's mouth."
+  - "Bougie (long thin blue/orange stylet) passed through vocal cords before endotracheal tube."
+  - "DL = straight handle, operator's eyes AT THE MOUTH. VL = screen on handle or tethered monitor, operator's eyes ON THE SCREEN."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes:
+
+  cpr_ongoing:
+    how_to_determine: >
+      Determine whether chest compressions were ongoing during this airway attempt based on visual or sensor evidence.
+    values: ['yes', 'no', 'unable_to_determine']
+
+  compression_type:
+    how_to_determine: >
+      If cpr_ongoing is yes, determine whether compressions were manual or mechanical (LUCAS/AutoPulse).
+    gate: "cpr_ongoing == yes"
+
+  device:
+    how_to_determine: >
+      Determine the airway device used: DL = straight handle, operator's eyes AT THE MOUTH. VL = screen on handle or tethered monitor, operator's eyes ON THE SCREEN. Codes for hyperangulated vs geometric require clear blade curvature or an audible product name; otherwise endotracheal_VL_unknown (expect >= 50% of VL attempts to land on unknown — that is correct).
+    values: ['endotracheal_DL', 'endotracheal_VL_hyperangulated',
+             'endotracheal_VL_geometric', 'endotracheal_VL_unknown', 'sga_lma',
+             'sga_king', 'sga_combitube', 'sga_unknown', 'cricothyrotomy',
+             'unable_to_determine']
+    abstain_if: "Airway operator's hands and device are completely blocked from camera view AND no verbal description of the blade or device is audible."
+
+  vomit_blood_aspiration:
+    how_to_determine: >
+      Determine whether vomit or blood aspiration occurred during the attempt, anchored by visible emesis/blood in airway or sudden loud continuous suction audio.
+    values: ['yes', 'no', 'unable_to_determine']
+
+  adjunct:
+    how_to_determine: >
+      Determine whether an intubation adjunct was used. A bougie is a long thin blue/orange stylet passed before the tube. Instrument is a radio button so bougie+fiberoptic is uncodeable; bougie takes precedence (Q-005 interim default).
+    values: ['bougie', 'fiberoptic', 'none', 'unable_to_determine']
+
+disambiguation:
+  - "Distinguish actual intubation attempt (blade in mouth) from pre-oxygenation, airway suctioning without laryngoscopy, or OPA/NPA placement."
+  - "Operator position (head_of_bed, patient_right, patient_left) is observed physically; NEVER emit training level, seniority, PGY, or years of experience (Constitution Prohibition 1)."
+
+hard_rules:
+  - "1. Insertion and removal of a blade is ONE attempt, whether or not a tube was passed. If the operator changes, that is a NEW attempt with its own start time."
+  - "2. If bougie and fiberoptic are both used, bougie takes precedence per Q-005 interim default."
+  - "3. NEVER emit training level, seniority, PGY, or years of experience. Not determinable from video."
+
+abstain_if:
+  - "Airway attempt occurs entirely off-camera AND no verbal speech confirms whether an intubation attempt occurred."

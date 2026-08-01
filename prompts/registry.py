@@ -116,12 +116,15 @@ def prompt_set_sha(strict: bool = True) -> str:
             
     return h.hexdigest()[:16]
 
-def check_anchors(types=None, fail_on_gap: bool = False) -> dict[str, list[str]]:
-    """Returns {event_type: [uncovered attributes]}.
+def check_anchors(types=None, fail_on_gap: bool = False) -> dict[str, dict[str, list[str]]]:
+    """Returns {event_type: {attr: [uncovered reasons]}}.
     fail_on_gap=False during A01-A03; A03b's acceptance flips it True.
     Gaps are reported against generated/extraction_contract.json — every
-    attribute the contract declares for a type must appear in that type's
-    card. File existence alone is not coverage."""
+    card as a detailed mapping.
+    
+    check_anchors() proves structural coverage only. It cannot validate
+    clinical accuracy. Anchor card content requires human clinical review
+    before the first production run — see docs/CLINICAL_REVIEW_QUEUE.md."""
     
     contract_path = Path("generated/extraction_contract.json")
     if not contract_path.exists():
@@ -146,23 +149,57 @@ def check_anchors(types=None, fail_on_gap: bool = False) -> dict[str, list[str]]
     for t in types_to_check:
         card_path = anchors_dir / f"{t}.yaml"
         if not card_path.exists():
-            gaps[t] = ["<no anchor card>"]
+            gaps[t] = {"_card": ["<no anchor card>"]}
             continue
             
-        card_text = card_path.read_text()
         card_yaml = load_yaml(card_path)
+        type_gaps = {}
         
-        type_gaps = []
         for key in required_keys:
             if key not in card_yaml:
-                type_gaps.append(f"Missing schema key: {key}")
+                type_gaps.setdefault("_schema", []).append(f"Missing schema key: {key}")
                 
-        # Check attributes
-        attrs = event_types.get(t, {}).get("attributes", [])
-        for attr in attrs:
-            attr_name = attr.get("name")
-            if attr_name and attr_name not in card_text:
-                type_gaps.append(f"Attribute not covered: {attr_name}")
+        req_attrs = card_yaml.get("required_attributes", {})
+        is_mapping = isinstance(req_attrs, dict)
+        
+        contract_attrs = event_types.get(t, {}).get("attributes", {})
+        for attr_name, contract_attr in contract_attrs.items():
+            if attr_name in ("t_start_s", "t_end_s") or contract_attr.get("kind") == "timestamp":
+                continue
+            attr_reasons = []
+            if not is_mapping or attr_name not in req_attrs:
+                attr_reasons.append("absent from required_attributes mapping")
+            else:
+                card_attr = req_attrs[attr_name]
+                if not isinstance(card_attr, dict):
+                    attr_reasons.append("attribute entry is not a mapping")
+                else:
+                    how = card_attr.get("how_to_determine", "")
+                    if not how or len(str(how).strip()) < 40:
+                        attr_reasons.append("how_to_determine missing, empty, or under 40 characters")
+                        
+                    kind = contract_attr.get("kind")
+                    if kind in ("enum", "multi_enum"):
+                        c_vals = set(contract_attr.get("values", []))
+                        a_vals = set(card_attr.get("values", []))
+                        if "values" not in card_attr or a_vals != c_vals:
+                            attr_reasons.append(f"enum values mismatch: card {sorted([str(x) for x in a_vals])} != contract {sorted([str(x) for x in c_vals])}")
+                            
+                    if "gated_by" in contract_attr:
+                        if "gate" not in card_attr:
+                            attr_reasons.append(f"contract declares gate ({contract_attr['gated_by']}) but card omits it")
+                            
+                    if "detector_hint" in contract_attr:
+                        if "source" not in card_attr:
+                            attr_reasons.append(f"contract declares detector hint ({contract_attr['detector_hint']}) but card omits source")
+                            
+                    if contract_attr.get("difficulty") == "HIGH":
+                        abstain = card_attr.get("abstain_if", "")
+                        if not abstain or not str(abstain).strip():
+                            attr_reasons.append("difficulty is HIGH and abstain_if is missing")
+                            
+            if attr_reasons:
+                type_gaps[attr_name] = attr_reasons
                 
         if type_gaps:
             gaps[t] = type_gaps
@@ -180,3 +217,14 @@ if __name__ == "__main__":
         except Exception as e:
             print(str(e))
             sys.exit(1)
+    elif len(sys.argv) > 1 and sys.argv[1] == "check-anchors":
+        types = None
+        if "--types" in sys.argv:
+            idx = sys.argv.index("--types")
+            types = sys.argv[idx + 1:]
+        gaps = check_anchors(types=types)
+        if gaps:
+            print(json.dumps(gaps, indent=2))
+            sys.exit(1)
+        else:
+            print("0 uncovered")

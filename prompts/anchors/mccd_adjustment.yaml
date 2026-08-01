@@ -1,0 +1,70 @@
+# Anchor card for mccd_adjustment
+# Carries the 8-way taxonomy and maps to contract adjustment categories
+
+event_type: mccd_adjustment
+scope: interval
+boundary_mode: self
+
+defining_instants:
+  start: "The exact video frame where an operator begins physical manipulation of the mechanical CPR device, patient position, or straps/clothing around the device."
+  end: "The exact video frame where operator hands release the mechanical CPR device and normal compression cycling resumes."
+
+audio_device:
+  - "Metallic double-click when a support-leg claw is re-seated onto the backboard pin (latch_resecured)."
+  - "Compressions stop, followed by startup tone sequence upon battery reinsertion (battery_change)."
+  - "# CLINICAL_REVIEW: CR-004 (mechanical CPR device make/model)"
+
+speech:
+  precursor:
+    - "it's too low"
+    - "move it up"
+    - "that's on his stomach"
+    - "let me set the depth"
+    - "press it down"
+    - "it's not latched"
+    - "relatch that side"
+    - "battery"
+    - "low battery alarm"
+  confirm:
+    - "good position"
+    - "locked in"
+    - "restarted"
+  negation:
+    - "don't move it yet"
+    - "leave it where it is"
+    - "it's fine as is"
+
+visual:
+  - "device_moved_up: whole frame lifted and repositioned cephalad; suction cup relocated from upper abdomen/xiphoid toward mid-sternum."
+  - "suction_cup_manipulated: cup pressed down onto the chest, or ADJUST/up-down keys pressed on the control pad — frame NOT moved."
+  - "latch_resecured: one support-leg claw grasped and re-seated onto the backboard pin."
+  - "battery_change: black battery block slid out of the top, new one in."
+  - "clothing_removed: fabric pulled from under the cup or frame."
+  - "sheets_moved: bedding pulled clear of the mechanism."
+  - "arm_adjusted: patient's arm moved into or out of the straps."
+  - "other: any manipulation not covered above."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes:
+
+  adjustment_categories:
+    how_to_determine: >
+      Identify every category of mechanical CPR adjustment performed during this interval. Multi-select. Map observations from the 8-way taxonomy: device_moved_up and suction_cup_manipulated map to mccd_position; arm_adjusted, clothing_removed, and sheets_moved map to patient_position; latch_resecured and battery_change map to troubleshooting_components; any other manipulation maps to other. If an adjustment clearly occurred but the specific category is obscured, emit ['other'].
+    values: ['patient_position', 'mccd_position', 'troubleshooting_components', 'other']
+    abstain_if: "Mechanical CPR device is completely obscured from camera view AND no speech or audio cues indicate the adjustment type."
+
+  adjustment_other_text:
+    how_to_determine: >
+      If adjustment_categories contains 'other', write a concise physical description of the manipulation observed based on direct visual or speech evidence. Leave null if 'other' is not selected.
+    gate: "adjustment_categories contains other"
+
+disambiguation:
+  - "device_moved_up vs suction_cup_manipulated is the highest-confusion pair. The discriminator is whether the FRAME moved (device_moved_up) or only the piston/cup (suction_cup_manipulated)."
+  - "Distinguish mechanical CPR adjustment during an interruption from initial device placement or permanent removal."
+
+hard_rules:
+  - "1. Multi-select. Emit every manipulation observed. If an adjustment clearly occurred but the specific manipulation is not visible, emit ['other'] with an abstain_reason — never default to the most common category."
+  - "2. Attribute each adjustment to THIS interval only. An action beginning before the interval starts or continuing after it ends is attributed to the interval(s) it overlaps, not moved."
+
+abstain_if:
+  - "Mechanical CPR device is obscured by providers AND no verbal description of the adjustment is audible."

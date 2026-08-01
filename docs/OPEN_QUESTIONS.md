@@ -43,6 +43,11 @@ Q-006 TEAM autonomy threshold
   - status: OPEN
   - blocks: TBD
 
+Q-009 — All 39 anchor cards require clinical review for accuracy before
+production use. Structural validation (check_anchors) passes; clinical
+validation has not occurred. Blocks: first production run, not development.
+Owner: clinical lead.  Status: OPEN.
+
 ## OPERATIONAL — awaiting human
 Q-007 — Is the artifact-foundry-prod pip index an institutional control?
 Inherited pip config points at

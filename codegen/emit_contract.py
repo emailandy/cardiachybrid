@@ -58,7 +58,31 @@ def iter_all_rules(registry):
     yield from registry.get("never_ai", [])
     for g in registry.get("groups", []):
         yield g
-        yield from g.get("fields", [])
+        group_et = g.get("event_type")
+        if not group_et and g.get("interval_type"):
+            it = g.get("interval_type")
+            if it == "cci": group_et = "compression_interruption"
+            elif it == "rosc": group_et = "rosc_detected"
+            elif it == "vent_delay": group_et = "ventilation_delay"
+        for gf in g.get("fields", []):
+            gf_copy = dict(gf)
+            if not gf_copy.get("rule") and gf_copy.get("emit"):
+                gf_copy["rule"] = "attr"
+            if not gf_copy.get("rule") and gf_copy.get("kind") == "checkbox":
+                gf_copy["rule"] = "checkbox"
+            if not gf_copy.get("emit") and gf_copy.get("rule") in ("gate_yesno", "gate_3way"):
+                pat = str(gf_copy.get("pattern", ""))
+                if "aline_present" in pat: gf_copy["emit"] = "aline_present"
+                elif "vitals_obtained" in pat: gf_copy["emit"] = "vitals_obtained"
+            if g.get("name") == "rosc" and ("vitals" in str(gf_copy.get("gate", "")) or gf_copy.get("emit") in ("hr", "sbp", "dbp", "spo2", "etco2", "vitals_t_s")):
+                gf_copy["event_type"] = "vitals_reading"
+            elif group_et and not gf_copy.get("event_type"):
+                gf_copy["event_type"] = group_et
+            yield gf_copy
+            if gf_copy.get("emit") == "pocus_other_used":
+                extra = dict(gf_copy)
+                extra["event_type"] = "compression_interruption"
+                yield extra
 
 def get_field_vocab(f_spec, rule, registry):
     vocab_name = rule.get("vocab_override") or rule.get("vocab")
@@ -114,10 +138,9 @@ def main():
     for et in all_event_types:
         p = Path(f"prompts/anchors/{et}.yaml")
         if p.exists():
-            with open(p) as f:
-                anchor = yaml.safe_load(f)
-                if anchor and "defining_instants" in anchor:
-                    contract["event_types"][et]["defining_instants"] = anchor["defining_instants"]
+            anchor = load_yaml(p)
+            if anchor and "defining_instants" in anchor:
+                contract["event_types"][et]["defining_instants"] = anchor["defining_instants"]
         if "defining_instants" not in contract["event_types"][et]:
             contract["event_types"][et]["defining_instants"] = {}
             
@@ -219,6 +242,9 @@ def main():
             elif vocab and len(vocab) == 2 and set(vocab.values()) == {"true", "false"}:
                 kind = "bool"
                 values = [True, False]
+            elif rule.get("rule") == "gate_3way":
+                kind = "bool"
+                values = [True, False]
             elif vocab and len(vocab) >= 3:
                 kind = "enum"
                 values = list(vocab.values())
@@ -243,8 +269,8 @@ def main():
                 
             if "range" in rule:
                 attr["range"] = rule["range"]
-            if "detector_hint" in rule:
-                attr["detector_hint"] = rule["detector_hint"]
+            if rule.get("detector") or rule.get("detector_hint"):
+                attr["detector_hint"] = rule.get("detector") or rule.get("detector_hint")
             if "gate" in rule:
                 attr["gated_by"] = rule["gate"] # Will normalize in pass 2
                 
@@ -257,21 +283,19 @@ def main():
                         if gf.get("pattern") == rule.get("pattern"):
                             g_max = g.get("max", 0)
                 
-                union_values = set()
+                ordered_union = []
                 index_vocabs = {}
                 for i in range(1, g_max + 1):
                     real_field = f_name.replace("{i}", str(i))
                     if real_field in specs:
                         ivocab = get_field_vocab(specs[real_field], rule, registry)
                         ivocab_symbols = [ivocab[str(c)] for c in ivocab if str(c) not in [str(x) for x in rule.get("suppress_codes", [])]]
-                        union_values.update(ivocab_symbols)
+                        for sym in ivocab_symbols:
+                            if sym not in ordered_union:
+                                ordered_union.append(sym)
                         index_vocabs[str(i)] = ivocab_symbols
                         
-                try:
-                    attr["values"] = sorted(list(union_values))
-                except TypeError:
-                    print(f"Error sorting union_values for {f_name}, emit {emit}: {union_values}")
-                    sys.exit(1)
+                attr["values"] = ordered_union
                 exc = {}
                 for idx, syms in index_vocabs.items():
                     missing = set(attr["values"]) - set(syms)

@@ -1,0 +1,90 @@
+# Anchor card for vitals_reading
+# All five vitals abstain INDEPENDENTLY; OCR or verbatim speech only
+
+event_type: vitals_reading
+scope: linked_to_interval
+boundary_mode: self
+
+defining_instants:
+  reading: "The timestamp of the monitor frame the values were read from. For an NIBP cycle, the moment the NEW value APPEARS on screen, not when the cuff inflated."
+
+audio_device:
+  - "Verbatim verbal readout of vital signs by clinical staff (e.g., 'pressure is 110 over 70', 'sats are 98%')."
+  - "NIBP cuff inflation pump noise ending in beep when measurement completes."
+
+speech:
+  precursor:
+    - "cycle the cuff"
+    - "check a pressure"
+    - "what are his vitals"
+    - "get sats"
+  confirm:
+    - "pressure is 110 over 70"
+    - "sats 98"
+    - "heart rate 85"
+    - "end tidal is 35"
+  negation:
+    - "that's artifact"
+    - "cuff didn't read"
+    - "pleth is bad"
+    - "don't read that BP, we're compressing"
+
+visual:
+  - "Monitor screen showing OCR-legible numeric digits for HR, SpO2, EtCO2, ART, or NIBP."
+  - "Provider pressing the NIBP start button on monitor."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration) and CR-002 (resuscitation monitor make/model)"
+
+required_attributes:
+
+  vitals_obtained:
+    kind: bool
+    how_to_determine: >
+      Determine whether any vital signs (HR, SBP, DBP, SpO2, EtCO2) were successfully read or verbalized for this ROSC window. Emit true if at least one vital sign is obtained, false otherwise.
+
+  hr:
+    how_to_determine: >
+      Read heart rate (HR) directly from the monitor OCR track (confidence > 0.80, within ±15 s of reading timestamp) or verbatim verbal readout. Never estimate from waveform shape. During compressions, displayed HR is artifact — only report when compressions are confirmed stopped.
+    source: S4_monitor_ocr
+    gate: "vitals_obtained == true"
+    abstain_if: "HR digits are illegible on OCR (confidence <= 0.80) AND no verbatim HR verbalization is audible within ±15 s."
+
+  sbp:
+    how_to_determine: >
+      Read systolic blood pressure (SBP) directly from the monitor OCR track (confidence > 0.80, within ±15 s of reading timestamp) or verbatim verbal readout. Never estimate from waveform amplitude.
+    source: S4_monitor_ocr
+    gate: "vitals_obtained == true"
+    abstain_if: "SBP digits are illegible on OCR (confidence <= 0.80) AND no verbatim SBP verbalization is audible within ±15 s."
+
+  dbp:
+    how_to_determine: >
+      Read diastolic blood pressure (DBP) directly from the monitor OCR track (confidence > 0.80, within ±15 s of reading timestamp) or verbatim verbal readout. Never estimate from waveform amplitude.
+    source: S4_monitor_ocr
+    gate: "vitals_obtained == true"
+    abstain_if: "DBP digits are illegible on OCR (confidence <= 0.80) AND no verbatim DBP verbalization is audible within ±15 s."
+
+  spo2:
+    how_to_determine: >
+      Read pulse oximetry (SpO2) percentage directly from the monitor OCR track (confidence > 0.80, within ±15 s of reading timestamp) or verbatim verbal readout. Never estimate from patient color or pleth amplitude. During compressions, displayed SpO2 is artifact — only report when compressions are confirmed stopped.
+    source: S4_monitor_ocr
+    gate: "vitals_obtained == true"
+    abstain_if: "SpO2 digits are illegible on OCR (confidence <= 0.80) AND no verbatim SpO2 verbalization is audible within ±15 s."
+
+  etco2:
+    how_to_determine: >
+      Read end-tidal CO2 (EtCO2) mmHg directly from the monitor OCR track (confidence > 0.80, within ±15 s of reading timestamp) or verbatim verbal readout. Never estimate from capnography waveform shape alone.
+    source: S4_monitor_ocr
+    gate: "vitals_obtained == true"
+    abstain_if: "EtCO2 digits are illegible on OCR (confidence <= 0.80) AND no verbatim EtCO2 verbalization is audible within ±15 s."
+
+disambiguation:
+  - "Distinguish valid post-ROSC vital signs from compression artifact during CPR."
+  - "An NIBP measurement timestamp corresponds to when the NEW numeric value appears on screen, not when cuff inflation began."
+
+hard_rules:
+  - "1. Source is the monitor OCR track (confidence >0.80, within ±15 s of the reading timestamp) or a verbatim verbal readout. NEVER estimate a numeric value from waveform appearance, patient colour, or clinical context."
+  - "2. A legible HR does not license a guessed SpO2. Each vital abstains alone."
+  - "3. During compressions, displayed HR and SpO2 are artifact. Report vitals tied to a ROSC episode only when the compression track confirms compressions are stopped."
+  - "4. Distinguish arterial-line BP (continuous, ART label) from NIBP (intermittent, NIBP label). Record which in bp_source."
+
+abstain_if:
+  - "Monitor is completely powered off or out of frame AND no clinical speech reports any vital signs."

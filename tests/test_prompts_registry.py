@@ -20,11 +20,36 @@ def test_assert_no_field_names():
     assert_no_field_names("This is a safe prompt with no field names", "test")
     
 def test_check_anchors_gaps():
-    gaps = check_anchors(fail_on_gap=False)
-    # 39 required anchor cards are missing
-    assert len(gaps) == 39
-    for v in gaps.values():
-        assert v == ["<no anchor card>"]
+    # Only check types that do not have cards on disk yet
+    from prompts.registry import check_anchors, manifest
+    anchors_dir = Path(manifest().get("anchors_dir", "prompts/anchors"))
+    all_gaps = check_anchors(fail_on_gap=False)
+    for t, v in all_gaps.items():
+        if not (anchors_dir / f"{t}.yaml").exists():
+            assert v == {"_card": ["<no anchor card>"]}
+
+def test_check_anchors_flat_list_fails(tmp_path, monkeypatch):
+    card = """
+defining_instants: {}
+audio_device: []
+speech: {}
+visual: []
+required_attributes:
+  - t_start_s
+  - t_end_s
+disambiguation: []
+hard_rules: []
+abstain_if: []
+"""
+    fake_anchors = tmp_path / "anchors"
+    fake_anchors.mkdir()
+    (fake_anchors / "compression_interruption.yaml").write_text(card)
+    
+    monkeypatch.setattr("prompts.registry.manifest", lambda: {"anchors_dir": str(fake_anchors)})
+    gaps = check_anchors(types=["compression_interruption"], fail_on_gap=False)
+    assert "compression_interruption" in gaps
+    assert "reasons" in gaps["compression_interruption"]
+    assert "absent from required_attributes mapping" in gaps["compression_interruption"]["reasons"]
 
 def test_constitution_round_trip():
     original = Path("tests/fixtures/constitution_v2.0_source.md").read_text()

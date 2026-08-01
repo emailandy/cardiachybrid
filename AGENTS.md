@@ -51,6 +51,17 @@ I6  Never clamp, round, or coerce an out-of-range value. Fail and route.
 Each has a check in scripts/check_invariants.sh. If you find yourself wanting
 to disable one, that is the signal to stop and ask.
 
+## NEVER FABRICATE A SPECIFIC
+Name only things this repository or I have told you exist. Never invent a
+vendor, model, room number, bay, camera, or device — not in code, not in a
+comment, not in a TODO, not in a question. If you do not know the
+equipment, ASK WHAT THE EQUIPMENT IS. Do not guess and then ask for
+confirmation of your guess.
+A fabricated specific is more damaging than an admitted gap, because it
+looks answered. This applies with full force to TODO items and open
+questions, which are read by clinicians who cannot easily tell invention
+from grounding.
+
 ## ANTI-PATTERNS — you will be tempted by all five
 | Tempting | Why it's wrong | Instead |
 |---|---|---|

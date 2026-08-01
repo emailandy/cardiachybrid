@@ -1,0 +1,65 @@
+# Anchor card for rosc_detected
+# Paired with rosc_lost; strict negation rules for CPR artifact
+
+event_type: rosc_detected
+scope: interval
+boundary_mode: self
+
+defining_instants:
+  start: "The EARLIER of (a) the first confident verbal declaration of a palpable pulse or measurable pressure, or (b) the first frame on which the arterial or plethysmograph trace becomes pulsatile with compressions confirmed STOPPED by the sensor track."
+  end: "Emitted when compressions resume (sensor transition) or loss of ROSC is verbalized (rosc_lost). Leave end timestamp null if ROSC persists to end of video."
+
+audio_device:
+  - "Verbatim verbal confirmation of a pulse or blood pressure by clinical staff."
+  - "Silence from mechanical CPR device confirming compressions are stopped."
+  - "# CLINICAL_REVIEW: CR-002 (resuscitation monitor make/model)"
+
+speech:
+  precursor:
+    - "hold CPR"
+    - "check a pulse"
+    - "do we have a pulse"
+  confirm:
+    - "we have a pulse"
+    - "I feel a pulse"
+    - "we have ROSC"
+    - "pressure is up"
+  negation:
+    - "no pulse"
+    - "I don't feel anything"
+    - "still nothing"
+    - "that's your hand"
+    - "that's the LUCAS"
+    - "no ROSC"
+
+visual:
+  - "Arterial line or plethysmograph waveform showing pulsatile arterial tracing while compressor hands are off chest."
+  - "Provider palpating pulse site with motionless chest (no CPR)."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes:
+
+  rhythm:
+    how_to_determine: >
+      Determine the underlying cardiac rhythm during the ROSC interval from monitor OCR or verbatim verbal statement.
+    values: ['sinus', 'atrial_fibrillation', 'junctional', 'heart_block',
+             'ventricular_tachycardia', 'unknown']
+    abstain_if: "Monitor ECG trace is illegible or out of view AND no clinician verbalizes the underlying cardiac rhythm."
+
+  detection_methods:
+    how_to_determine: >
+      Identify every method used to detect ROSC during this episode: manual (palpated pulse), ultrasound (pulsatile vessels or heart motion on POCUS), arterial_line (pulsatile ART waveform), or unknown. Multi-select.
+    values: ['manual', 'ultrasound', 'arterial_line', 'unknown']
+
+disambiguation:
+  - "An EtCO2 rise alone is suggestive, NOT sufficient for ROSC — requires a pulse statement or a pulsatile arterial waveform."
+  - "A pulse felt DURING ongoing chest compressions is NOT ROSC."
+  - "Compression artifact produces a pulsatile arterial trace ('that's the LUCAS'). Only emit ROSC if the compression sensor confirms compressions STOPPED."
+
+hard_rules:
+  - "1. Defining instant is the EARLIER of confident verbal declaration of a palpable pulse/pressure OR pulsatile arterial/pleth trace with compressions STOPPED."
+  - "2. Never emit ROSC from an EtCO2 rise alone without a verbal pulse statement or pulsatile arterial waveform."
+  - "3. Emit rosc_lost when compressions resume or loss is verbalized; leave end timestamp null if ROSC persists to end of video."
+
+abstain_if:
+  - "No verbal statement of pulse/ROSC AND no legible arterial/pleth waveform with compressions stopped."

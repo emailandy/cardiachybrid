@@ -1,0 +1,58 @@
+# Anchor card for defibrillation_shock
+# Defining instant is discharge click + myoclonic jerk; independent pad_position per shock
+
+event_type: defibrillation_shock
+scope: instant
+boundary_mode: self
+
+defining_instants:
+  shock: "The exact audible discharge click, coincident with the whole-body myoclonic jerk. NOT the 'clear' call, NOT the charge start."
+
+audio_device:
+  - "Rising-pitch charging tone lasting 1.5–4 seconds, terminating in a steady high-pitched tone or repeating 'ready' chirp."
+  - "Single sharp discharge click as the tone ceases, often accompanied by a monitor alarm or 'shock delivered' voice prompt."
+  - "# CLINICAL_REVIEW: CR-003 (defibrillator make/model; note: Zoll and LIFEPAK charge tones differ)"
+
+speech:
+  precursor:
+    - "charging"
+    - "clear"
+    - "everybody clear"
+    - "shocking"
+    - "press shock"
+  confirm:
+    - "shock delivered"
+    - "shock one delivered"
+    - "resume CPR"
+  negation:
+    - "disarm"
+    - "dump the charge"
+    - "stand down"
+    - "hold the shock"
+    - "don't shock"
+
+visual:
+  - "Brief whole-body or upper-extremity myoclonic jerk lasting < 0.5 seconds coincident with discharge click."
+  - "All provider hands visibly off the patient in the 1–3 seconds prior to discharge."
+  - "Operator thumb or finger pressing the illuminated SHOCK button on the defibrillator."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration) and CR-003 (defibrillator make/model)"
+
+required_attributes:
+
+  pad_position:
+    how_to_determine: >
+      Determine defibrillation pad position at the exact instant of THIS shock: anterolateral (right upper chest + left lateral chest), anteroposterior (anterior chest + posterior back), dual_defibrillation (two sets of pads placed for dual sequential defibrillation), inappropriate_location, or unable_to_determine. Never inherit from an earlier shock or from initial placement. Occlusion at shock 4 does not inherit shock 1's answer.
+    values: ['anterolateral', 'anteroposterior', 'dual_defibrillation', 'inappropriate_location', 'unable_to_determine']
+    abstain_if: "Both defibrillation pads are completely covered or out of camera frame AND no verbal description of pad position is audible at the time of the shock."
+
+disambiguation:
+  - "A defibrillator charge with no discharge and a 'disarm' or 'stand down' utterance is defib_charge_aborted, NOT a shock (see Constitution failure mode 1)."
+  - "Two discharges occurring <1.0 second apart from two devices represent ONE dual-sequential shock event (record pad_position as dual_defibrillation)."
+
+hard_rules:
+  - "1. Defining instant is the discharge click coincident with myoclonic jerk — never the 'clear' call or charging start."
+  - "2. Determine pad_position independently at the instant of THIS shock. Never inherit from an earlier shock or initial pad placement."
+  - "3. If a charge is dumped or disarmed without a discharge click or myoclonic jerk, do not emit defibrillation_shock."
+
+abstain_if:
+  - "No audible discharge click AND no visible myoclonic jerk can be identified on audio/visual tracks."

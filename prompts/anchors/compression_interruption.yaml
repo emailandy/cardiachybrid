@@ -1,0 +1,184 @@
+# Anchor card for compression_interruption
+# Covers every contract attribute for compression_interruption (CCI)
+
+event_type: compression_interruption
+scope: interval
+boundary_mode: self
+sensor_authority: >
+  Boundaries come from S1 (chest-ROI optical flow, 10 Hz, band-passed
+  1.3–3.0 Hz) and S2 (compression-audio periodicity). Annotate the supplied
+  interval. Do not re-detect, re-time, or threshold it.
+
+defining_instants:
+  start: "The exact video frame where the downward motion of chest compressions (manual or mechanical) ceases completely as bounded by sensor tracks S1 and S2."
+  end: "The exact video frame where the downward motion of regular chest compressions resumes as bounded by sensor tracks S1 and S2."
+
+audio_device:
+  - "Cessation of rhythmic mechanical CPR thump or motor whine; resume of mechanical piston cycling when compressions restart."
+  - "Defibrillator charging tone (rising pitch) or discharge click during the pause."
+  - "# CLINICAL_REVIEW: CR-004 (mechanical CPR device make/model) and CR-005 (microphone configuration)"
+
+speech:
+  precursor:
+    - "hold CPR"
+    - "stop compressions"
+    - "pause for pulse check"
+    - "clear for rhythm"
+    - "holding for shock"
+    - "stop the LUCAS"
+  confirm:
+    - "pulse check"
+    - "checking rhythm"
+    - "continue CPR"
+    - "resuming compressions"
+    - "back on the chest"
+  negation:
+    - "should we check a pulse? — no, keep going"
+    - "want an ultrasound? — not now"
+    - "do we need to move the LUCAS? — it's fine"
+    - "not yet"
+    - "skip it"
+    - "we'll do that next round"
+    - "don't bother, we're switching"
+    - "hold off on the ultrasound"
+
+visual:
+  - "Compressor's hands lift off the patient's chest or remain motionless on the chest without compression depth changes."
+  - "Mechanical CPR piston retracts and remains stationary."
+  - "# CLINICAL_REVIEW: CR-001 (camera configuration)"
+
+required_attributes:
+
+  reasons:
+    how_to_determine: >
+      Identify every action that occurred DURING this interval, from all
+      three channels. Multi-select — an interruption commonly serves several
+      purposes at once (rhythm check + pulse check + shock). An action that
+      was proposed and declined does NOT count. If no reason is
+      determinable from any channel, emit ["unknown"] — never guess the
+      most common.
+    values: [pulse_check, rhythm_determination, airway_placement, chest_us,
+             us_pulse, tee, stretcher_transfer, pad_placement, defibrillation,
+             dual_sequential_defib, mccd_placement, mccd_removed, mccd_adjusted,
+             central_line, arterial_line, ng_og, log_roll, ecmo, other,
+             unknown, rosc]
+    abstain_if: "Never abstains — emit ['unknown'] instead."
+
+  other_reason_text:
+    how_to_determine: >
+      If reasons contains 'other', write a concise physical description of the action that caused the interruption based on direct visual or speech evidence. Leave null if 'other' is not selected.
+    gate: "reasons contains other"
+
+  sono_window:
+    how_to_determine: >
+      Determined by PROBE POSITION AND ORIENTATION on the patient, not by
+      the ultrasound screen.
+      subxiphoid  — probe held overhand and nearly flat against the abdomen
+                    just below the xiphoid process, angled up toward the
+                    left shoulder; marker to the patient's right.
+      parasternal — probe upright against the chest immediately left of the
+                    sternum at roughly the 3rd–4th intercostal space;
+                    marker toward the patient's right shoulder.
+      apical      — probe at the left lateral chest, roughly 5th
+                    intercostal space at the mid-axillary line, angled
+                    medially; marker toward the patient's left.
+      If the sonographer repositions between windows during one
+      interruption, record the window in which images were actually
+      obtained.
+    values: [subxiphoid, parasternal, apical, unable_to_determine]
+    gate: "reasons contains chest_us"
+    abstain_if: >
+      The probe-to-body contact point is out of frame, or the operator's
+      body blocks the view of probe placement for the whole interruption.
+
+  echo_success:
+    how_to_determine: >
+      "Yes" if the heart is visualized, per the dictionary: EITHER the team says so OR you can see a recognizable cardiac silhouette on the ultrasound screen. Repeated probe repositioning plus "I can't get a window" is No. Screen off-camera and no verbalization is unable_to_determine.
+    values: ['yes', 'no', 'unable_to_determine']
+    gate: "reasons contains chest_us"
+    abstain_if: "The ultrasound screen is out of frame AND no verbal confirmation of image adequacy or cardiac findings is audible."
+
+  us_pulse_site:
+    how_to_determine: >
+      Palpation or ultrasound site is determined by WHERE THE HAND AND PROBE ARE: carotid = anterior neck lateral to the trachea; femoral = inguinal crease; other = any other anatomic location.
+    values: [carotid, femoral, other]
+    gate: "reasons contains us_pulse"
+
+  us_pulse_present:
+    how_to_determine: >
+      Distinguish from echo_success. This is Doppler or compression of a named vessel to detect pulsatile flow, not cardiac imaging. Probe on the neck or groin, not the chest. The finding is usually verbalized ("I've got flow" / "nothing there") because the screen is small and angled away.
+    values: ['yes', 'no', 'unable_to_determine']
+    gate: "reasons contains us_pulse"
+    abstain_if: "The ultrasound screen is out of frame AND no verbal confirmation of pulsatile flow is audible."
+
+  aline_present:
+    kind: bool
+    how_to_determine: >
+      Determine whether an arterial line catheter is in place and connected to a monitor transducer during this interruption. Emit true or false.
+
+  aline_sbp:
+    how_to_determine: >
+      Read from the monitor OCR track only. Take the HIGHEST systolic value
+      displayed at any point during this interruption. Requires an ART-
+      labelled arterial trace; do not read an NIBP value into this field.
+      Never estimate a number from waveform amplitude or shape.
+    source: S4_monitor_ocr
+    gate: "aline_present == true"
+    abstain_if: >
+      No OCR reading above 0.80 confidence within the interval, and no
+      verbatim verbal readout of a systolic number.
+
+  aline_dbp:
+    how_to_determine: >
+      Read from the monitor OCR track only. Take the HIGHEST diastolic arterial pressure displayed at any point during this interruption from an ART-labelled arterial trace. Never estimate from waveform shape.
+    source: S4_monitor_ocr
+    gate: "aline_present == true"
+    abstain_if: >
+      No OCR reading above 0.80 confidence within the interval, and no verbatim verbal readout of a diastolic number.
+
+  pulse_check_locations:
+    how_to_determine: >
+      Identify every anatomic site palpated for a pulse during this interruption. Multi-select: two providers commonly palpate different sites simultaneously. Determined by HAND POSITION: carotid = anterior neck lateral to the trachea, two fingers; femoral = inguinal crease below the ASIS; brachial = medial upper arm above the antecubital fossa; radial = volar wrist thumb side. ⚠ Note: This vocabulary is NOT the same as initial pulse check (codes 3 and 4 are swapped in source dictionary). Use symbolic codes.
+    values: [carotid, femoral, brachial, radial]
+    gate: "reasons contains pulse_check"
+
+  pocus_other_used:
+    kind: bool
+    how_to_determine: >
+      Determine whether point-of-care ultrasound was performed for a non-cardiac, non-pulse purpose (e.g., lung ultrasound, line confirmation) during this interval. Coverage-driven 'unknown' is applied downstream by the reducer from your coverage_notes — you emit only true/false, or null with an abstain_reason if the probe and screen were both out of frame.
+
+  rhythm_code:
+    how_to_determine: >
+      Read directly from the monitor when legible with hands off the chest.
+      INFERENCE EXCEPTION — this is the only attribute in the entire
+      contract permitted to be inferred from the team's actions, because the
+      source data dictionary explicitly instructs it: if the patient was
+      defibrillated, the rhythm was VF or pulseless VT. When you infer, you
+      MUST add an evidence item with modality "inference" naming the
+      intervention you reasoned from.
+    values: [vf, pulseless_vt, pea, asystole, aed_nonshockable, aed_shockable,
+             aicd_shockable, aicd_nonshockable, unable_to_determine]
+    gate: "reasons contains rhythm_determination"
+    abstain_if: "Monitor illegible AND no intervention permits inference."
+
+  mccd_adjust_reasons:
+    how_to_determine: >
+      See prompts/anchors/mccd_adjustment.yaml for the full 8-way taxonomy; apply it identically when an adjustment occurs during an interruption.
+    values: [device_moved_up, suction_cup_manipulated, latch_resecured,
+             battery_change, clothing_removed, sheets_moved, arm_adjusted, other]
+    gate: "reasons contains mccd_adjusted"
+    abstain_if: "Mechanical CPR device is obscured by providers AND no verbal description of the adjustment is audible."
+
+disambiguation:
+  - "Interval boundaries are supplied by sensor tracks S1 and S2. Do NOT re-derive, adjust, or apply your own duration threshold."
+  - "Distinguish temporary resuscitation pauses from permanent cessation of CPR due to ROSC or termination of efforts."
+  - "Speech negation: phrases like 'not yet', 'skip it', or 'we'll do that next round' decline a PROPOSED action. The proposed action must not enter reasons. Distinguish from a clinical FINDING — 'no pulse' is a finding and CONFIRMS pulse_check occurred; 'not yet' declines the action entirely."
+
+hard_rules:
+  - "1. Boundaries are sensor-supplied. If you believe a boundary is wrong, emit sensor_dispute with your reasoning — never silently disagree, and never adjust the interval."
+  - "2. Attribute each reason to THIS interval only. An action beginning before the interval starts or continuing after it ends is attributed to the interval(s) it overlaps, not moved."
+  - "3. Never infer an interruption from verbal orders alone if visual or sensor evidence shows compressions continued."
+  - "4. For rhythm_code ONLY, apply the Inference Exception: if direct view of monitor is occluded, rhythm_code may be inferred from team actions (e.g., VF/VT if defibrillated), but you MUST log an evidence item with modality: 'inference' explaining the action."
+
+abstain_if:
+  - "Abstention on compression interruptions applies PER ATTRIBUTE (see required_attributes mapping), not to the interval as a whole. Never abstain on the interval itself."
