@@ -3,6 +3,19 @@
 #   1. resus_raw: Physical base tables (PHI restricted, CMEK encrypted).
 #   2. resus_curated: Authorized views projecting non-PHI / redacted schema.
 #   3. resus_scratch: Ephemeral scratch/eval dataset for test runs and near-miss eval.
+#
+# -----------------------------------------------------------------------------
+# AUDIT LOGGING & DELETION PROTECTION POLICY
+# 1. Audit Logging: Full Data Access READ and WRITE audit logs (DATA_READ, DATA_WRITE, ADMIN_READ)
+#    are enabled across all BigQuery datasets (resus_raw, resus_curated, resus_scratch) via bq_audit.
+# 2. Deletion Protection: For production (var.environment == "prod"), dataset deletion protection
+#    is enforced by delete_contents_on_destroy = false. Furthermore, all physical tables deployed
+#    into resus_raw MUST enforce deletion_protection = true in prod to prevent accidental PHI loss.
+# 3. CMEK Encryption: var.cmek_kms_key_name is a variable awaiting a Cloud KMS CryptoKey resource ID.
+#    If left unset (""), encryption falls back to Google-managed keys (permitted only in dev/test).
+#    In production, an explicit KMS key with automatic rotation MUST be supplied.
+# -----------------------------------------------------------------------------
+
 
 resource "google_bigquery_dataset" "resus_raw" {
   project                    = var.project_id

@@ -37,3 +37,10 @@ Four service accounts are managed in `infra/iam.tf`:
 
 `fact_utterance.text_embedding` (`ARRAY<FLOAT64>`) is explicitly **DROPPED** from table DDL and schema definitions (`Q-011`, deferred).
 Voice and text embeddings derived from clinical audio are derived PHI, and voice embeddings may be biometric identifiers under institutional interpretations. Storage of embeddings is deferred until the retrieval layer is implemented under independent IRB and governance review.
+
+## 6. Audit Logging, Deletion Protection, and CMEK Key Binding
+
+- **Audit Logging**: Data Access READ and WRITE audit logs (`DATA_READ`, `DATA_WRITE`, `ADMIN_READ`) are enabled across all BigQuery datasets (`resus_raw`, `resus_curated`, `resus_scratch`) via `google_project_iam_audit_config.bq_audit`.
+- **Deletion Protection**: On production (`var.environment == "prod"`), dataset deletion protection is enforced via `delete_contents_on_destroy = false`, and all physical tables deployed into `resus_raw` MUST enforce `deletion_protection = true` to prevent accidental PHI loss.
+- **CMEK Key Binding**: `var.cmek_kms_key_name` is an **unset variable placeholder awaiting a Cloud KMS CryptoKey resource ID**. When left unset (`""`), encryption falls back to Google-managed keys (permitted only in dev/test). In production, an explicit KMS key with automated rotation MUST be supplied.
+
