@@ -53,12 +53,9 @@ class Flag:
 
 
 _CHANNEL_ISSUES: dict[str, set[str]] = {
-    'speech': {'audio_unintelligible'},
-    'audio_device': {'audio_unintelligible'},
+    'speech': {'audio_unintelligible'}, 'audio_device': {'audio_unintelligible'},
     'visual': {'chest_occluded', 'provider_crowding', 'camera_motion', 'frame_dropout'},
-    'monitor': {'monitor_not_visible'},
-    'airway': {'airway_not_visible'},
-}
+    'monitor': {'monitor_not_visible'}, 'airway': {'airway_not_visible'}}
 
 _INTERVAL_TYPE_MAP: dict[str, str] = {'cci': 'compression_interruption', 'rosc': 'rosc', 'vent_delay': 'ventilation_delay'}
 
@@ -110,12 +107,7 @@ def _evaluate_gate(expr: str, attrs: dict[str, Any]) -> bool:
 
 
 def _match_where(item: Event | Interval, where: dict[str, Any] | None) -> bool:
-    if not where:
-        return True
-    for k, expected in where.items():
-        if str(item.attributes.get(k)).lower() != str(expected).lower():
-            return False
-    return True
+    return all(str(item.attributes.get(k)).lower() == str(exp).lower() for k, exp in (where or {}).items())
 
 
 def _filter_items(stream: EventStream, et: str | None, where: dict[str, Any] | None = None, min_dur: float | None = None) -> list[Event | Interval]:
@@ -253,7 +245,12 @@ def _execute_rule(
     if rule_type in ('first_of', 'last_of'):
         target_item = items[0] if (rule_type == 'first_of' and items) else items[-1] if items else None
         if not target_item:
-            return [_emit_fv(f_name, None, '', 'REDUCER_DERIVED', [], fields_spec, is_null=True, routed=routed)]
+            chans = rule.get('coverage_channels', [])
+            if _check_coverage_degraded(stream, chans):
+                return [_emit_fv(f_name, None, 'Unable to determine', 'REDUCER_DERIVED', ['stream_coverage'], fields_spec, is_null=True, routed=True, abstained=True, abstain_reason="Channel coverage degraded")]
+            fv = _emit_fv(f_name, None, '', 'REDUCER_DERIVED', [], fields_spec, is_null=True, routed=routed)
+            fv.confidence = 1.0  # Clean null: event did not occur, coverage adequate
+            return [fv]
         emit_key = rule.get('emit')
         ids = [_get_item_id(target_item)]
         if emit_key in ('t_start_s', 'timestamp_s', 'timestamp', None):
@@ -487,7 +484,6 @@ def reduce_stream(
             in_rosc = any(i.t_start_s <= e.timestamp_s <= (i.t_end_s or i.t_start_s) for i in rosc_intervals)
             if in_rosc:
                 flags.append(Flag(None, 'med_inside_rosc', f'Medication at {e.timestamp_s}s during ROSC window', [_get_item_id(e)]))
-
     return values, repairs, flags
 
 
