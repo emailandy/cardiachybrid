@@ -282,8 +282,7 @@ def _execute_rule(
             return [_emit_fv(f_name, '1', 'Yes', 'REDUCER_DERIVED', ids, fields_spec, routed=routed)]
         chans = rule.get('coverage_channels', [])
         if _check_coverage_degraded(stream, chans):
-            f_sp = fields_spec.get(f_name)
-            val = None if (f_sp and f_sp.choices and '3' not in f_sp.choices) else '3'
+            val = None if rule.get('no_utd_code') == 'abstain' else '3'
             return [_emit_fv(f_name, val, 'Unable to determine', 'REDUCER_DERIVED', ['stream_coverage'], fields_spec, is_null=(val is None), routed=True if val is None else routed, abstained=True, abstain_reason="Channel coverage degraded")]
         return [_emit_fv(f_name, '2', 'No', 'REDUCER_DERIVED', ['stream_absence'], fields_spec, routed=routed)]
 
@@ -307,9 +306,9 @@ def _execute_rule(
             return [_emit_fv(f_name, None, '', 'REDUCER_DERIVED', [], fields_spec, is_null=True, routed=routed)]
         emit_key = rule.get('emit', '')
         ids = [_get_item_id(target_item)]
-        if emit_key in ('t_start_s', 'timestamp_s', 'timestamp'):
-            ts = getattr(target_item, 'timestamp_s', getattr(target_item, 't_start_s', None))
-            return [_emit_fv(f_name, ts, str(ts), 'REDUCER_DERIVED', ids, fields_spec, routed=routed)]
+        if emit_key in ('t_start_s', 't_end_s', 'timestamp_s', 'timestamp'):
+            ts = getattr(target_item, emit_key, getattr(target_item, 'timestamp_s', getattr(target_item, 't_start_s', None)))
+            return [_emit_fv(f_name, ts, str(ts), 'REDUCER_DERIVED', ids, fields_spec, is_null=(ts is None), routed=routed)]
         val = target_item.attributes.get(emit_key)
         return [_emit_fv(f_name, val, str(val) if val is not None else '', 'REDUCER_DERIVED', ids, fields_spec, is_null=(val is None), routed=routed)]
 
@@ -457,7 +456,12 @@ def reduce_stream(
         record[fv.field_name] = val
 
     for fv in values:
-        pred = bc.PREDICATES.get(fv.field_name) or bc.PREDICATES.get(fv.export_column)
+        pred = (
+            bc.PREDICATES.get(fv.field_name)
+            or bc.PREDICATES.get(fv.export_column)
+            or bc.PREDICATES.get(fv.field_name.split('___')[0])
+            or bc.PREDICATES.get(fv.export_column.split('___')[0])
+        )
         if pred and not pred(record):
             fv.branching_satisfied = False
             if not fv.is_null and fv.value is not None:

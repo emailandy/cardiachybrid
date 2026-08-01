@@ -126,7 +126,7 @@ sections:
   - {field: mccd_applied_ems_v2, rule: gate_3way,
      event_type: mccd_application_start, where: {applied_by: ems},
      coverage_channels: [visual], vocab_override: yes_no_1_2,
-     source_class: AI_DERIVED, difficulty: LOW}
+     no_utd_code: abstain, source_class: AI_DERIVED, difficulty: LOW}
   - {field: mccd_type_ems_v2, rule: first_of, event_type: mccd_application_start,
      where: {applied_by: ems}, emit: device_type, vocab: mccd_type,
      difficulty: LOW,
@@ -138,8 +138,8 @@ sections:
      source_class: CONDITIONAL}
   - {field: mccd_used_in_the_ed_v2, rule: gate_3way,
      event_type: mccd_compressions_effective, vocab_override: yes_no_1_2,
-     coverage_channels: [visual, audio_device], source_class: AI_DERIVED,
-     difficulty: LOW}
+     coverage_channels: [visual, audio_device], no_utd_code: abstain,
+     source_class: AI_DERIVED, difficulty: LOW}
   - {field: how_mccd_used_in_ed_v2, rule: case_field, key: mccd_ed_provenance,
      vocab: mccd_provenance, source_class: AI_DERIVED, difficulty: MEDIUM,
      owning_event_types: [mccd_application_start, mccd_compressions_effective]}

@@ -70,6 +70,9 @@ def should_route(
     if rule_map is None:
         rule_map = _get_field_rule_map()
 
+    if not fv.branching_satisfied:
+        return False, "branching_not_satisfied"
+
     # 1. TEAM fields always route (Q-006)
     if _is_team_field(fv, rule_map):
         return True, "TEAM (Q-006)"

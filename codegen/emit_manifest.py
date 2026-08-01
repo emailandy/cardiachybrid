@@ -140,8 +140,9 @@ def main():
                 if rule == "gate_yesno" and f_spec.field_type != "yesno":
                     errors.append(f"FAIL: gate_yesno on non-yesno field {f_name}")
                 if rule == "gate_3way":
-                    if "3" not in f_spec.choices and "unable_to_determine" not in f_spec.choices.values() and not entry.get("vocab_override"):
-                        errors.append(f"FAIL: gate_3way on field {f_name} lacking 3rd choice")
+                    has_3rd = bool(f_spec.choices and (len(f_spec.choices) >= 3 or "3" in f_spec.choices or "unable_to_determine" in f_spec.choices.values()))
+                    if not has_3rd and entry.get("no_utd_code") != "abstain":
+                        errors.append(f"FAIL: gate_3way on field {f_name} lacking 3rd choice without no_utd_code: abstain")
                         
                 # suppress_codes
                 sc = entry.get("suppress_codes")
