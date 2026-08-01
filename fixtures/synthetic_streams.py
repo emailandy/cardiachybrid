@@ -410,28 +410,41 @@ def get_maximal_stream() -> EventStream:
     )
 
 
-def get_degraded_stream() -> EventStream:
+_ABSENT_EVENT_TYPES = (
+    "ems_handoff_begin", "medication_administration", "ecmo_called",
+    "ecmo_cannulation_start", "ecmo_flow_established", "rosc_detected",
+    "dnr_confirmed", "death_pronounced", "pocus_cardiac", "pad_reposition",
+)
+
+
+def get_absence_stream() -> EventStream:
     """
-    Returns a degraded synthetic EventStream with channel-specific coverage gaps.
-    Speech is degraded 0-600s via 'audio_unintelligible', while visual is clean throughout.
-    
-    In this stream, ems_handoff_begin (speech channel) and pad_reposition (visual channel)
-    are both absent (0 matching events).
-    This exercises the gate_3way No-vs-UTD asymmetry:
-      -> video_ems_handoff (speech-gated) returns '3' (UTD)
-      -> pad_place_position_changed_v2 (visual-gated) returns '2' (No)
+    Returns a synthetic EventStream with specific events absent and NO coverage notes.
+    Every absent gate_3way field returns '2' (No).
     """
     max_stream = get_maximal_stream()
-    speech_events = (
-        "ems_handoff_begin", "medication_administration", "ecmo_called",
-        "ecmo_cannulation_start", "ecmo_flow_established", "rosc_detected",
-        "dnr_confirmed", "death_pronounced", "pocus_cardiac",
-    )
     filtered_events = [
-        e
-        for e in max_stream.events
-        if e.type not in speech_events and e.type != "pad_reposition"
+        e for e in max_stream.events if e.type not in _ABSENT_EVENT_TYPES
     ]
+    return EventStream(
+        case_id="synthetic_absence_001",
+        events=filtered_events,
+        intervals=max_stream.intervals,
+        coverage=[],
+        fields=max_stream.fields,
+    )
+
+
+def get_degraded_stream() -> EventStream:
+    """
+    Returns a degraded synthetic EventStream with the same events absent as get_absence_stream(),
+    PLUS speech channel coverage degradation (audio_unintelligible 0-600s), while visual is clean.
+    
+    This exercises the gate_3way No-vs-UTD asymmetry:
+      -> speech-gated absent fields flip from '2' (No) to '3' (UTD)
+      -> visual-gated absent field (pad_place_position_changed_v2) remains '2' (No)
+    """
+    abs_stream = get_absence_stream()
     coverage = [
         CoverageNote(
             type="audio_unintelligible",
@@ -440,10 +453,10 @@ def get_degraded_stream() -> EventStream:
     ]
     return EventStream(
         case_id="synthetic_degraded_001",
-        events=filtered_events,
-        intervals=max_stream.intervals,
+        events=abs_stream.events,
+        intervals=abs_stream.intervals,
         coverage=coverage,
-        fields=max_stream.fields,
+        fields=abs_stream.fields,
     )
 
 

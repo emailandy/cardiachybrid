@@ -25,6 +25,7 @@ import generated.redcap_fields as rf
 from fixtures.synthetic_streams import (
     get_all_synthetic_streams,
     get_maximal_stream,
+    get_absence_stream,
     get_degraded_stream,
     get_sparse_stream,
     get_overflow_stream,
@@ -255,6 +256,19 @@ def test_degraded_differs_from_maximal():
     m_utd = sum(1 for f in m if f.value == "3")
     d_utd = sum(1 for f in d if f.value == "3")
     assert d_utd > m_utd, f"degraded UTD {d_utd} !> maximal UTD {m_utd}"
+
+
+def test_coverage_note_flips_no_to_utd():
+    """I5: identical absence, different coverage -> different answer."""
+    a, _, _ = reduce_stream(get_absence_stream())
+    d, _, _ = reduce_stream(get_degraded_stream())
+    a_two = {f.export_column for f in a if f.value == "2"}
+    d_three = {f.export_column for f in d if f.value == "3"}
+    flipped = a_two & d_three
+    assert len(flipped) >= 5, f"only {len(flipped)} fields flipped 2->3"
+    a_pad = next(f.value for f in a if f.export_column == "pad_place_position_changed_v2")
+    d_pad = next(f.value for f in d if f.export_column == "pad_place_position_changed_v2")
+    assert a_pad == "2" and d_pad == "2", "visual-gated pad_reposition should remain 2 (No) under speech degradation"
 
 
 
