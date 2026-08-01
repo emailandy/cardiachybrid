@@ -257,7 +257,9 @@ def _execute_rule(
             ts = getattr(target_item, 'timestamp_s', getattr(target_item, 't_start_s', None))
             return [_emit_fv(f_name, ts, str(ts), 'REDUCER_DERIVED', ids, fields_spec, routed=routed)]
         val = target_item.attributes.get(emit_key)
-        return [_emit_fv(f_name, val, str(val) if val is not None else '', 'REDUCER_DERIVED', ids, fields_spec, is_null=(val is None), routed=routed)]
+        if val is None:
+            return [_emit_fv(f_name, None, '', 'REDUCER_DERIVED', ids, fields_spec, is_null=True, abstained=True, abstain_reason=f"Missing attribute {emit_key!r} on observed event", routed=routed)]
+        return [_emit_fv(f_name, val, str(val), 'REDUCER_DERIVED', ids, fields_spec, is_null=False, routed=routed)]
 
     if rule_type == 'nth_distinct_attribute':
         emit_key, n = rule.get('emit', ''), int(rule.get('n', 1))
@@ -271,7 +273,7 @@ def _execute_rule(
         if len(distinct_vals) >= n:
             v, i_id = distinct_vals[n - 1]
             return [_emit_fv(f_name, v, str(v), 'REDUCER_DERIVED', [i_id], fields_spec, routed=routed)]
-        return [_emit_fv(f_name, None, '', 'REDUCER_DERIVED', [], fields_spec, is_null=True, routed=routed)]
+        return [_emit_fv(f_name, None, '', 'REDUCER_DERIVED', [], fields_spec, is_null=True, abstained=True, abstain_reason=f"Fewer than {n} distinct values for {emit_key!r}", routed=routed)]
 
     if rule_type == 'gate_3way':
         if items:
@@ -307,7 +309,9 @@ def _execute_rule(
             ts = getattr(target_item, emit_key, getattr(target_item, 'timestamp_s', getattr(target_item, 't_start_s', None)))
             return [_emit_fv(f_name, ts, str(ts), 'REDUCER_DERIVED', ids, fields_spec, is_null=(ts is None), routed=routed)]
         val = target_item.attributes.get(emit_key)
-        return [_emit_fv(f_name, val, str(val) if val is not None else '', 'REDUCER_DERIVED', ids, fields_spec, is_null=(val is None), routed=routed)]
+        if val is None:
+            return [_emit_fv(f_name, None, '', 'REDUCER_DERIVED', ids, fields_spec, is_null=True, abstained=True, abstain_reason=f"Missing attribute {emit_key!r} on observed event", routed=routed)]
+        return [_emit_fv(f_name, val, str(val), 'REDUCER_DERIVED', ids, fields_spec, is_null=False, routed=routed)]
 
     if rule_type == 'checkbox':
         f_spec = fields_spec.get(f_name)
@@ -339,10 +343,7 @@ def _execute_rule(
 
     if rule_type == 'notes':
         # Q-004 INTERIM DEFAULT: MCCD adjustment window with multiple adjustments defaults to envelope. A one-line registry change flips it.
-        texts = [getattr(it, 'text', '') or getattr(it, 'type', '') for it in items]
-        val = '; '.join([t for t in texts if t])
-        ids = [_get_item_id(it) for it in items]
-        return [_emit_fv(f_name, val if val else None, val, 'REDUCER_DERIVED', ids, fields_spec, is_null=not bool(val), routed=routed)]
+        return [_emit_fv(f_name, None, '', 'REDUCER_DERIVED', [], fields_spec, is_null=True, abstained=True, abstain_reason="requires P5 (A06)", routed=routed)]
 
     if rule_type == 'team_score':
         # Q-006 INTERIM DEFAULT: TEAM autonomy threshold defaults to standard routing. A one-line registry change flips it.
@@ -399,8 +400,11 @@ def _process_repeating_group(
 
     ov_field = group.get('overflow_note_field')
     if ov_field:
-        ov_val = f'Overflow: true count was {true_count}' if is_overflow else None
-        res.append(_emit_fv(ov_field, ov_val, str(ov_val) if ov_val else '', 'REDUCER_DERIVED', [], fields_spec, is_null=not is_overflow, routed=is_overflow))
+        if is_overflow:
+            ov_val = f'Overflow: true count was {true_count}'
+            res.append(_emit_fv(ov_field, ov_val, str(ov_val), 'REDUCER_DERIVED', [], fields_spec, is_null=False, routed=True))
+        else:
+            res.append(_emit_fv(ov_field, None, '', 'REDUCER_DERIVED', [], fields_spec, is_null=True, abstained=True, abstain_reason="requires P5 (A06)", routed=is_overflow))
 
     for idx in range(1, max_count + 1):
         target_items = [items[idx - 1]] if idx <= len(items) else []

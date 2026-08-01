@@ -98,6 +98,10 @@ Q-014 Scratch REDCap project with video_review instrument and API token required
   - status: OPEN
   - note: "Scratch REDCap project with video_review instrument and API token required for D13b round-trip verification. Blocks the definitive coverage proof — all column-count agreement to date is internal to codegen."
 
+Q-015 Three TEAM calibration anchor cases at consensus global 2, 6, 9 require human-rated cases from the gold set.
+  - status: OPEN
+  - note: "Until then P4 runs uncalibrated. Does not block development — Q-006 routes all TEAM fields to human review regardless — but blocks any claim about TEAM score validity."
+
 
 
 ## RESOLVED

@@ -274,3 +274,15 @@ def test_coverage_degraded_yields_utd_not_no():
         assert a_val == "2" and d_val == "2", (
             f"{col} is visual-gated but changed under speech degradation"
         )
+
+
+def test_ai_narrative_notes_emit_null_until_p5():
+    """Until P5 is wired, all AI_NARRATIVE fields emit value=None and abstained=True."""
+    from fixtures.golden_case_01 import build_golden_case_01
+    fvs, _, _ = reduce_stream(build_golden_case_01())
+    notes = [f for f in fvs if f.source_class == "AI_NARRATIVE"]
+    assert len(notes) == 7
+    for fv in notes:
+        assert fv.value is None, f"{fv.export_column} has non-null value {fv.value!r}"
+        assert fv.abstained is True, f"{fv.export_column} not abstained"
+        assert fv.abstain_reason == "requires P5 (A06)", f"{fv.export_column} reason: {fv.abstain_reason!r}"
