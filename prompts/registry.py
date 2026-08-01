@@ -142,6 +142,24 @@ def check_anchors(types=None, fail_on_gap: bool = True) -> dict[str, dict[str, l
         schema = load_yaml(schema_path)
         required_keys = schema.get("required_keys", [])
         
+    abstain_reasons_path = Path("prompts/anchors/_ABSTAIN_REASONS.yaml")
+    allowed_abstain_reasons = set()
+    if abstain_reasons_path.exists():
+        allowed_abstain_reasons = set(load_yaml(abstain_reasons_path).keys())
+        from generated.redcap_fields import EXPORT_COLUMNS
+        for r in allowed_abstain_reasons:
+            if r in EXPORT_COLUMNS:
+                raise ValueError(f"abstain_reason '{r}' collides with REDCap field name in EXPORT_COLUMNS")
+        reg_path = Path("mapping/registry.yaml")
+        if reg_path.exists():
+            reg_data = load_yaml(reg_path)
+            for sec in reg_data.get("sections", []):
+                for rule in sec.get("fields", []):
+                    if rule.get("rule") == "case_field":
+                        key = rule.get("key")
+                        if key in allowed_abstain_reasons:
+                            raise ValueError(f"abstain_reason '{key}' collides with case_field key '{key}'")
+
     m = manifest()
     anchors_dir = Path(m.get("anchors_dir", "prompts/anchors"))
     
@@ -153,6 +171,11 @@ def check_anchors(types=None, fail_on_gap: bool = True) -> dict[str, dict[str, l
             gaps[t] = {"_card": ["<no anchor card>"]}
             continue
             
+        card_text = card_path.read_text()
+        for match in re.findall(r"abstain_reason:\s*['\"]?([a-zA-Z0-9_]+)['\"]?", card_text):
+            if allowed_abstain_reasons and match not in allowed_abstain_reasons:
+                raise ValueError(f"Anchor card {t} uses unregistered abstain_reason '{match}'")
+
         card_yaml = load_yaml(card_path)
         type_gaps = {}
         

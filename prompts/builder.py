@@ -72,7 +72,7 @@ def _all_anchor_event_types() -> list[str]:
     return sorted(
         p.stem
         for p in Path("prompts/anchors").glob("*.yaml")
-        if p.stem != "_SCHEMA"
+        if not p.stem.startswith("_")
     )
 
 

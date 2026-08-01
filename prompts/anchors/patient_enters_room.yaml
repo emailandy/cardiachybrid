@@ -42,7 +42,7 @@ disambiguation:
   - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
 
 hard_rules:
-  - "1. If the video recording starts after the patient is already in the room, emit null/abstain with abstain_reason: 'recording started late'. Never infer an arrival time."
+  - "1. If the video recording starts after the patient is already in the room, emit null/abstain with abstain_reason: 'event_precedes_recording'. Never infer an arrival time."
   - "2. Defining instant is threshold crossing, not when the stretcher stops or brakes are locked."
 
 abstain_if:

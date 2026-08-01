@@ -40,3 +40,7 @@ In `prompts/system/constitution.v2.0.md` and `prompts/fragments/*.md`, each frag
 ## 009 — case_field keys must not collide with REDCap field names
 Date: 2026-08-01  Session: D05  Decided by: human
 case_field keys must not collide with REDCap field names, because the contract's case_fields block is injected into P3 and assert_no_field_names is absolute. Renamed `ohca_ihca` to `arrest_location` and `video_start_late` to `recording_started_late` in `mapping/registry.yaml`, and added a build-time codegen validator to ensure no case_field key ever collides with `EXPORT_COLUMNS`.
+
+## 010 — abstain_reason is a closed vocabulary in its own namespace
+Date: 2026-08-01  Session: D05  Decided by: human
+`abstain_reason` is a closed vocabulary in its own namespace (`prompts/anchors/_ABSTAIN_REASONS.yaml`). It must not overlap `case_field` keys or REDCap field names. The router classifies abstentions by this token, so an unregistered value is silently unroutable. Enforced by `check_anchors()`.

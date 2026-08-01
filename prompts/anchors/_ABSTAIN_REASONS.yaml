@@ -1,0 +1,11 @@
+# Closed vocabulary for abstain_reason
+# Every abstain_reason literal used in anchor cards or emitted by models must be a member of this set.
+# abstain_reason values are in their own namespace and must never collide with EXPORT_COLUMNS or case_field keys.
+
+event_precedes_recording: "the event occurred before the recording began"
+event_follows_recording: "occurred after the recording ended"
+occluded_visual: "the relevant body region or device was out of frame or blocked"
+occluded_monitor: "the monitor face was not legible"
+inaudible: "speech or device audio was not intelligible"
+ambiguous_evidence: "observed, but insufficient to choose a value"
+not_determinable_from_video: "structurally impossible (e.g. operator training level)"

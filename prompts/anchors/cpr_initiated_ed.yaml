@@ -54,7 +54,7 @@ disambiguation:
 
 hard_rules:
   - "1. Do NOT emit for continuation of EMS compressions. This event marks INITIATION where none was occurring."
-  - "2. If the recording begins with compressions already underway, you cannot determine whether this was an initiation or a continuation. Abstain with abstain_reason: recording started late."
+  - "2. If the recording begins with compressions already underway, you cannot determine whether this was an initiation or a continuation. Abstain with abstain_reason: 'event_precedes_recording'."
 
 abstain_if:
   - "Recording begins with compressions already underway (recording started late) OR chest is completely obstructed from camera view."
