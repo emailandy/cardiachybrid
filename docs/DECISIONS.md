@@ -94,6 +94,12 @@ Date: 2026-08-01  Session: D10  Decided by: human, agent
 5. **REDCap Calc Field Replacements**: The two REDCap server-computed calc fields (`dur_mccd_app_ed_secs_v2` and `duration_ventilator_place_v2`) are computed independently in `fact_metric` (`source = "REDCAP_CALC_REPLACEMENT"`), dynamically resolved from `FIELDS` by `source_class == "REDCAP_CALC"` to avoid field-name literals.
 6. **Declarative Formula Versioning**: All QI formula specifications reside in prose in `metrics/definitions.yaml`. `metric_definition_version` is an 8-character SHA-256 hash computed over the prose statements only, so refactoring Python code without changing formulas leaves the version unchanged.
 
+## 020 — D10 Architectural Decision on Emitted Column Scope (Option a) and Checkbox Repeating Group Expansion
+Date: 2026-08-01  Session: D10  Decided by: human, agent
+1. **Row for Every Exportable Column (Option a)**: `reduce_stream()` emits a `FieldValue` row for every single one of the 1,879 exportable dictionary columns (all non-server-computed, non-roster/human-only columns, including every repeating group slot up to max instances). Inactive repeating group slots emit with `is_null=True` (`value=None`) and `branching_satisfied=False` when branching predicates are evaluated.
+2. **Repeating Group Checkbox Expansion**: Checkbox rules in repeating groups (`groups:` in `mapping/registry.yaml`) specify `kind: 'checkbox'`. `_execute_rule()` resolves `rule_type = rule.get('rule') or rule.get('kind') or 'attr'`, ensuring every repeating checkbox field expands into its individual binary export columns (`___1` ... `___N`).
+3. **D12 Set Equality Check**: Because every exportable column is emitted by `reduce_stream()`, the D12 milestone coverage test is a strict set-equality assertion (`set(fv.export_column for fv in fvs) == expected_export_columns`).
+
 
 
 

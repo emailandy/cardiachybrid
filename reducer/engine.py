@@ -196,7 +196,7 @@ def _emit_fv(
     abstained: bool = False, abstain_reason: str | None = None, ensemble_spread_s: float = 0.0,
 ) -> FieldValue:
     f_spec = fields_spec.get(field_name) or fields_spec.get(field_name.split('___')[0])
-    col = f_spec.export_columns[0] if f_spec and f_spec.export_columns else field_name
+    col = field_name if '___' in field_name else (f_spec.export_columns[0] if f_spec and f_spec.export_columns else field_name)
     src = f_spec.source_class if f_spec else source_class
     if not is_null and val is not None:
         val = _map_vocab(val, f_spec)
@@ -222,7 +222,7 @@ def _execute_rule(
     item_idx: int = 0,
     routed: bool = False,
 ) -> list[FieldValue]:
-    rule_type = rule.get('rule', 'attr')
+    rule_type = rule.get('rule') or rule.get('kind') or 'attr'
     f_name = rule.get('field') or rule.get('pattern')
     if not f_name or not rule_type:
         return []

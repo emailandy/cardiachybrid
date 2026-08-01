@@ -235,7 +235,7 @@ def test_synthetic_stream_routing_breakdown() -> None:
     field_values, _, _ = reduce_stream(stream)
     res = evaluate_stream_routing(field_values)
 
-    assert res["total_fields_evaluated"] == 920
+    assert res["total_fields_evaluated"] == 1879
     assert res["routed_team_q006"] == 12
     assert res["routed_validation_failed"] == 0
     assert "auto_accepted" in res
