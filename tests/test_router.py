@@ -237,6 +237,6 @@ def test_synthetic_stream_routing_breakdown() -> None:
 
     assert res["total_fields_evaluated"] == 920
     assert res["routed_team_q006"] == 12
-    assert res["routed_validation_failed"] == 15
+    assert res["routed_validation_failed"] == 0
     assert "auto_accepted" in res
     assert "auto_accepted_pct" in res

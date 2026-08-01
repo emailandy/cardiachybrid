@@ -115,6 +115,7 @@ def evaluate_stream_routing(
     config: dict[str, Any] | None = None,
     rule_map: dict[str, str] | None = None,
     case_utd_rate_by_field: dict[str, float] | None = None,
+    ensemble_spread_s: float = 0.0,
 ) -> dict[str, Any]:
     """
     Evaluate routing across a full list of FieldValues and return counts and auto-accept percentage.
@@ -139,7 +140,13 @@ def evaluate_stream_routing(
 
     for fv in field_values:
         utd_rate = case_utd_rate_by_field.get(fv.field_name)
-        route, reason = should_route(fv, config=config, rule_map=rule_map, case_utd_rate=utd_rate)
+        route, reason = should_route(
+            fv,
+            config=config,
+            rule_map=rule_map,
+            case_utd_rate=utd_rate,
+            ensemble_spread_s=ensemble_spread_s,
+        )
         if not route:
             auto_accepted += 1
         elif reason == "TEAM (Q-006)":

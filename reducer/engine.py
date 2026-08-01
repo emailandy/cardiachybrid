@@ -174,37 +174,38 @@ def _validate_field_value(fv: FieldValue, f_spec: rf.FieldSpec) -> None:
         fv.validation_error = f'Value {val_str!r} does not match regex'
 
 
+_SYN = {'ohca': '1', 'in_ed_cardiac_arrest': '2', 'anterior_lateral': '1', 'anterolateral': '1', 'vf': '1', 'pulseless_vt': '2', 'pea': '3', 'asystole': '4', 'lucas': '1', 'defibtech': '2', 'autopulse': '3', 'ems': '1', 'ems_mccd_continued': '1', 'success': '1', 'ett': '1', 'endotracheal_dl': '1'}
+
+
+def _map_vocab(val: Any, f_spec: rf.FieldSpec | None) -> Any:
+    if val is None or val == "" or not f_spec or not f_spec.choices:
+        return val
+    s = str(val).strip().lower()
+    if s in f_spec.choices or (s in _SYN and _SYN[s] in f_spec.choices):
+        return _SYN.get(s, str(val))
+    for k, v in f_spec.choices.items():
+        if s == str(v).strip().lower():
+            return str(k)
+    return val
+
+
 def _emit_fv(
-    field_name: str,
-    val: Any,
-    label: str,
-    source_class: str,
-    ids: list[str],
-    fields_spec: dict[str, rf.FieldSpec],
-    is_null: bool = False,
-    routed: bool = False,
+    field_name: str, val: Any, label: str, source_class: str, ids: list[str],
+    fields_spec: dict[str, rf.FieldSpec], is_null: bool = False, routed: bool = False,
+    abstained: bool = False, abstain_reason: str | None = None,
 ) -> FieldValue:
-    f_spec = fields_spec.get(field_name)
-    if not f_spec:
-        base_name = field_name.split('___')[0]
-        f_spec = fields_spec.get(base_name)
+    f_spec = fields_spec.get(field_name) or fields_spec.get(field_name.split('___')[0])
     col = f_spec.export_columns[0] if f_spec and f_spec.export_columns else field_name
     src = f_spec.source_class if f_spec else source_class
+    if not is_null and val is not None:
+        val = _map_vocab(val, f_spec)
     if src == 'AI_DIRECT' and not is_null and val is not None and not ids:
         raise ValueError(f'AI_DIRECT field {field_name!r} has non-null value but empty source_event_ids')
-
     fv = FieldValue(
-        field_name=field_name,
-        export_column=col,
-        value=val,
-        value_label=label,
-        is_null=is_null or (val is None),
-        abstained=False,
-        abstain_reason=None,
+        field_name=field_name, export_column=col, value=val, value_label=label,
+        is_null=is_null or (val is None), abstained=abstained, abstain_reason=abstain_reason,
         confidence=1.0 if (not is_null and val is not None) else 0.0,
-        source_class=src,
-        source_event_ids=ids,
-        routed_to_human=routed,
+        source_class=src, source_event_ids=ids, routed_to_human=routed,
     )
     if f_spec:
         _validate_field_value(fv, f_spec)
@@ -242,7 +243,7 @@ def _execute_rule(
                 val = (yes_codes[0] if yes_codes else '1') if raw_val else (no_codes[0] if no_codes else '0')
             else:
                 val = '1' if raw_val else '0'
-        return [_emit_fv(f_name, val, label, 'AI_DIRECT', ['case_fields'], fields_spec, is_null=is_null, routed=routed)]
+        return [_emit_fv(f_name, val, label, 'AI_DIRECT', ['case_fields'], fields_spec, is_null=is_null, routed=routed, abstained=is_null, abstain_reason="Case field unpopulated" if is_null else None)]
 
     if rule_type == 'const_null':
         return [_emit_fv(f_name, None, '', 'REDUCER_DERIVED', [], fields_spec, is_null=True, routed=routed)]
@@ -282,7 +283,7 @@ def _execute_rule(
             return [_emit_fv(f_name, '1', 'Yes', 'REDUCER_DERIVED', ids, fields_spec, routed=routed)]
         chans = rule.get('coverage_channels', [])
         if _check_coverage_degraded(stream, chans):
-            return [_emit_fv(f_name, '3', 'Unable to determine', 'REDUCER_DERIVED', ['stream_coverage'], fields_spec, routed=routed)]
+            return [_emit_fv(f_name, '3', 'Unable to determine', 'REDUCER_DERIVED', ['stream_coverage'], fields_spec, routed=routed, abstained=True, abstain_reason="Channel coverage degraded")]
         return [_emit_fv(f_name, '2', 'No', 'REDUCER_DERIVED', ['stream_absence'], fields_spec, routed=routed)]
 
     if rule_type == 'gate_yesno':
