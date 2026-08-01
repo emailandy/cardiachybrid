@@ -94,6 +94,11 @@ Q-011 text_embedding storage in fact_utterance.
   - status: DEFERRED (not OPEN)
   - note: "Embedding storage deferred to the retrieval layer. When added, requires separate governance review — derived embeddings of clinical audio are PHI and voice embeddings may be biometric identifiers."
 
+Q-014 Scratch REDCap project with video_review instrument and API token required for D13b round-trip verification.
+  - status: OPEN
+  - note: "Scratch REDCap project with video_review instrument and API token required for D13b round-trip verification. Blocks the definitive coverage proof — all column-count agreement to date is internal to codegen."
+
+
 
 ## RESOLVED
 **T-001 (A01)**: What is the correct value for 'Scope: MODIFY'? (specs.yaml does not determine this).
