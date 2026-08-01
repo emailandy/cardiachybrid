@@ -35,7 +35,7 @@ All physical tables reside in the `resus_raw` dataset (`us-east4`, CMEK-encrypte
 
 ## 3. Curated and Audit Views (`resus_curated` — 7 Views)
 
-1. **v_redcap_wide**: Generated pivot view over `fact_redcap_field`, containing exactly `len(IMPORTABLE_COLUMNS)` (~1,889) `MAX(IF(...))` column expressions plus `case_id, run_id, event_date`. Calc fields are excluded to prevent permanently-NULL extraction columns.
+1. **v_redcap_wide**: Generated pivot view over `fact_redcap_field`, containing exactly `len(IMPORTABLE_COLUMNS)` (1,889) `MAX(IF(...))` column expressions plus `case_id, run_id, event_date`. The two server-computed calc fields (`dur_mccd_app_ed_secs_v2`, `duration_ventilator_place_v2`) are excluded to prevent permanently-NULL extraction columns. Reducer-populated count fields (`num_cci_v2`, `num_times_defib_ed_v2`, etc.) are text fields with number validation and are present in `IMPORTABLE_COLUMNS`.
 2. **v_exemplar_store**: Authorized view joining `fact_event` and `fact_redcap_field` for clinical review.
 3. **v_audit_missing_fields**: Returns zero rows when all importable fields are populated (coverage proof Q1).
 4. **v_audit_domain_coverage**: Populated vs. abstained field counts aggregated by domain/form (Q2).
