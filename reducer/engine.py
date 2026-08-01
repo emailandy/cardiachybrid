@@ -33,6 +33,7 @@ class FieldValue:
     validation_passed: bool = True
     validation_error: str | None = None
     routed_to_human: bool = False
+    human_verified: bool = False
     ensemble_spread_s: float = 0.0
 
 

@@ -55,6 +55,13 @@ Q-012 CCF denominator definition
   - status: OPEN
   - blocks: D10 clinical sign-off
 
+Q-013 Case-level affirmative human sign-off for video_review_complete="2"
+  - options: (a) infer from field-level human_verified state, (b) gate "2" on an explicit case-level sign-off table (case_signoff with signed_off_by/signed_off_at)
+  - default: hard-code "1" (Unverified/Incomplete) in assemble_submission() until affirmative sign-off table is implemented
+  - owner: clinical lead / engineering
+  - status: OPEN
+  - blocks: D11 production release (automated complete marking)
+
 ## OPERATIONAL — awaiting human
 Q-007 — Is the artifact-foundry-prod pip index an institutional control?
 Inherited pip config points at

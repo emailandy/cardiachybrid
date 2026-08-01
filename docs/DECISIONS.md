@@ -100,6 +100,14 @@ Date: 2026-08-01  Session: D10  Decided by: human, agent
 2. **Repeating Group Checkbox Expansion**: Checkbox rules in repeating groups (`groups:` in `mapping/registry.yaml`) specify `kind: 'checkbox'`. `_execute_rule()` resolves `rule_type = rule.get('rule') or rule.get('kind') or 'attr'`, ensuring every repeating checkbox field expands into its individual binary export columns (`___1` ... `___N`).
 3. **D12 Set Equality Check**: Because every exportable column is emitted by `reduce_stream()`, the D12 milestone coverage test is a strict set-equality assertion (`set(fv.export_column for fv in fvs) == expected_export_columns`).
 
+## 021 — D11 REDCap Payload Assembly & Client Architecture
+Date: 2026-08-01  Session: D11  Decided by: human, agent
+1. **SUBMISSION_COLUMNS Ownership**: `assemble_submission` owns `record_id`, `video_review_complete`, and all 10 non-AI (`ROSTER_JOIN` + `HUMAN_ONLY`) columns, setting each of those 10 to `""` (present-and-blank) so REDCap `overwriteBehavior=overwrite` clears stale manual entries. Asserts exact set equality against `SUBMISSION_COLUMNS` (1,891 keys).
+2. **Checkbox Completeness (I4)**: Iterates `FIELDS` after the main loop, defaulting unpopulated checkbox choice export columns to `"0"`, ensuring binary `"1"`/`"0"` across all 1,098 checkbox choice columns.
+3. **HTTP 400 Non-Retry**: Client never retries HTTP 400 validation errors, instead attaching parsed field errors to `quarantine_reasons`. Only retries 5xx and connection errors with exponential backoff and jitter.
+4. **Quarantine Blocking**: A single validation failure (`not validation_passed`) or unverified routed field (`routed_to_human and not human_verified`) blocks the entire record, returning `({}, quarantine_reasons)`.
+5. **video_review_complete="1" Interim Default**: Hard-codes `"1"` (Unverified/Incomplete) until an affirmative case-level sign-off table is implemented (`Q-013`). Never emits `"2"` from field-level inference alone.
+
 
 
 
