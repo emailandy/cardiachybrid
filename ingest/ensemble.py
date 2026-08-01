@@ -23,12 +23,38 @@ def get_ts(item: dict[str, Any]) -> float:
     return float(item.get("t_start_s", item.get("timestamp_s", 0.0)))
 
 
+def can_merge_monotonically(
+    c1: list[tuple[int, int]],
+    c2: list[tuple[int, int]],
+    clusters: list[list[tuple[int, int]]],
+) -> bool:
+    """Ensure merging c1 and c2 does not cross any existing matched pair across runs."""
+    for r1, idx1 in c1:
+        for r2, idx2 in c2:
+            for c_exist in clusters:
+                if len(c_exist) < 2 or c_exist is c1 or c_exist is c2:
+                    continue
+                x1 = None
+                x2 = None
+                for r, idx in c_exist:
+                    if r == r1:
+                        x1 = idx
+                    elif r == r2:
+                        x2 = idx
+                if x1 is not None and x2 is not None:
+                    if (idx1 < x1 and idx2 > x2) or (idx1 > x1 and idx2 < x2):
+                        return False
+    return True
+
+
 def match_item_clusters(
-    items_by_run: list[list[dict[str, Any]]], k: int
+    items_by_run: list[list[dict[str, Any]]], k: int, is_interval: bool = False
 ) -> list[list[dict[str, Any]]]:
     """
     Global nearest-neighbour matching across member runs.
     Sorts candidate pairs (run_i != run_j) by |Δt| ascending where |Δt| <= tol.
+    Enforces monotonic matching (no crossing edges) to prevent matching cascade.
+    For intervals, checks both start and end boundary tolerances.
     Returns a list of clusters (each cluster is a list of matched items across runs).
     """
     all_items: list[tuple[int, int, dict[str, Any]]] = []
@@ -42,16 +68,23 @@ def match_item_clusters(
     for i in range(n):
         r1, i1, item1 = all_items[i]
         t1 = get_ts(item1)
+        end1 = float(item1.get("t_end_s", t1))
         p1 = float(item1.get("t_precision_s", 1.0))
         for j in range(i + 1, n):
             r2, i2, item2 = all_items[j]
             if r1 == r2:
                 continue
             t2 = get_ts(item2)
+            end2 = float(item2.get("t_end_s", t2))
             p2 = float(item2.get("t_precision_s", 1.0))
             dt = abs(t1 - t2)
-            if dt <= (p1 + p2):
-                candidate_pairs.append((dt, (r1, i1), (r2, i2)))
+            if is_interval:
+                dt_end = abs(end1 - end2)
+                if dt <= (p1 + p2) and dt_end <= (p1 + p2):
+                    candidate_pairs.append((dt + dt_end, (r1, i1), (r2, i2)))
+            else:
+                if dt <= (p1 + p2):
+                    candidate_pairs.append((dt, (r1, i1), (r2, i2)))
 
     # Sort ascending by time difference
     candidate_pairs.sort(key=lambda x: x[0])
@@ -72,7 +105,9 @@ def match_item_clusters(
         c2 = clusters[c2_idx]
         runs_in_c1 = {r for r, _ in c1}
         runs_in_c2 = {r for r, _ in c2}
-        if runs_in_c1.isdisjoint(runs_in_c2):
+        if runs_in_c1.isdisjoint(runs_in_c2) and can_merge_monotonically(
+            c1, c2, clusters
+        ):
             c1.extend(c2)
             for item_key in c2:
                 event_to_cluster[item_key] = c1_idx
@@ -277,7 +312,7 @@ def ensemble_streams(
                 iv_by_type[itype][r_idx].append(iv)
 
     for itype, runs_ivs in iv_by_type.items():
-        clusters = match_item_clusters(runs_ivs, k)
+        clusters = match_item_clusters(runs_ivs, k, is_interval=True)
         for cl in clusters:
             acc, nm, _ = merge_cluster(cl, k, spread_threshold_s)
             if acc:
@@ -308,28 +343,28 @@ def run_synthetic_ensemble_experiment() -> dict[str, Any]:
     run2 = json.loads(json.dumps(base_dict))
 
     # Run 1 perturbations: shift timestamps by +0.2s, change one categorical
+    changed_rhythm_1 = False
     for ev in run1.get("events", []):
         ts = ev.get("t_start_s", ev.get("timestamp_s", 0.0))
         ev["t_start_s"] = ts + 0.2
         ev["timestamp_s"] = ts + 0.2
-        if ev.get("type") == "rhythm_check" and "rhythm" in ev.get("attributes", {}):
+        if not changed_rhythm_1 and ev.get("type") == "rhythm_check" and "rhythm" in ev.get("attributes", {}):
             ev["attributes"]["rhythm"] = "vtach"
+            changed_rhythm_1 = True
 
-    # Run 2 perturbations: shift timestamps by -0.1s, trigger 1/1/1 tie, drop first shock, spread > 3s on second shock
+    # Run 2 perturbations: shift timestamps by -0.1s, trigger exactly one 1/1/1 tie, drop exactly one shock
+    changed_rhythm_2 = False
     dropped_first = False
     for ev in list(run2.get("events", [])):
         ts = ev.get("t_start_s", ev.get("timestamp_s", 0.0))
         ev["t_start_s"] = ts - 0.1
         ev["timestamp_s"] = ts - 0.1
-        if ev.get("type") == "rhythm_check" and "rhythm" in ev.get("attributes", {}):
+        if not changed_rhythm_2 and ev.get("type") == "rhythm_check" and "rhythm" in ev.get("attributes", {}):
             ev["attributes"]["rhythm"] = "asystole"  # 3-way tie: vfib vs vtach vs asystole
-        if ev.get("type") == "defibrillation_shock":
-            if not dropped_first:
-                run2["events"].remove(ev)
-                dropped_first = True
-            else:
-                ev["t_start_s"] += 3.5  # Spread > 3.0s
-                ev["timestamp_s"] += 3.5
+            changed_rhythm_2 = True
+        if ev.get("type") == "defibrillation_shock" and not dropped_first:
+            run2["events"].remove(ev)
+            dropped_first = True
 
     # Add an explicit event with spread > 3.0s (t_precision_s = 2.0s) to demonstrate spread threshold routing
     spread_ev_0 = {
@@ -346,6 +381,18 @@ def run_synthetic_ensemble_experiment() -> dict[str, Any]:
     run0.setdefault("events", []).append(spread_ev_0)
     run1.setdefault("events", []).append(spread_ev_1)
     run2.setdefault("events", []).append(spread_ev_2)
+
+    # Add an explicit 1-of-3 minority event to Run 1 to demonstrate near-miss routing
+    nm_ev_1 = {
+        "type": "pocus_cardiac",
+        "t_start_s": 88.0,
+        "timestamp_s": 88.0,
+        "t_precision_s": 1.0,
+        "confidence": 0.6,
+        "evidence": [{"text": "possible pocus"}],
+        "attributes": {},
+    }
+    run1.setdefault("events", []).append(nm_ev_1)
 
     merged, near_misses = ensemble_streams([run0, run1, run2], k=3)
 

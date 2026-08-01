@@ -207,13 +207,74 @@ def test_near_miss_phi_and_scratch_refusal() -> None:
             )
 
 
+def test_monotonic_matching_no_cascades() -> None:
+    """
+    30 CCIs at 20s intervals in run A, same 30 in run B shifted +0.3s, t_precision_s=0.5 (tol 1.0s).
+    Monotonic order-preserving constraint prevents matching cascade: assert 30 pairs, 0 near-misses.
+    """
+    run_a = {
+        "events": [
+            {
+                "type": "compression_interruption",
+                "t_start_s": i * 20.0,
+                "t_precision_s": 0.5,
+                "evidence": [{"text": f"cci {i}"}],
+            }
+            for i in range(30)
+        ]
+    }
+    run_b = {
+        "events": [
+            {
+                "type": "compression_interruption",
+                "t_start_s": i * 20.0 + 0.3,
+                "t_precision_s": 0.5,
+                "evidence": [{"text": f"cci {i} b"}],
+            }
+            for i in range(30)
+        ]
+    }
+    merged, nm = ensemble_streams([run_a, run_b], k=2)
+    assert len(merged["events"]) == 30, f"Expected 30 pairs, got {len(merged['events'])}"
+    assert len(nm) == 0, f"Expected 0 near-misses, got {len(nm)}"
+
+
+def test_interval_matching_checks_duration_bounds() -> None:
+    """Assert interval matching checks both start and end boundaries so differing durations do not pair."""
+    run_a = {
+        "intervals": [
+            {
+                "type": "compression_interruption",
+                "t_start_s": 10.0,
+                "t_end_s": 14.0,  # 4s duration
+                "t_precision_s": 0.5,
+                "evidence": [{"text": "short cci"}],
+            }
+        ]
+    }
+    run_b = {
+        "intervals": [
+            {
+                "type": "compression_interruption",
+                "t_start_s": 10.0,
+                "t_end_s": 28.0,  # 18s duration
+                "t_precision_s": 0.5,
+                "evidence": [{"text": "long cci"}],
+            }
+        ]
+    }
+    merged, nm = ensemble_streams([run_a, run_b], k=2)
+    assert len(merged["intervals"]) == 0, "Intervals with differing durations must not be paired"
+    assert len(nm) == 2, "Unpaired intervals become near-misses"
+
+
 def test_synthetic_ensemble_experiment_baseline() -> None:
     """Assert baseline synthetic ensemble experiment returns expected distribution."""
     stats = run_synthetic_ensemble_experiment()
-    assert stats["total_clusters_evaluated"] == 133
-    assert stats["accepted_3_3"] == 74
-    assert stats["accepted_2_3"] == 30
-    assert stats["dropped_1_3_near_miss"] == 29
+    assert stats["total_clusters_evaluated"] == 105
+    assert stats["accepted_3_3"] == 103
+    assert stats["accepted_2_3"] == 1
+    assert stats["dropped_1_3_near_miss"] == 1
     assert stats["spread_exceeded_3s"] == 1
     assert stats["categorical_1_1_1_ties"] == 1
 
@@ -223,3 +284,4 @@ def test_write_rows_integration_dry_run() -> None:
     """Integration mark test for write_rows."""
     rows = [{"event_id": "test_001", "case_id": "case_001"}]
     assert write_rows(rows, "resus_raw", "fact_event", dry_run=True) == 1
+
