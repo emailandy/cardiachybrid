@@ -1,0 +1,130 @@
+name: Resus QC CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: "pip"
+
+      - name: Install dev dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: 1. Check Dictionary Hash (scripts/hash_dict.sh)
+        run: |
+          bash scripts/hash_dict.sh --check || (echo "FAIL: dict_version.txt is stale" && exit 1)
+
+      - name: 2. Check Codegen & Manifest Schema Diff
+        run: |
+          python - <<'PY'
+          import os, json, subprocess
+          from pathlib import Path
+
+          manifest_path = Path("generated/coverage_manifest.json")
+          old_manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else {}
+
+          subprocess.run(["python", "-m", "codegen.emit_manifest"], check=True)
+          new_manifest = json.loads(manifest_path.read_text())
+
+          if old_manifest != new_manifest:
+              status = subprocess.run(["git", "status", "--porcelain", "dictionary/", "mapping/"], capture_output=True, text=True)
+              if not status.stdout.strip():
+                  print("::warning title=Manifest Diff Without Schema Change::generated/coverage_manifest.json differs from the committed copy WITHOUT a corresponding change to dictionary/ or mapping/. Please review changes.")
+          PY
+
+      - name: 3. Linting and Type Checking (ruff, mypy --strict)
+        run: |
+          ruff check .
+          mypy --strict resus_qc/
+
+      - name: 4. Unit Tests (pytest, deselecting integration and network)
+        run: |
+          pytest -m "not (integration or network)"
+
+      - name: 5. Determinism Check (codegen byte-identity)
+        run: |
+          python - <<'PY'
+          import subprocess
+          from pathlib import Path
+
+          subprocess.run(["python", "-m", "codegen.emit_python"], check=True)
+          run1_py = Path("generated/redcap_fields.py").read_bytes()
+          run1_json = Path("generated/coverage_manifest.json").read_bytes()
+
+          subprocess.run(["python", "-m", "codegen.emit_python"], check=True)
+          run2_py = Path("generated/redcap_fields.py").read_bytes()
+          run2_json = Path("generated/coverage_manifest.json").read_bytes()
+
+          assert run1_py == run2_py, "FAIL: generated/redcap_fields.py is not byte-identical across runs"
+          assert run1_json == run2_json, "FAIL: generated/coverage_manifest.json is not byte-identical across runs"
+          print("✓ Codegen is byte-identical across consecutive runs")
+          PY
+
+      - name: 6. Secret Scan (REDCap Token 32-char uppercase hex)
+        run: |
+          python - <<'PY'
+          import re, subprocess, sys
+          from pathlib import Path
+
+          pattern = re.compile(r'\b[A-F0-9]{32}\b')
+          files = subprocess.check_output(["git", "ls-files"], text=True).splitlines()
+          violations = []
+          for rel_path in files:
+              if "test_roundtrip.py" in rel_path:
+                  continue
+              p = Path(rel_path)
+              if p.is_file():
+                  try:
+                      content = p.read_text(errors="ignore")
+                      matches = pattern.findall(content)
+                      if matches:
+                          violations.append((rel_path, matches))
+                  except Exception:
+                      pass
+          if violations:
+              for f, m in violations:
+                  print(f"FAIL: Possible REDCap API token(s) found in {f}: {m[:3]}", file=sys.stderr)
+              sys.exit(1)
+          print("✓ No REDCap tokens detected")
+          PY
+
+      - name: 7. Invariants Check (scripts/check_invariants.sh)
+        run: |
+          bash scripts/check_invariants.sh
+
+      - name: 8. Manifest Summary Comment & Artifact Publish
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          p = Path("generated/coverage_manifest.json")
+          if p.exists():
+              data = json.loads(p.read_text())
+              by_src = data.get("by_source_class", {})
+              by_diff = data.get("by_difficulty", {})
+              summary = f"### Coverage Manifest Summary\n\n**Total Fields**: {data.get('total_fields', 0)}\n\n**By Source Class**:\n```json\n{json.dumps(by_src, indent=2)}\n```\n\n**By Difficulty**:\n```json\n{json.dumps(by_diff, indent=2)}\n```\n"
+              out = Path("manifest_summary.md")
+              out.write_text(summary)
+          PY
+
+      - name: Upload coverage_manifest.json Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-manifest
+          path: generated/coverage_manifest.json

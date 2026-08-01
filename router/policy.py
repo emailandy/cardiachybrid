@@ -103,6 +103,10 @@ def should_route(
     if floor is not None and case_utd_rate is not None and case_utd_rate < (float(floor) - margin):
         return True, "UTD anomaly"
 
+    # 6a. Empty AI narrative notes with no section anomalies do not route
+    if fv.source_class == "AI_NARRATIVE" and not fv.value:
+        return False, "empty_narrative_no_anomalies"
+
     # 7. Low confidence against difficulty threshold
     diff_str = str(getattr(spec, "difficulty", "MEDIUM") if spec else "MEDIUM").upper()
     thresh_map = config.get("confidence_thresholds", {})
