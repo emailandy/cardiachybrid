@@ -14,7 +14,8 @@ import pytest
 from ingest.loader import build_rows, write_rows, compute_sequence_id
 from ingest.ensemble import (
     ensemble_streams,
-    run_synthetic_ensemble_experiment,
+    run_path_coverage_experiment,
+    run_stochastic_ensemble_experiment,
     match_item_clusters,
 )
 
@@ -268,15 +269,21 @@ def test_interval_matching_checks_duration_bounds() -> None:
     assert len(nm) == 2, "Unpaired intervals become near-misses"
 
 
-def test_synthetic_ensemble_experiment_baseline() -> None:
-    """Assert baseline synthetic ensemble experiment returns expected distribution."""
-    stats = run_synthetic_ensemble_experiment()
-    assert stats["total_clusters_evaluated"] == 105
-    assert stats["accepted_3_3"] == 103
-    assert stats["accepted_2_3"] == 1
-    assert stats["dropped_1_3_near_miss"] == 1
-    assert stats["spread_exceeded_3s"] == 1
-    assert stats["categorical_1_1_1_ties"] == 1
+def test_path_coverage_and_stochastic_experiments() -> None:
+    """Assert deterministic path coverage fixture counts and stochastic generator return structure."""
+    pc = run_path_coverage_experiment()
+    assert pc["total_clusters_evaluated"] == 105
+    assert pc["accepted_3_3"] == 103
+    assert pc["accepted_2_3"] == 1
+    assert pc["dropped_1_3_near_miss"] == 1
+    assert pc["spread_exceeded_3s"] == 1
+    assert pc["categorical_1_1_1_ties"] == 1
+
+    stoch = run_stochastic_ensemble_experiment(n_seeds=2)
+    assert stoch["seeds"] == 2
+    assert "3_3_pct_mean" in stoch
+    assert "2_3_pct_mean" in stoch
+    assert "1_3_pct_mean" in stoch
 
 
 @pytest.mark.integration
@@ -284,4 +291,5 @@ def test_write_rows_integration_dry_run() -> None:
     """Integration mark test for write_rows."""
     rows = [{"event_id": "test_001", "case_id": "case_001"}]
     assert write_rows(rows, "resus_raw", "fact_event", dry_run=True) == 1
+
 

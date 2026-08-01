@@ -330,11 +330,10 @@ def ensemble_streams(
     return merged_stream, near_miss_list
 
 
-def run_synthetic_ensemble_experiment() -> dict[str, Any]:
+def build_path_coverage_triple() -> list[dict[str, Any]]:
     """
-    Generates synthetic run-triples from fixtures/synthetic_streams.py and
-    returns baseline ensemble outcome statistics (for STATE.md).
-    Provisional until real P1/P2 output distribution is observed.
+    Deterministic path-coverage run-triple where each ensemble branch fires exactly once.
+    Purpose: every branch executes. Not a baseline distribution.
     """
     base_obj = get_maximal_stream()
     base_dict = base_obj.model_dump() if hasattr(base_obj, "model_dump") else base_obj.dict()
@@ -360,13 +359,12 @@ def run_synthetic_ensemble_experiment() -> dict[str, Any]:
         ev["t_start_s"] = ts - 0.1
         ev["timestamp_s"] = ts - 0.1
         if not changed_rhythm_2 and ev.get("type") == "rhythm_check" and "rhythm" in ev.get("attributes", {}):
-            ev["attributes"]["rhythm"] = "asystole"  # 3-way tie: vfib vs vtach vs asystole
+            ev["attributes"]["rhythm"] = "asystole"
             changed_rhythm_2 = True
         if ev.get("type") == "defibrillation_shock" and not dropped_first:
             run2["events"].remove(ev)
             dropped_first = True
 
-    # Add an explicit event with spread > 3.0s (t_precision_s = 2.0s) to demonstrate spread threshold routing
     spread_ev_0 = {
         "type": "compression_mode_change",
         "t_start_s": 50.0,
@@ -382,7 +380,6 @@ def run_synthetic_ensemble_experiment() -> dict[str, Any]:
     run1.setdefault("events", []).append(spread_ev_1)
     run2.setdefault("events", []).append(spread_ev_2)
 
-    # Add an explicit 1-of-3 minority event to Run 1 to demonstrate near-miss routing
     nm_ev_1 = {
         "type": "pocus_cardiac",
         "t_start_s": 88.0,
@@ -394,7 +391,16 @@ def run_synthetic_ensemble_experiment() -> dict[str, Any]:
     }
     run1.setdefault("events", []).append(nm_ev_1)
 
-    merged, near_misses = ensemble_streams([run0, run1, run2], k=3)
+    return [run0, run1, run2]
+
+
+def run_path_coverage_experiment() -> dict[str, Any]:
+    """
+    Executes the deterministic path coverage triple and returns branch counts.
+    Not a baseline distribution.
+    """
+    runs = build_path_coverage_triple()
+    merged, near_misses = ensemble_streams(runs, k=3)
 
     count_3_3 = 0
     count_2_3 = 0
@@ -423,12 +429,144 @@ def run_synthetic_ensemble_experiment() -> dict[str, Any]:
     }
 
 
+run_synthetic_ensemble_experiment = run_path_coverage_experiment
+
+
+def build_stochastic_triple(
+    seed: int,
+    jitter_sd: float = 0.4,
+    drop_p: float = 0.05,
+    spurious_p: float = 0.03,
+    attr_flip_p: float = 0.08,
+) -> list[dict[str, Any]]:
+    """
+    Stochastic generator for realistic ensemble disagreement distribution.
+    Parameters are guesses; replace with measured values after first real P1/P2 triple.
+    """
+    import random
+
+    rng = random.Random(seed)
+    base_obj = get_maximal_stream()
+    base_dict = (
+        base_obj.model_dump()
+        if hasattr(base_obj, "model_dump")
+        else base_obj.dict()
+    )
+
+    runs: list[dict[str, Any]] = []
+    for run_idx in range(3):
+        r = json.loads(json.dumps(base_dict))
+        new_events: list[dict[str, Any]] = []
+        for ev in r.get("events", []):
+            if rng.random() < drop_p:
+                continue
+
+            ts = get_ts(ev)
+            jitter = rng.gauss(0, jitter_sd)
+            ev["t_start_s"] = round(ts + jitter, 2)
+            if "timestamp_s" in ev:
+                ev["timestamp_s"] = round(ts + jitter, 2)
+
+            if rng.random() < attr_flip_p:
+                attrs = ev.get("attributes", {})
+                if isinstance(attrs, dict):
+                    if "rhythm" in attrs:
+                        rhythms = ["vfib", "vtach", "asystole", "pea"]
+                        cur = attrs["rhythm"]
+                        alt = [x for x in rhythms if x != cur]
+                        if alt:
+                            attrs["rhythm"] = rng.choice(alt)
+                    elif "access_type" in attrs:
+                        types = ["iv", "io", "central"]
+                        cur = attrs["access_type"]
+                        alt = [x for x in types if x != cur]
+                        if alt:
+                            attrs["access_type"] = rng.choice(alt)
+            new_events.append(ev)
+
+        if rng.random() < spurious_p:
+            spurious = {
+                "type": "pocus_cardiac",
+                "t_start_s": round(rng.uniform(10.0, 300.0), 2),
+                "timestamp_s": round(rng.uniform(10.0, 300.0), 2),
+                "t_precision_s": 1.0,
+                "confidence": 0.5,
+                "evidence": [{"text": f"spurious pocus run {run_idx}"}],
+                "attributes": {},
+            }
+            new_events.append(spurious)
+
+        r["events"] = new_events
+        runs.append(r)
+    return runs
+
+
+def run_stochastic_ensemble_experiment(n_seeds: int = 20) -> dict[str, Any]:
+    """
+    Run build_stochastic_triple across n_seeds and compute mean and range
+    for 3/3, 2/3, 1/3 percentages, spread>3s counts, and 1/1/1 tie counts.
+    """
+    pct_3_3_list = []
+    pct_2_3_list = []
+    pct_1_3_list = []
+    spread_gt_3_list = []
+    ties_list = []
+
+    for s in range(n_seeds):
+        runs = build_stochastic_triple(seed=s)
+        merged, near_misses = ensemble_streams(runs, k=3)
+        total = len(merged.get("events", [])) + len(near_misses)
+        if total == 0:
+            continue
+        c_3_3 = 0
+        c_2_3 = 0
+        c_spread = 0
+        c_ties = 0
+        for ev in merged.get("events", []):
+            attrs = ev.get("attributes", {})
+            v = attrs.get("ensemble_votes", 0)
+            if v == 3:
+                c_3_3 += 1
+            elif v == 2:
+                c_2_3 += 1
+            if attrs.get("ensemble_spread_s", 0.0) > 3.0:
+                c_spread += 1
+            if any(val == "abstained_1_1_1_tie" for val in attrs.values()):
+                c_ties += 1
+
+        pct_3_3_list.append(round(c_3_3 / total * 100.0, 1))
+        pct_2_3_list.append(round(c_2_3 / total * 100.0, 1))
+        pct_1_3_list.append(round(len(near_misses) / total * 100.0, 1))
+        spread_gt_3_list.append(c_spread)
+        ties_list.append(c_ties)
+
+    return {
+        "seeds": n_seeds,
+        "3_3_pct_mean": round(statistics.mean(pct_3_3_list), 1),
+        "3_3_pct_range": f"{min(pct_3_3_list)}–{max(pct_3_3_list)}",
+        "2_3_pct_mean": round(statistics.mean(pct_2_3_list), 1),
+        "2_3_pct_range": f"{min(pct_2_3_list)}–{max(pct_2_3_list)}",
+        "1_3_pct_mean": round(statistics.mean(pct_1_3_list), 1),
+        "1_3_pct_range": f"{min(pct_1_3_list)}–{max(pct_1_3_list)}",
+        "spread_gt_3s_mean": round(statistics.mean(spread_gt_3_list), 1),
+        "spread_gt_3s_range": f"{min(spread_gt_3_list)}–{max(spread_gt_3_list)}",
+        "ties_1_1_1_mean": round(statistics.mean(ties_list), 1),
+        "ties_1_1_1_range": f"{min(ties_list)}–{max(ties_list)}",
+    }
+
+
 def main() -> None:
-    stats = run_synthetic_ensemble_experiment()
-    print("=== D08 Synthetic Ensemble Experiment Baseline ===")
-    for k, v in stats.items():
+    pc = run_path_coverage_experiment()
+    print("=== D08 Path Coverage Fixture (Deterministic, Pinned) ===")
+    for k, v in pc.items():
+        print(f"  {k}: {v}")
+
+    stoch = run_stochastic_ensemble_experiment(n_seeds=20)
+    print("\n=== D08 Stochastic Baseline (20 seeds, PROVISIONAL — parameters are guesses) ===")
+    for k, v in stoch.items():
         print(f"  {k}: {v}")
 
 
 if __name__ == "__main__":
     main()
+
