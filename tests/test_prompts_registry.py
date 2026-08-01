@@ -8,8 +8,8 @@ from prompts.registry import (
 def test_prompt_set_sha_strict():
     with pytest.raises(FileNotFoundError) as exc:
         prompt_set_sha(strict=True)
-    assert "Missing" in str(exc.value)
-    assert "prompts/passes/p1.txt" in str(exc.value)
+    assert "Missing 4 files:" in str(exc.value)
+    assert "prompts/passes/p3.txt" in str(exc.value)
 
 def test_assert_no_field_names():
     with pytest.raises(ValueError) as exc:
@@ -66,3 +66,34 @@ def test_constitution_round_trip():
     assert_no_field_names(cov, "coverage_rules")
     assert_no_field_names(time_cal, "timestamp_calibration")
     assert_no_field_names(fail, "failure_modes")
+
+def test_passes_round_trip():
+    source = Path("tests/fixtures/passes_v2.0_source.md").read_text()
+    p1 = Path("prompts/passes/p1_harvest.v2.0.md").read_text()
+    p2 = Path("prompts/passes/p2_verify.v2.0.md").read_text()
+
+    p1_part = source.split("=== P1 ===\n")[1].split("=== P2 ===\n")[0]
+    p2_part = source.split("=== P2 ===\n")[1].split("=== P3 ===\n")[0]
+
+    assert p1 == p1_part, "P1 harvest template does not match byte-identical source section"
+    assert p2 == p2_part, "P2 verify template does not match byte-identical source section"
+
+    assert_no_field_names(p1, "p1_harvest")
+    assert_no_field_names(p2, "p2_verify")
+
+def test_placeholder_validation():
+    from prompts.registry import validate_template_placeholders
+    p1 = Path("prompts/passes/p1_harvest.v2.0.md").read_text()
+    p2 = Path("prompts/passes/p2_verify.v2.0.md").read_text()
+
+    # Active templates should pass validation cleanly
+    validate_template_placeholders(p1, "p1_harvest")
+    validate_template_placeholders(p2, "p2_verify")
+
+    # Undeclared placeholder should raise ValueError
+    with pytest.raises(ValueError, match="uses undeclared placeholders"):
+        validate_template_placeholders(p1 + " {undeclared_fake_param} ", "p1_harvest")
+
+    # Unused declared placeholder should raise ValueError
+    with pytest.raises(ValueError, match="declares unused placeholders"):
+        validate_template_placeholders(" {chunk_index} ", "p1_harvest")

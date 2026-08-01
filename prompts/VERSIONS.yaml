@@ -3,20 +3,20 @@ requires_contract_version: 1
 requires_dict_version: "e7c08437adcef4a5"
 anchors_dir: "prompts/anchors"
 
-system_prompt: "prompts/system.txt"
+system_prompt: "prompts/system/constitution.v2.0.md"
 
 pass_templates:
-  pass_1: "prompts/passes/p1.txt"
-  pass_2: "prompts/passes/p2.txt"
+  pass_1: "prompts/passes/p1_harvest.v2.0.md"
+  pass_2: "prompts/passes/p2_verify.v2.0.md"
   pass_3: "prompts/passes/p3.txt"
   pass_4a: "prompts/passes/p4a.txt"
   pass_4b: "prompts/passes/p4b.txt"
   pass_5: "prompts/passes/p5.txt"
 
 fragments:
-  frag_1: "prompts/fragments/frag1.txt"
-  frag_2: "prompts/fragments/frag2.txt"
-  frag_3: "prompts/fragments/frag3.txt"
+  coverage_rules: "prompts/fragments/coverage_rules.md"
+  timestamp_calibration: "prompts/fragments/timestamp_calibration.md"
+  failure_modes: "prompts/fragments/failure_modes.md"
 
 team_anchors:
   team_1: "prompts/anchors/team_1.txt"

@@ -1,3 +1,4 @@
+<!-- Golden source for prompts/passes/p*.txt. Reconstruction from extracted passes must be byte-identical. Do not edit without updating both. -->
 === P1 ===
 # TASK: EVENT HARVEST — WINDOW {chunk_index} of {chunk_total}
 # contract_version: {contract_version}          # ▲ logged with every record

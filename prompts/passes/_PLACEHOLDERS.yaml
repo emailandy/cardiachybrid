@@ -1,0 +1,106 @@
+# Placeholders contract for pass templates (p1_harvest, p2_verify)
+# Every placeholder used in a pass template must be declared here with its type, source, and description.
+
+p1_harvest:
+  anchor_cards:
+    type: yaml_block
+    source: anchors
+    description: "Sliced anchor cards for event types plausibly present in this window."
+  asr_transcript:
+    type: markdown_block
+    source: sensor
+    description: "Authoritative S4 ASR diarized audio transcript in this window."
+  chunk_index:
+    type: integer
+    source: chunker
+    description: "1-indexed sequence number of the current video window chunk."
+  chunk_total:
+    type: integer
+    source: chunker
+    description: "Total number of video window chunks in the resuscitation recording."
+  compression_intervals:
+    type: markdown_block
+    source: sensor
+    description: "Authoritative S1 CPR sensor track compression intervals in this window."
+  contract_slice:
+    type: markdown_block
+    source: contract
+    description: "Sliced extraction contract for event types plausibly present in this window."
+  contract_version:
+    type: string
+    source: contract
+    description: "Version string of the extraction contract and prompt set."
+  device_audio_hits:
+    type: markdown_block
+    source: sensor
+    description: "Authoritative S2 device audio sensor hits in this window."
+  monitor_ocr_series:
+    type: markdown_block
+    source: sensor
+    description: "Authoritative S3 monitor OCR text series in this window."
+  overlap_lead:
+    type: float
+    source: chunker
+    description: "Duration in seconds of the lead-in overlap zone from the prior window."
+  primary_end:
+    type: float
+    source: chunker
+    description: "Absolute video timestamp in seconds where the primary ownership zone ends."
+  quality_windows:
+    type: markdown_block
+    source: sensor
+    description: "Authoritative S5 video quality track intervals in this window."
+  video_duration_s:
+    type: float
+    source: chunker
+    description: "Total duration of the resuscitation video recording in seconds."
+  win_end:
+    type: float
+    source: chunker
+    description: "Absolute video timestamp in seconds where this window ends."
+  win_start:
+    type: float
+    source: chunker
+    description: "Absolute video timestamp in seconds where this window begins."
+  win_start_primary:
+    type: float
+    source: chunker
+    description: "Absolute video timestamp in seconds where the primary ownership zone begins."
+
+p2_verify:
+  anchor_card:
+    type: yaml_block
+    source: anchors
+    description: "Single anchor card for the candidate event type."
+  candidate_event_json:
+    type: json
+    source: pipeline
+    description: "JSON representation of the candidate event being verified."
+  clip_t0:
+    type: float
+    source: chunker
+    description: "Absolute video timestamp in seconds where the verification excerpt clip begins."
+  clip_t1:
+    type: float
+    source: chunker
+    description: "Absolute video timestamp in seconds where the verification excerpt clip ends."
+  contract_slice_single:
+    type: markdown_block
+    source: contract
+    description: "Single extraction contract slice for the candidate event type."
+  contract_version:
+    type: string
+    source: contract
+    description: "Version string of the extraction contract and prompt set."
+  event_type:
+    type: string
+    source: pipeline
+    description: "The event type identifier of the candidate event being verified."
+  retrieved_exemplars:
+    type: markdown_block
+    source: pipeline
+    description: "k=3 nearest human-adjudicated exemplars from HITL correction store. May legitimately be empty string at n=0 before HITL loop runs; render empty string gracefully."
+  sensor_slice:
+    type: markdown_block
+    source: sensor
+    description: "Sliced sensor evidence across all channels within the verification clip interval."

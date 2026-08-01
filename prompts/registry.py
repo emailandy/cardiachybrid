@@ -5,6 +5,7 @@ Prompts registry for resus_qc.
 from pathlib import Path
 import json
 import hashlib
+import re
 from codegen.yamlio import load_yaml
 
 def assert_no_field_names(text: str, where: str) -> None:
@@ -208,6 +209,29 @@ def check_anchors(types=None, fail_on_gap: bool = True) -> dict[str, dict[str, l
         raise ValueError(f"Anchor card gaps detected:\n{json.dumps(gaps, indent=2)}")
         
     return gaps
+
+def validate_template_placeholders(template_text: str, pass_name: str) -> None:
+    """Validates that template_text uses exactly the placeholders declared in
+    prompts/passes/_PLACEHOLDERS.yaml under pass_name.
+    Raises ValueError if there is an undeclared placeholder or an unused declared placeholder.
+    """
+    placeholders_path = Path("prompts/passes/_PLACEHOLDERS.yaml")
+    if not placeholders_path.exists():
+        raise FileNotFoundError(f"Missing {placeholders_path}")
+    data = load_yaml(placeholders_path)
+    if pass_name not in data:
+        raise KeyError(f"Pass {pass_name} not found in _PLACEHOLDERS.yaml")
+    
+    declared = set(data[pass_name].keys())
+    used = set(re.findall(r'\{([a-zA-Z0-9_]+)\}', template_text))
+    
+    undeclared = used - declared
+    if undeclared:
+        raise ValueError(f"Template for {pass_name} uses undeclared placeholders: {sorted(undeclared)}")
+        
+    unused = declared - used
+    if unused:
+        raise ValueError(f"Template for {pass_name} declares unused placeholders: {sorted(unused)}")
 
 if __name__ == "__main__":
     import sys

@@ -1,14 +1,15 @@
 Phase: 1 (schema spine)
-Last completed: A03b
-Next task: A04
-Verified gates: check_anchors(fail_on_gap=True) permanently enabled in CI and passes cleanly across all 39 anchor cards (6 from A03 + 33 from A03b). D14 tests (test_coverage.py) checked: Contract reads match registry perfectly, no integer codes exposed to model, malformed gates correctly trapped, and interval types resolved accurately. Boolean parsing from PyYAML in vocabularies corrected to 'yes'/'no'.
+Last completed: A04
+Next task: A05
+Verified gates: A04 tests: byte-identical round-trip reconstruction of P1 and P2 templates from tests/fixtures/passes_v2.0_source.md, bidirectional placeholder validation (undeclared and unused placeholders raise ValueError), assert_no_field_names on both templates, and prompt_set_sha(strict=True) raising with exactly 4 missing files (P3, P4a, P4b, P5). check_anchors(fail_on_gap=True) permanently enabled in CI and passes cleanly across all 39 anchor cards (6 from A03 + 33 from A03b). D14 tests (test_coverage.py) checked: Contract reads match registry perfectly, no integer codes exposed to model, malformed gates correctly trapped, and interval types resolved accurately. Boolean parsing from PyYAML in vocabularies corrected to 'yes'/'no'.
 Environment: Python 3.11, TBD the rest
 
 Known-broken/deferred:
 - "check_anchors() proves structural coverage only. It cannot validate clinical accuracy. Anchor card content requires human clinical review before the first production run — see docs/CLINICAL_REVIEW_QUEUE.md."
 - "D05 must implement drug->drug_class classification and rhythm->rhythm_shockable derivation in the reducer. Both are where filters the registry depends on, excluded from the model contract because they are computable from drug and rhythm."
 - "D05 drug classification: drug=other + drug_name_text -> drug_class requires a synonym table. Thrombolytics: alteplase, tPA, TNK, tenecteplase, reteplase, retavase, activase, cathflo. Case-insensitive, substring match. Unmatched `other` drugs get drug_class=null and do not populate thrombolytic fields."
-- "dictionary/DDL_SPEC.md not yet staged — blocks D07 only. Human to paste from _inbox/40_ddl_spec.md."
+- "dictionary/DDL_SPEC.md not yet staged — blocks D07 only. Content must come from human user (was never staged in _inbox/)."
+- "_inbox/ is scheduled for deletion after D13 (retaining only referenced task/contract docs until then)."
 - "scripts/make_task.py UNVERIFIED — --dry-run produced no output, which does not distinguish 'works' from 'stub no-op'. Off the critical path; task bodies come from _inbox/. Verify before first real use."
 - "docs/tasks/A02.md is only 7 lines. Before running A02, confirm its Task body names _inbox/20_constitution.md as the source. If it does not, the agent will write a constitution from scratch instead of placing the staged one."
 - "pip index override in place (Q-007). Venv-scoped, repo-local. Must be resolved before production deployment."
@@ -23,6 +24,6 @@ Known-broken/deferred:
 - "Interval types (e.g. cci, rosc, vent_delay) must not leak into event_types. event_types_from_rules and event_types_from_hints are kept distinct in manifest derivation. anchor_cards_required is 39."
 - "NO non-existent files should be skipped in prompt_set_sha(). A partial hash is a lie about reproducibility. Raise on missing files."
 
-Session summary: Completed A03b by authoring and validating BATCH 5 (`airway_confirmation`, `ventilation_delay`, `ventilator_placement`, `defib_charge_aborted`, `stretcher_transfer`, `tee_placement`). Reconciled all 39 required anchor cards (39 required, 39 written, 0 missing, 0 extra). Flipped `fail_on_gap=True` permanently ON in `check_anchors()` and `tests/test_prompts_registry.py`; verified that zero gaps exist across all 39 cards. Added thrombolytic `drug_name_text` mandatory rule and `t_decision_s` disambiguation to `medication_administration.yaml`, and recorded D05 drug classification synonym requirements in `STATE.md`. All 34 unit tests and invariants I1–I6 pass cleanly. Committed A03b.
+Session summary: Completed A04 by extracting P1 harvest (`p1_harvest.v2.0.md`) and P2 verify (`p2_verify.v2.0.md`) templates from `tests/fixtures/passes_v2.0_source.md` and registering them in `prompts/VERSIONS.yaml`. Created `prompts/passes/_PLACEHOLDERS.yaml` declaring the placeholder contract (type, source, description) for both passes. Implemented bidirectional placeholder validation (`validate_template_placeholders`) in `prompts/registry.py`. Added comprehensive unit tests in `tests/test_prompts_registry.py` verifying byte-identical round-trip reconstruction, placeholder validation, clean `assert_no_field_names()` checks, and `prompt_set_sha(strict=True)` reporting exactly 4 missing files (P3–P5). Also created `prompts/passes/_DESIGN.md` documenting A05 anchor slicing optimization and recall-biased selection rules.
 
 <!-- Updated by the agent as the LAST action of every session. If stale, the next session will redo or skip work. -->
