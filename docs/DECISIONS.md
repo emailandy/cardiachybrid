@@ -57,4 +57,12 @@ Cross-field validators emit results per-instance rather than aggregating N affec
 Date: 2026-08-01  Session: D06  Decided by: human, agent
 Validator `V00_timestamp_in_range` (`0 <= t <= video_duration_s`) runs first in `validate_stream` and short-circuits immediately if any event or interval timestamp is out of range or negative. A stream with out-of-range timestamps has a broken clock or ingestion error, rendering all downstream interval comparisons and sequence checks unreliable. Short-circuiting prevents downstream validators (such as V03 or V04) from emitting spurious clinical count or interval mismatch flags when the root fault is upstream clock/ingestion corruption.
 
+## 014 — BigQuery Terraform Region, Embedding Exclusion, and IAM Access Model
+Date: 2026-08-01  Session: D07a  Decided by: human
+1. **Region**: Single region `us-east4` is fixed across all three datasets (`resus_raw`, `resus_curated`, `resus_scratch`) to provide the narrowest defensible institutional PHI footprint for IRB compliance.
+2. **Embeddings**: `fact_utterance.text_embedding` (`ARRAY<FLOAT64>`) is dropped from table schemas per Q-011 (deferred to retrieval layer; audio/voice embeddings are derived PHI / biometric identifiers requiring independent IRB review).
+3. **IAM & Authorized Views**: `sa-analyst` and `sa-reviewer` get `roles/bigquery.dataViewer` access strictly on the curated dataset (`resus_curated`), which exposes authorized views over `resus_raw` (`v_redcap_wide`, `v_exemplar_store`, `v_fact_event`). Both accounts have zero direct IAM bindings on `resus_raw`, ensuring queries against `fact_utterance` or `fact_event.evidence` return `PERMISSION_DENIED`.
+4. **Deployer SA**: `sa-deploy` on production has no human-assumable binding, restricted strictly to CI OIDC workflow federation.
+
+
 

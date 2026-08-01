@@ -73,8 +73,12 @@ Multi-region US vs single region (e.g. us-east4 for data-residency compliance).
   - options: (a) Multi-region US (cheaper/simpler), (b) Single region e.g. us-east4
   - default: None (must be explicitly chosen by human; no silent default)
   - owner: human
-  - status: OPEN
-  - blocks: D07a Terraform deployment
+  - status: RESOLVED (SINGLE REGION, us-east4)
+  - blocks: nothing
+
+Q-011 text_embedding storage in fact_utterance.
+  - status: DEFERRED (not OPEN)
+  - note: "Embedding storage deferred to the retrieval layer. When added, requires separate governance review — derived embeddings of clinical audio are PHI and voice embeddings may be biometric identifiers."
 
 
 ## RESOLVED
