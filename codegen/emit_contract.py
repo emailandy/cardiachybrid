@@ -219,6 +219,9 @@ def main():
         
         if r_type == "case_field":
             key = rule.get("key")
+            from generated.redcap_fields import EXPORT_COLUMNS
+            if key in EXPORT_COLUMNS:
+                raise ValueError(f"case_field key '{key}' collides with REDCap field name in EXPORT_COLUMNS")
             contract["case_fields"][key] = {
                 "vocab": list(get_field_vocab(f_spec, rule, registry).values()),
                 "owning_event_types": rule.get("owning_event_types", []),

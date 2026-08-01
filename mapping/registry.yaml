@@ -37,21 +37,21 @@ sections:
 
 - name: ed_details
   fields:
-  - {field: ohca_ihca, rule: case_field, key: ohca_ihca, vocab: ohca_ihca,
+  - {field: ohca_ihca, rule: case_field, key: arrest_location, vocab: ohca_ihca,
      source_class: AI_DERIVED, difficulty: LOW,
      owning_event_types: [patient_enters_room, ems_handoff_begin,
                           compression_interruption, cpr_initiated_ed]}
-  - {field: video_start_late, rule: case_field, key: video_start_late,
+  - {field: video_start_late, rule: case_field, key: recording_started_late,
      vocab: yes_no_1_2, source_class: AI_DERIVED, difficulty: LOW,
      owning_event_types: [patient_enters_room, compression_interruption]}
   - {field: time_first_team_member_ent_v2, rule: first_of,
      event_type: first_team_member_enters, emit: t_start_s,
      transform: to_redcap_datetime, difficulty: LOW,
-     gate_null_when: "video_start_late == yes"}
+     gate_null_when: "recording_started_late == yes"}
   - {field: time_pt_enters_room_v2, rule: first_of,
      event_type: patient_enters_room, emit: t_start_s,
      transform: to_redcap_datetime, difficulty: LOW,
-     gate_null_when: "video_start_late == yes"}
+     gate_null_when: "recording_started_late == yes"}
   - {field: video_brought_by_ems, rule: case_field, key: brought_by_ems,
      vocab: yes_no_1_2, source_class: AI_DERIVED, difficulty: LOW,
      owning_event_types: [ems_handoff_begin, patient_enters_room]}
@@ -156,7 +156,7 @@ sections:
   - {field: backboard_prior_transf, rule: first_of,
      event_type: mccd_application_start, emit: backboard_preplaced,
      vocab: yes_no_utd, difficulty: HIGH, expected_utd_floor: 0.40,
-     gate_null_when: "video_start_late == yes"}
+     gate_null_when: "recording_started_late == yes"}
   - {field: starttime_mccd_app_ed_v2, rule: first_of,
      event_type: mccd_application_start, where: {applied_by: ed_team},
      emit: t_start_s, transform: to_redcap_datetime, difficulty: MEDIUM}
