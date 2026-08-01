@@ -21,8 +21,10 @@ import re
 from pathlib import Path
 import pytest
 
+from codegen.yamlio import load_yaml
 import generated.redcap_fields as rf
 from fixtures.synthetic_streams import (
+    _ABSENT_EVENT_TYPES,
     get_all_synthetic_streams,
     get_maximal_stream,
     get_absence_stream,
@@ -258,6 +260,40 @@ def test_degraded_differs_from_maximal():
     assert d_utd > m_utd, f"degraded UTD {d_utd} !> maximal UTD {m_utd}"
 
 
+def _speech_gated_absent_fields(fvs: list) -> set[str]:
+    reg = load_yaml(Path("mapping/registry.yaml"))
+    active_fields = {f.export_column for f in fvs if f.branching_satisfied}
+    res = set()
+    for sec in reg.get("sections", []):
+        for r in sec.get("fields", []):
+            if (
+                r.get("rule") == "gate_3way"
+                and r.get("event_type") in _ABSENT_EVENT_TYPES
+                and "speech" in r.get("coverage_channels", [])
+            ):
+                f = r.get("field")
+                if f in active_fields:
+                    res.add(f)
+    return res
+
+
+def _visual_gated_absent_fields(fvs: list) -> set[str]:
+    reg = load_yaml(Path("mapping/registry.yaml"))
+    active_fields = {f.export_column for f in fvs if f.branching_satisfied}
+    res = set()
+    for sec in reg.get("sections", []):
+        for r in sec.get("fields", []):
+            if (
+                r.get("rule") == "gate_3way"
+                and r.get("event_type") in _ABSENT_EVENT_TYPES
+                and "speech" not in r.get("coverage_channels", [])
+            ):
+                f = r.get("field")
+                if f in active_fields:
+                    res.add(f)
+    return res
+
+
 def test_coverage_note_flips_no_to_utd():
     """I5: identical absence, different coverage -> different answer."""
     a, _, _ = reduce_stream(get_absence_stream())
@@ -265,10 +301,20 @@ def test_coverage_note_flips_no_to_utd():
     a_two = {f.export_column for f in a if f.value == "2"}
     d_three = {f.export_column for f in d if f.value == "3"}
     flipped = a_two & d_three
-    assert len(flipped) >= 5, f"only {len(flipped)} fields flipped 2->3"
-    a_pad = next(f.value for f in a if f.export_column == "pad_place_position_changed_v2")
-    d_pad = next(f.value for f in d if f.export_column == "pad_place_position_changed_v2")
-    assert a_pad == "2" and d_pad == "2", "visual-gated pad_reposition should remain 2 (No) under speech degradation"
+
+    expected = _speech_gated_absent_fields(a)
+    assert flipped == expected, (
+        f"missing: {sorted(expected - flipped)}  "
+        f"unexpected: {sorted(flipped - expected)}"
+    )
+
+    visual = _visual_gated_absent_fields(a)
+    for col in visual:
+        a_val = next(f.value for f in a if f.export_column == col)
+        d_val = next(f.value for f in d if f.export_column == col)
+        assert a_val == "2" and d_val == "2", (
+            f"{col} is visual-gated but changed under speech degradation"
+        )
 
 
 
