@@ -1,0 +1,6 @@
+{
+  "compressions_active": "this should be a list not a string",
+  "device_audio": 12345,
+  "monitor_ocr": null,
+  "invalid_track": {"bad": "data"}
+}

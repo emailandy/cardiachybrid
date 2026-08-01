@@ -1,5 +1,5 @@
 # Anchor card for first_team_member_enters
-# Point-in-time arrival marker; unobservable if video_start_late
+# Point-in-time arrival marker; unobservable if recording started late
 
 event_type: first_team_member_enters
 scope: instant
@@ -39,7 +39,7 @@ required_attributes: {}
 disambiguation:
   - "Anyone involved in the patient's care: technician, nursing assistant, nurse, physician, respiratory therapist, pharmacist, scribe. Excludes only non-care personnel — security, environmental services, family."
   - "Excludes EMS personnel arriving with the patient."
-  - "If team members are already present when recording starts (video_start_late), do not guess entrance timestamp."
+  - "If team members are already present when recording starts (recording started late), do not guess entrance timestamp."
   - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
 
 hard_rules:

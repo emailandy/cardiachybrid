@@ -40,7 +40,7 @@ required_attributes: {}
 
 disambiguation:
   - "AUDIO-PRIMARY: Mechanical signatures take precedence over visual occlusion. See mccd_adjustment (Card 2) for the 8-way mechanical CPR adjustment taxonomy."
-  - "If deployment is attempted and given up BEFORE effective compressions are achieved, do NOT emit mccd_removed. That is an abandoned deployment (ed_mccd_outcome = abandoned) where endtime_mccd_app_ed_v2 takes the abandonment timestamp."
+  - "If deployment is attempted and given up BEFORE effective compressions are achieved, do NOT emit mccd_removed. That is an abandoned deployment (ed_mccd_outcome = abandoned) where mechanical compression end timestamp takes the abandonment timestamp."
   - "Emit mccd_removed ONLY for removal AFTER effective compressions (device did its job, now coming off)."
   - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
 

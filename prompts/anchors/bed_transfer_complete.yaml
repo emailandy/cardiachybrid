@@ -46,7 +46,7 @@ disambiguation:
 
 hard_rules:
   - "1. Defining instant is when body weight is fully transferred and movement ceases, not when the countdown starts."
-  - "2. If transfer occurred before video start (video_start_late), abstain — do not guess."
+  - "2. If transfer occurred before video start (recording started late), abstain — do not guess."
 
 abstain_if:
   - "Transfer occurred before video recording began OR bed surface is completely obscured."

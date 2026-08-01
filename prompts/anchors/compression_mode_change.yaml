@@ -49,7 +49,7 @@ required_attributes:
 
 disambiguation:
   - "AUDIO-PRIMARY: Mechanical signatures take precedence over visual occlusion. See mccd_adjustment (Card 2) for the 8-way mechanical CPR adjustment taxonomy."
-  - "Manual->mechanical is the normal deployment path; mechanical->manual usually signals device failure and feeds time_mechanical_chest_comp_v2, which records the FIRST such switch only. Emit EVERY switch observed; the downstream reducer selects the first relevant transition."
+  - "Manual->mechanical is the normal deployment path; mechanical->manual usually signals device failure and feeds mechanical compression start timestamp, which records the FIRST such switch only. Emit EVERY switch observed; the downstream reducer selects the first relevant transition."
   - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
 
 hard_rules:

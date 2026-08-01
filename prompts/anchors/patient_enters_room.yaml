@@ -1,5 +1,5 @@
 # Anchor card for patient_enters_room
-# Point-in-time arrival marker; unobservable if video_start_late
+# Point-in-time arrival marker; unobservable if recording started late
 
 event_type: patient_enters_room
 scope: instant
@@ -38,12 +38,12 @@ required_attributes: {}
 
 disambiguation:
   - "Distinguish patient stretcher entering from staff or equipment carts entering."
-  - "If the recording begins after the patient is already in the bay (see video_start_late), this event is unobservable — abstain, do not infer from later state."
+  - "If the recording begins after the patient is already in the bay (see recording started late), this event is unobservable — abstain, do not infer from later state."
   - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
 
 hard_rules:
-  - "1. If the video recording starts after the patient is already in the room, emit null/abstain with abstain_reason: 'video_start_late'. Never infer an arrival time."
+  - "1. If the video recording starts after the patient is already in the room, emit null/abstain with abstain_reason: 'recording started late'. Never infer an arrival time."
   - "2. Defining instant is threshold crossing, not when the stretcher stops or brakes are locked."
 
 abstain_if:
-  - "Video recording starts after the patient is already inside the resuscitation bay (video_start_late) OR doorway is completely out of frame and no speech confirms arrival time."
+  - "Video recording starts after the patient is already inside the resuscitation bay (recording started late) OR doorway is completely out of frame and no speech confirms arrival time."

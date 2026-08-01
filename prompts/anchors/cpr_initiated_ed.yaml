@@ -1,5 +1,5 @@
 # Anchor card for cpr_initiated_ed
-# Point-in-time first ED chest compression marker; unobservable if video_start_late
+# Point-in-time first ED chest compression marker; unobservable if recording started late
 
 event_type: cpr_initiated_ed
 scope: instant
@@ -54,7 +54,7 @@ disambiguation:
 
 hard_rules:
   - "1. Do NOT emit for continuation of EMS compressions. This event marks INITIATION where none was occurring."
-  - "2. If the recording begins with compressions already underway, you cannot determine whether this was an initiation or a continuation. Abstain with abstain_reason: video_start_late."
+  - "2. If the recording begins with compressions already underway, you cannot determine whether this was an initiation or a continuation. Abstain with abstain_reason: recording started late."
 
 abstain_if:
-  - "Recording begins with compressions already underway (video_start_late) OR chest is completely obstructed from camera view."
+  - "Recording begins with compressions already underway (recording started late) OR chest is completely obstructed from camera view."

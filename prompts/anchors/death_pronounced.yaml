@@ -40,7 +40,7 @@ required_attributes: {}
 
 disambiguation:
   - "Defining instant is the VERBAL PRONOUNCEMENT of death, never the timestamp when chest compressions ceased."
-  - "Note the paired REDCap field ultrasound_dead_ed_v2, which asks whether POCUS was used within roughly 60 seconds before pronouncement. A pocus_cardiac event near a death_pronounced event is clinically meaningful; ensure timestamps accurately reflect when verbal pronouncement occurred relative to ultrasound checks."
+  - "Note the paired REDCap field ultrasound marker at death, which asks whether POCUS was used within roughly 60 seconds before pronouncement. A pocus_cardiac event near a death_pronounced event is clinically meaningful; ensure timestamps accurately reflect when verbal pronouncement occurred relative to ultrasound checks."
   - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
 
 hard_rules:

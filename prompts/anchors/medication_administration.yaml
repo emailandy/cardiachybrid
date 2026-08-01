@@ -62,7 +62,7 @@ disambiguation:
   - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
 
 hard_rules:
-  - "1. When drug is other, drug_name_text is MANDATORY, not optional. Record the medication name exactly as verbalized — 'TNK', 'tenecteplase', 'tPA', 'alteplase', 'bicarb', 'calcium', 'mag'. Downstream classification of thrombolytics depends entirely on this string; an empty drug_name_text on an other drug silently loses the thrombolytic fields (name_thromb_ed_v2, decision_time_thromb_ed, time_thromb_ed_v2)."
+  - "1. When drug is other, drug_name_text is MANDATORY, not optional. Record the medication name exactly as verbalized — 'TNK', 'tenecteplase', 'tPA', 'alteplase', 'bicarb', 'calcium', 'mag'. Downstream classification of thrombolytics depends entirely on this string; an empty drug_name_text on an other drug silently loses the thrombolytic data downstream."
   - "2. An order is not an administration. Emit only on confirmation that the drug entered the line — a verbal 'in'/'given'/'pushed', an observed syringe emptied into a port, or an observed pump bolus start."
   - "3. If you observe an order and never hear a confirmation, emit nothing and note the coverage gap."
   - "4. Emit dose_number ONLY if explicitly verbalized by staff; otherwise emit null."

@@ -41,7 +41,7 @@ required_attributes: {}
 
 disambiguation:
   - "The first word of EMS-to-ED clinical information transfer, however brief or informal. A shouted 'sixty-year-old, down twenty minutes, three shocks' over ongoing compressions IS a handoff. Logistics alone ('watch the IV', 'his name is Bob') is not."
-  - "If handoff began in the hallway or before video starts (video_start_late), abstain."
+  - "If handoff began in the hallway or before video starts (recording started late), abstain."
   - "A statement DESCRIBING this event — future, conditional, or past-tense — is not the event. Emit only on direct observation of the act itself."
 
 hard_rules:

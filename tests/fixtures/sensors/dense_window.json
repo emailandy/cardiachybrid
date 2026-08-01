@@ -1,0 +1,50 @@
+{
+  "compressions_active": [
+    {"start": 0.0, "end": 15.0},
+    {"start": 18.0, "end": 35.0},
+    {"start": 38.0, "end": 55.0},
+    {"start": 58.0, "end": 75.0},
+    {"start": 78.0, "end": 95.0},
+    {"start": 98.0, "end": 115.0},
+    {"start": 118.0, "end": 135.0},
+    {"start": 138.0, "end": 155.0},
+    {"start": 158.0, "end": 175.0},
+    {"start": 178.0, "end": 195.0},
+    {"start": 198.0, "end": 215.0},
+    {"start": 218.0, "end": 235.0},
+    {"start": 238.0, "end": 255.0},
+    {"start": 258.0, "end": 275.0},
+    {"start": 278.0, "end": 295.0},
+    {"start": 298.0, "end": 315.0},
+    {"start": 318.0, "end": 335.0},
+    {"start": 338.0, "end": 355.0},
+    {"start": 358.0, "end": 375.0},
+    {"start": 378.0, "end": 395.0},
+    {"start": 398.0, "end": 415.0},
+    {"start": 418.0, "end": 435.0},
+    {"start": 438.0, "end": 455.0},
+    {"start": 458.0, "end": 475.0},
+    {"start": 478.0, "end": 495.0},
+    {"start": 498.0, "end": 515.0},
+    {"start": 518.0, "end": 535.0},
+    {"start": 538.0, "end": 555.0},
+    {"start": 558.0, "end": 575.0},
+    {"start": 578.0, "end": 595.0}
+  ],
+  "device_audio": [
+    {"timestamp": 15.5, "event": "charge_tone_start"},
+    {"timestamp": 17.0, "event": "shock_delivered"}
+  ],
+  "monitor_ocr": [
+    {"timestamp": 10.0, "text": "HR 0 ASYSTOLE"},
+    {"timestamp": 120.0, "text": "HR 110 NORMAL SINUS"}
+  ],
+  "asr_diarized": [
+    {"timestamp": 16.0, "speaker": "Leader", "text": "Clear, shocking now"},
+    {"timestamp": 40.0, "speaker": "Nurse", "text": "Giving 1mg epi now"},
+    {"timestamp": 125.0, "speaker": "Leader", "text": "Hold CPR, check for a pulse"}
+  ],
+  "quality_track": [
+    {"start": 0.0, "end": 600.0, "video_quality": "good", "audio_quality": "clear"}
+  ]
+}
