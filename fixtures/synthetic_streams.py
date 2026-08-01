@@ -422,11 +422,15 @@ def get_degraded_stream() -> EventStream:
       -> pad_place_position_changed_v2 (visual-gated) returns '2' (No)
     """
     max_stream = get_maximal_stream()
-    # Filter out ems_handoff_begin and pad_reposition so they are absent
+    speech_events = (
+        "ems_handoff_begin", "medication_administration", "ecmo_called",
+        "ecmo_cannulation_start", "ecmo_flow_established", "rosc_detected",
+        "dnr_confirmed", "death_pronounced", "pocus_cardiac",
+    )
     filtered_events = [
         e
         for e in max_stream.events
-        if e.type not in ("ems_handoff_begin", "pad_reposition")
+        if e.type not in speech_events and e.type != "pad_reposition"
     ]
     coverage = [
         CoverageNote(

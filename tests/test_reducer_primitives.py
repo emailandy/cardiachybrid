@@ -248,6 +248,16 @@ def test_interim_defaults_labeled():
         assert f"# {q_num} INTERIM DEFAULT:" in text, f"Missing interim default comment for {q_num}"
 
 
+def test_degraded_differs_from_maximal():
+    """I5: identical routing between clean case and coverage-degraded case means No-vs-UTD asymmetry is not being applied."""
+    m, _, _ = reduce_stream(get_maximal_stream())
+    d, _, _ = reduce_stream(get_degraded_stream())
+    m_utd = sum(1 for f in m if f.value == "3")
+    d_utd = sum(1 for f in d if f.value == "3")
+    assert d_utd > m_utd, f"degraded UTD {d_utd} !> maximal UTD {m_utd}"
+
+
+
 def test_contradictory_flags():
     _, _, flags = reduce_stream(get_contradictory_stream())
     flag_types = {f.flag_type for f in flags}

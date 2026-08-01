@@ -79,7 +79,7 @@ def should_route(
         return True, "validation failed"
 
     # 3. Abstained on a REQUIRED field
-    spec = rf.FIELDS.get(fv.field_name)
+    spec = rf.FIELDS.get(fv.field_name) or rf.FIELDS.get(fv.field_name.split("___")[0])
     is_required = bool(getattr(spec, "required", False)) if spec else False
     if fv.abstained and is_required:
         return True, "abstained + required"
@@ -139,7 +139,9 @@ def evaluate_stream_routing(
     c_low_conf = 0
 
     for fv in field_values:
-        utd_rate = case_utd_rate_by_field.get(fv.field_name)
+        utd_rate = case_utd_rate_by_field.get(fv.field_name) if case_utd_rate_by_field else None
+        if utd_rate is None and case_utd_rate_by_field and "___" in fv.field_name:
+            utd_rate = case_utd_rate_by_field.get(fv.field_name.split("___")[0])
         route, reason = should_route(
             fv,
             config=config,
