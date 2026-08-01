@@ -39,11 +39,43 @@ if [[ -n "${H:-}" ]]; then
 fi
 
 # ── I2  no REDCap field names outside dictionary/ and mapping/ ──────────────
-hits=$(grep -rnE '"[a-z][a-z0-9_]*_v2"|"(num_cci|record_id|reason_cci)[a-z0-9_]*"' \
-       --include='*.py' reducer/ redcap/ router/ metrics/ ingest/ prompts/ \
-       2>/dev/null | grep -v '^generated/' || true)
-if [[ -n "$hits" ]]; then red "I2 field-name literals:"; echo "$hits"
-else green "I2 no field-name literals"; fi
+if [[ ! -f generated/redcap_fields.py ]]; then
+  skip "I2 requires generated/redcap_fields.py (D04)"
+elif ! have_yaml; then
+  err "I2 CANNOT RUN — PyYAML absent"
+else
+  "$PY" - <<'PY'; rc=$?
+import ast
+from pathlib import Path
+from generated.redcap_fields import EXPORT_COLUMNS, FIELDS
+
+target_names = (set(EXPORT_COLUMNS) | set(FIELDS.keys())) - {"record_id"}
+dirs = ["reducer", "redcap", "router", "metrics", "ingest", "prompts"]
+hits = []
+for d in dirs:
+    p = Path(d)
+    if not p.exists():
+        continue
+    for py_file in p.rglob("*.py"):
+        if "generated" in str(py_file):
+            continue
+        try:
+            tree = ast.parse(py_file.read_text(), filename=str(py_file))
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                    if node.value in target_names:
+                        hits.append(f"{py_file}:{node.lineno}: literal {node.value!r}")
+        except Exception:
+            pass
+if hits:
+    print("  offending literals:")
+    for h in hits:
+        print("   ", h)
+raise SystemExit(1 if hits else 0)
+PY
+  if [[ $rc -ne 0 ]]; then red "I2 field-name literals found"
+  else green "I2 no field-name literals"; fi
+fi
 
 # ── I3  yesno is 1/0 ────────────────────────────────────────────────────────
 if [[ ! -f generated/redcap_fields.py ]]; then

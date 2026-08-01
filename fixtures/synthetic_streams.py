@@ -521,49 +521,115 @@ def get_sparse_stream() -> EventStream:
 
 def get_contradictory_stream() -> EventStream:
     """
-    Returns a contradictory synthetic EventStream containing:
-      - a shock outside any CCI
-      - a medication inside a ROSC window
-      - an inverted interval (t_end_s < t_start_s)
-    These must produce flags without crashes when analyzed by the engine.
+    Returns a contradictory synthetic EventStream containing explicit trigger elements
+    for all 10 stream cross-field validators (V1 through V10):
+      - V01_start_before_end: an inverted interval (t_end_s < t_start_s)
+      - V02_mccd_adj_within_app: MCCD adjustment at 35.0s outside MCCD application window [15.0, 25.0s]
+      - V03_defib_count_match: 2 shocks present (one with t_start_s=None so only 1 timestamp populated, while num_times_defib is '2')
+      - V04_shock_inside_cci: a shock at 100.0s outside any CCI interval
+      - V05_shock_implies_shockable: shocks present and every rhythm_check is asystole (no shockable rhythm anywhere in stream)
+      - V06_no_med_in_rosc: medication administered at 250.0s during ROSC interval [200.0, 300.0s]
+      - V07_cci_non_overlapping: two overlapping CCI intervals [120.0, 130.0s] and [125.0, 135.0s]
+      - V08_rosc_non_overlapping: two overlapping ROSC intervals [200.0, 300.0s] and [280.0, 350.0s]
+      - V09_room_entry_first: patient_enters_room at 30.0s while other events/intervals occur earlier (< 30.0s)
+      - V10_airway_confirmation: airway attempt with successful=True at 60.0s and no subsequent confirmation event
+    (V11 and V12 are payload checks without stream representation; tested via synthetic payload dicts).
     """
     events: list[Event] = [
+        # V9: patient_enters_room at 30.0s (later than several events/intervals below)
         Event(
             type="patient_enters_room",
-            timestamp_s=0.0,
+            timestamp_s=30.0,
             attributes={"arrival": True},
-            evidence=_make_evidence(0.0, "Arrival"),
+            evidence=_make_evidence(30.0, "Arrival"),
         ),
-        # Shock at 100.0 outside any CCI
+        # V2: MCCD application window and out-of-bounds adjustment
+        Event(
+            type="mccd_application_start",
+            timestamp_s=15.0,
+            attributes={"applied_by": "ems"},
+            evidence=_make_evidence(15.0, "MCCD start"),
+        ),
+        Event(
+            type="mccd_removed",
+            timestamp_s=25.0,
+            attributes={"removed": True},
+            evidence=_make_evidence(25.0, "MCCD end"),
+        ),
+        Event(
+            type="mccd_adjustment",
+            timestamp_s=35.0,
+            attributes={"adjustment_categories": ["pause"]},
+            evidence=_make_evidence(35.0, "MCCD adjustment outside app window"),
+        ),
+        # V3, V4, V5: Shock at 100.0s (outside CCI -> V4), second shock at 105.0s with unpopulated timestamp -> V3 (count=2, populated=1), all rhythms asystole -> V5
         Event(
             type="defibrillation_shock",
             timestamp_s=100.0,
             attributes={"shock_delivered": True, "energy_j": 200},
             evidence=_make_evidence(100.0, "Shock outside CCI"),
         ),
-        # Medication inside ROSC window (200-300s)
+        Event(
+            type="defibrillation_shock",
+            timestamp_s=-5.0,
+            attributes={"shock_delivered": True, "energy_j": 200, "t_start_s": None},
+            evidence=_make_evidence(-5.0, "Shock with unpopulated timestamp"),
+        ),
+        Event(
+            type="rhythm_check",
+            timestamp_s=90.0,
+            attributes={"rhythm": "asystole"},
+            evidence=_make_evidence(90.0, "Non-shockable rhythm"),
+        ),
+        # V6: Medication inside ROSC window (200-300s)
         Event(
             type="medication_administration",
             timestamp_s=250.0,
             attributes={"drug": "epinephrine", "dose_mg": 1.0, "route": "iv"},
             evidence=_make_evidence(250.0, "Epi during ROSC"),
         ),
+        # V10: Successful airway attempt with no subsequent airway_confirmation
+        Event(
+            type="airway_attempt",
+            timestamp_s=60.0,
+            attributes={"device": "ett", "successful": True},
+            evidence=_make_evidence(60.0, "Successful airway attempt without confirmation"),
+        ),
     ]
 
     intervals: list[Interval] = [
-        # ROSC window 200.0 to 300.0
+        # V1: Inverted interval: t_end_s < t_start_s
+        Interval(
+            type="compression_interruption",
+            t_start_s=50.0,
+            t_end_s=10.0,
+            attributes={"pulse_check": True},
+        ),
+        # V7: Overlapping CCI intervals
+        Interval(
+            type="compression_interruption",
+            t_start_s=120.0,
+            t_end_s=130.0,
+            attributes={"pulse_check": True},
+        ),
+        Interval(
+            type="compression_interruption",
+            t_start_s=125.0,
+            t_end_s=135.0,
+            attributes={"pulse_check": True},
+        ),
+        # V8: Overlapping ROSC intervals
         Interval(
             type="rosc",
             t_start_s=200.0,
             t_end_s=300.0,
             attributes={"rosc_duration_s": 100.0},
         ),
-        # Inverted interval: t_end_s < t_start_s
         Interval(
-            type="compression_interruption",
-            t_start_s=50.0,
-            t_end_s=10.0,
-            attributes={"pulse_check": True},
+            type="rosc",
+            t_start_s=280.0,
+            t_end_s=350.0,
+            attributes={"rosc_duration_s": 70.0},
         ),
     ]
 

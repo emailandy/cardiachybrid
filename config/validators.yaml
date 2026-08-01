@@ -1,1 +1,47 @@
-# TODO: Populated by D06
+# config/validators.yaml
+# Cross-field validator severity thresholds and rule definitions.
+# Severity options: QUARANTINE, FLAG, REPAIR
+# Configurable by clinical lead without code changes.
+
+validators:
+  V01_start_before_end:
+    severity: QUARANTINE
+    description: "Every start timestamp must be less than its corresponding end timestamp."
+  V02_mccd_adj_within_app:
+    severity: QUARANTINE
+    description: "MCCD adjustment window must be a subset of the MCCD application window."
+  V03_defib_count_match:
+    severity: QUARANTINE
+    description: "num_times_defib must equal the count of populated defib timestamps."
+  V04_shock_inside_cci:
+    severity: FLAG
+    description: "Every defibrillation shock timestamp must fall inside some CCI interval."
+  V05_shock_implies_shockable:
+    severity: FLAG
+    description: "Any shock present implies a shockable rhythm recorded somewhere in the case."
+  V06_no_med_in_rosc:
+    severity: FLAG
+    description: "No medication administration event inside a ROSC window."
+  V07_cci_non_overlapping:
+    severity: QUARANTINE
+    description: "CCIs non-overlapping and monotonic (sensor defect/drift check)."
+  V08_rosc_non_overlapping:
+    severity: QUARANTINE
+    description: "ROSC episodes non-overlapping, end_i <= start_{i+1}."
+  V09_room_entry_first:
+    severity: QUARANTINE
+    description: "patient_enters_room <= every other event/interval timestamp."
+  V10_airway_confirmation:
+    severity: FLAG
+    description: "Every airway attempt with successful=true has a subsequent confirmation."
+  V11_no_calc_fields:
+    severity: QUARANTINE
+    description: "calc fields must be absent from the submitted payload."
+  V12_dict_version_match:
+    severity: QUARANTINE
+    description: "dict_version in payload matches dictionary/dict_version.txt."
+
+config_mappings:
+  defib_count_field: "num_times_defib_ed_v2"
+  defib_group_name: "defib"
+  dict_version_field: "dict_version"

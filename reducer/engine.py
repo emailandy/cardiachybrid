@@ -219,7 +219,7 @@ def _execute_rule(
     item_idx: int = 0,
     routed: bool = False,
 ) -> list[FieldValue]:
-    rule_type = rule.get('rule')
+    rule_type = rule.get('rule', 'attr')
     f_name = rule.get('field') or rule.get('pattern')
     if not f_name or not rule_type:
         return []
@@ -300,7 +300,7 @@ def _execute_rule(
         return [_emit_fv(f_name, val, val, 'REDUCER_DERIVED', ids, fields_spec, routed=routed)]
 
     if rule_type == 'attr':
-        target_item = items[item_idx] if item_idx < len(items) else None
+        target_item = items[item_idx] if item_idx < len(items) else (items[0] if items else None)
         if not target_item:
             return [_emit_fv(f_name, None, '', 'REDUCER_DERIVED', [], fields_spec, is_null=True, routed=routed)]
         emit_key = rule.get('emit', '')
@@ -406,7 +406,7 @@ def _process_repeating_group(
         target_items = [items[idx - 1]] if idx <= len(items) else []
         for rule in group.get('fields', []):
             f_rule = dict(rule)
-            res.extend(_execute_rule(f_rule, stream, fields_spec, items=target_items, item_idx=0, routed=is_overflow))
+            res.extend(_execute_rule(f_rule, stream, fields_spec, items=target_items, item_idx=idx - 1, routed=is_overflow))
     return res
 
 

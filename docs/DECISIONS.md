@@ -44,3 +44,8 @@ case_field keys must not collide with REDCap field names, because the contract's
 ## 010 — abstain_reason is a closed vocabulary in its own namespace
 Date: 2026-08-01  Session: D05  Decided by: human
 `abstain_reason` is a closed vocabulary in its own namespace (`prompts/anchors/_ABSTAIN_REASONS.yaml`). It must not overlap `case_field` keys or REDCap field names. The router classifies abstentions by this token, so an unregistered value is silently unroutable. Enforced by `check_anchors()`.
+
+## 011 — V7 sensor rationale and QUARANTINE severity
+Date: 2026-08-01  Session: D06  Decided by: human
+CCI boundaries are supplied by S1 (chest-ROI optical flow) and S2 (compression-audio periodicity). Both are monotonic time-series; overlapping intervals cannot arise from correct sensor output. An overlap therefore indicates a sensor defect, timestamp drift, or a chunk-boundary merge error — not a clinical ambiguity. Merging would distort total no-flow time and mask the upstream bug. QUARANTINE.
+
