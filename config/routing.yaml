@@ -1,1 +1,19 @@
-# TODO: Populated by D09
+# config/routing.yaml
+# Configurable confidence routing thresholds and parameters for HITL work-queue.
+# Configurable by clinical lead without code changes.
+
+confidence_thresholds:
+  LOW: 0.80
+  MEDIUM: 0.85
+  HIGH: 0.92
+  default: 0.85
+
+spread_threshold_s: 3.0
+
+# If a field has an expected_utd_floor and the case's UTD rate for that field
+# is more than utd_anomaly_margin below expected_utd_floor, route for review.
+utd_anomaly_margin: 0.20
+
+# NOTE (Q-006 OPEN): TEAM fields route unconditionally in policy.py until
+# per-item ICC vs. two human raters exceeds 0.75. This is hard-coded as a policy
+# rule and cannot be tuned to zero via configuration.
