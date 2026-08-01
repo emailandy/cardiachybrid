@@ -571,9 +571,9 @@ def get_contradictory_stream() -> EventStream:
         ),
         Event(
             type="defibrillation_shock",
-            timestamp_s=-5.0,
-            attributes={"shock_delivered": True, "energy_j": 200, "t_start_s": None},
-            evidence=_make_evidence(-5.0, "Shock with unpopulated timestamp"),
+            timestamp_s=105.0,
+            attributes={"shock_delivered": True, "energy_j": 200},
+            evidence=_make_evidence(105.0, "Shock 2 in range"),
         ),
         Event(
             type="rhythm_check",
@@ -638,7 +638,7 @@ def get_contradictory_stream() -> EventStream:
         events=events,
         intervals=intervals,
         coverage=[],
-        fields=CaseFields(recording_started_late=False),
+        fields=CaseFields(recording_started_late=False, num_times_defib_ed_v2=3),
     )
 
 

@@ -41,8 +41,9 @@ def test_datetime_format_trap() -> None:
     base_dt = datetime.datetime(2026, 8, 1, 10, 0, 0, tzinfo=datetime.timezone.utc)
     assert to_redcap_datetime(0, base_dt) == "2026-08-01 10:00:00"
 
-    # Negative offset before video start returns None (unpopulated)
-    assert to_redcap_datetime(-5.0, base_str) is None
+    # Negative offset before video start raises ValueError (corrupt input contract)
+    with pytest.raises(ValueError, match="out of range"):
+        to_redcap_datetime(-5.0, base_str)
 
     # Null / invalid inputs
     assert to_redcap_datetime(None, base_str) is None
@@ -178,3 +179,36 @@ def test_clean_maximal_stream_has_no_quarantines() -> None:
     results = validate_stream(record, stream.events, stream.intervals)
     quarantines = [r for r in results if r.severity == "QUARANTINE"]
     assert len(quarantines) == 0, f"Unexpected QUARANTINE on maximal stream: {quarantines}"
+
+
+def test_v03_in_isolation_and_v00_short_circuit() -> None:
+    """
+    FIX 3 - Re-verifies V03 in isolation on its own condition (count=3, populated=2,
+    all timestamps in range), then confirms a -5.0s shock triggers V00 and short-circuits
+    so V03 no longer fires.
+    """
+    record: dict[str, Any] = {
+        "num_times_defib_ed_v2": "3",
+        "time_ed_defib_1_v2": "2026-08-01 10:01:40",
+        "time_ed_defib_2_v2": "2026-08-01 10:01:45",
+    }
+    events_clean: list[Event] = [
+        Event(type="defibrillation_shock", timestamp_s=100.0, attributes={}, evidence=[]),
+        Event(type="defibrillation_shock", timestamp_s=105.0, attributes={}, evidence=[]),
+    ]
+    res_clean = validate_stream(record, events_clean, [])
+    fired_clean = {r.validator_id for r in res_clean}
+    assert "V00_timestamp_in_range" not in fired_clean
+    assert "V03_defib_count_match" in fired_clean
+    v03_res = [r for r in res_clean if r.validator_id == "V03_defib_count_match"][0]
+    assert "num_times_defib (3) != populated defib timestamps (2)" in v03_res.message
+
+    events_neg: list[Event] = [
+        Event(type="defibrillation_shock", timestamp_s=-5.0, attributes={}, evidence=[]),
+        Event(type="defibrillation_shock", timestamp_s=100.0, attributes={}, evidence=[]),
+        Event(type="defibrillation_shock", timestamp_s=105.0, attributes={}, evidence=[]),
+    ]
+    res_neg = validate_stream(record, events_neg, [])
+    assert len(res_neg) > 0
+    assert all(r.validator_id == "V00_timestamp_in_range" for r in res_neg)
+    assert "V03_defib_count_match" not in {r.validator_id for r in res_neg}

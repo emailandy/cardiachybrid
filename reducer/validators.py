@@ -49,6 +49,62 @@ def validate_stream(
     if config is None:
         config = _load_config()
 
+    # V00: timestamp in range [0, video_duration_s] (short-circuit on failure)
+    sev = _get_severity(config, "V00_timestamp_in_range")
+    dur_field = config.get("config_mappings", {}).get("video_duration_field", "")
+    try:
+        max_dur = float(record.get(dur_field, 3600.0))
+    except (ValueError, TypeError):
+        max_dur = 3600.0
+
+    v00_results: list[Result] = []
+    for e in events:
+        if e.timestamp_s < 0.0 or e.timestamp_s > max_dur:
+            v00_results.append(
+                Result(
+                    validator_id="V00_timestamp_in_range",
+                    severity=sev,
+                    field_name=None,
+                    message=f"Event {e.type} attribute=timestamp_s value={e.timestamp_s} out of range [0.0, {max_dur}]",
+                )
+            )
+        for k, val in e.attributes.items():
+            if k.endswith("_s") or k.endswith("_ts") or k in {"t_decision_s", "t_confirmed_s", "vitals_t_s"}:
+                try:
+                    f_val = float(val)
+                    if f_val < 0.0 or f_val > max_dur:
+                        v00_results.append(
+                            Result(
+                                validator_id="V00_timestamp_in_range",
+                                severity=sev,
+                                field_name=None,
+                                message=f"Event {e.type} attribute={k} value={f_val} out of range [0.0, {max_dur}]",
+                            )
+                        )
+                except (ValueError, TypeError):
+                    pass
+    for iv in intervals:
+        if iv.t_start_s < 0.0 or iv.t_start_s > max_dur:
+            v00_results.append(
+                Result(
+                    validator_id="V00_timestamp_in_range",
+                    severity=sev,
+                    field_name=None,
+                    message=f"Interval {iv.type} attribute=t_start_s value={iv.t_start_s} out of range [0.0, {max_dur}]",
+                )
+            )
+        if iv.t_end_s is not None and (iv.t_end_s < 0.0 or iv.t_end_s > max_dur):
+            v00_results.append(
+                Result(
+                    validator_id="V00_timestamp_in_range",
+                    severity=sev,
+                    field_name=None,
+                    message=f"Interval {iv.type} attribute=t_end_s value={iv.t_end_s} out of range [0.0, {max_dur}]",
+                )
+            )
+    if v00_results:
+        return v00_results
+
     results: list[Result] = []
 
     # V01: every start < end

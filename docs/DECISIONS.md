@@ -49,3 +49,12 @@ Date: 2026-08-01  Session: D05  Decided by: human
 Date: 2026-08-01  Session: D06  Decided by: human
 CCI boundaries are supplied by S1 (chest-ROI optical flow) and S2 (compression-audio periodicity). Both are monotonic time-series; overlapping intervals cannot arise from correct sensor output. An overlap therefore indicates a sensor defect, timestamp drift, or a chunk-boundary merge error — not a clinical ambiguity. Merging would distort total no-flow time and mask the upstream bug. QUARANTINE.
 
+## 012 — Cross-field validator emission: per-instance vs. aggregate
+Date: 2026-08-01  Session: D06  Decided by: human, agent
+Cross-field validators emit results per-instance rather than aggregating N affected events into a single result. While aggregate results reduce item count in a review queue, per-instance emission provides precise timestamp and event attribution for every violation, enabling exact filtering and root-cause localization without string parsing.
+
+## 013 — V00 short-circuiting on out-of-range timestamps
+Date: 2026-08-01  Session: D06  Decided by: human, agent
+Validator `V00_timestamp_in_range` (`0 <= t <= video_duration_s`) runs first in `validate_stream` and short-circuits immediately if any event or interval timestamp is out of range or negative. A stream with out-of-range timestamps has a broken clock or ingestion error, rendering all downstream interval comparisons and sequence checks unreliable. Short-circuiting prevents downstream validators (such as V03 or V04) from emitting spurious clinical count or interval mismatch flags when the root fault is upstream clock/ingestion corruption.
+
+

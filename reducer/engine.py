@@ -395,7 +395,9 @@ def _process_repeating_group(
     res: list[FieldValue] = []
     cnt_field = group.get('count_field')
     if cnt_field:
-        res.append(_emit_fv(cnt_field, str(len(items)), str(len(items)), 'REDUCER_DERIVED', [_get_item_id(it) for it in items], fields_spec, routed=is_overflow))
+        ovr_val = getattr(stream.fields, cnt_field, None) if stream.fields else None
+        c_val = str(ovr_val) if ovr_val is not None else str(len(items))
+        res.append(_emit_fv(cnt_field, c_val, c_val, 'REDUCER_DERIVED', [_get_item_id(it) for it in items], fields_spec, routed=is_overflow))
 
     ov_field = group.get('overflow_note_field')
     if ov_field:

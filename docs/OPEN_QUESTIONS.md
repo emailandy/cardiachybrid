@@ -68,6 +68,15 @@ Q-008 Pin exact Gemini model version strings before the first production run.
   - status: OPEN
   - blocks: production deployment
 
+Q-010 BigQuery Terraform Region Selection.
+Multi-region US vs single region (e.g. us-east4 for data-residency compliance).
+  - options: (a) Multi-region US (cheaper/simpler), (b) Single region e.g. us-east4
+  - default: None (must be explicitly chosen by human; no silent default)
+  - owner: human
+  - status: OPEN
+  - blocks: D07a Terraform deployment
+
+
 ## RESOLVED
 **T-001 (A01)**: What is the correct value for 'Scope: MODIFY'? (specs.yaml does not determine this).
 **T-002 (A01)**: What is the correct value for 'Scope: READ'? (specs.yaml does not determine this).

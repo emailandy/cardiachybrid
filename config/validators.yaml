@@ -4,6 +4,9 @@
 # Configurable by clinical lead without code changes.
 
 validators:
+  V00_timestamp_in_range:
+    severity: QUARANTINE
+    description: "Every event/interval timestamp must satisfy 0 <= t <= video_duration_s."
   V01_start_before_end:
     severity: QUARANTINE
     description: "Every start timestamp must be less than its corresponding end timestamp."
@@ -45,3 +48,4 @@ config_mappings:
   defib_count_field: "num_times_defib_ed_v2"
   defib_group_name: "defib"
   dict_version_field: "dict_version"
+  video_duration_field: "video_duration_s"

@@ -21,14 +21,21 @@ def to_redcap_datetime(
     UI DISPLAY ONLY in REDCap web interface. The REDCap API import format is STRICTLY
     `%Y-%m-%d %H:%M:%S` (Y-M-D). Sending M-D-Y format to the API import endpoint causes
     silent rejection or uninformative errors. Do NOT change this format to MDY.
+
+    OUT-OF-RANGE INPUT CONTRACT (FIX 2 - no silent nulls):
+    Raises ValueError on negative offset input (t_s < 0.0), because a negative video
+    offset is corrupt input or an ingestion/clock error, never a legitimate abstention.
+    This aligns with I6 (never coerce, fail loudly).
     """
     if t_s is None or t0 is None or str(t_s).strip() == "" or str(t0).strip() == "":
         return None
     try:
         offset = float(t_s)
         if offset < 0.0:
-            return None
-    except (ValueError, TypeError):
+            raise ValueError(f"Negative video offset {offset}s is out of range [0, ...]")
+    except (ValueError, TypeError) as ex:
+        if isinstance(ex, ValueError) and "out of range" in str(ex):
+            raise
         return None
 
     if isinstance(t0, (int, float)):
