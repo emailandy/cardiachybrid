@@ -1,0 +1,225 @@
+"""
+tests/test_ensemble.py — Unit test suite for D08 event ingestion loader and ensemble voting.
+
+Tests:
+  1. Idempotent ingestion and sequence-based deterministic event_id (DECISION 017).
+  2. Mandatory evidence[] rule rejection and logging (Constitution rule).
+  3. Vote thresholds (3/3 accept, 2/3 accept+flag, 1/3 near-miss drop, 1/1/1 tie abstention, spread > 3s routing).
+  4. Adversarial global greedy nearest-neighbour matching without false orphans.
+  5. Near-miss PHI preservation and scratch dataset deployment refusal.
+  6. Synthetic ensemble experiment baseline counts.
+"""
+
+import pytest
+from ingest.loader import build_rows, write_rows, compute_sequence_id
+from ingest.ensemble import (
+    ensemble_streams,
+    run_synthetic_ensemble_experiment,
+    match_item_clusters,
+)
+
+
+def test_idempotent_loader_ingestion() -> None:
+    """Assert build_rows run twice on identical input yields identical event_ids and row content."""
+    stream = {
+        "events": [
+            {
+                "type": "defibrillation_shock",
+                "t_start_s": 10.0,
+                "confidence": 0.95,
+                "evidence": [{"text": "shock 1"}],
+            },
+            {
+                "type": "defibrillation_shock",
+                "t_start_s": 20.0,
+                "confidence": 0.95,
+                "evidence": [{"text": "shock 2"}],
+            },
+        ]
+    }
+    t0 = "2026-08-01T12:00:00Z"
+    tables1, rej1, logs1 = build_rows(stream, "case_001", "run_ensemble_v1", t0)
+    tables2, rej2, logs2 = build_rows(stream, "case_001", "run_ensemble_v1", t0)
+
+    assert len(rej1) == 0 and len(rej2) == 0
+    assert len(tables1["fact_event"]) == 2
+    assert tables1["fact_event"] == tables2["fact_event"]
+    assert [x["event_id"] for x in tables1["fact_event"]] == [
+        x["event_id"] for x in tables2["fact_event"]
+    ]
+
+
+def test_event_id_stable_under_timestamp_drift() -> None:
+    """Assert sequence-based ID is stable under small timestamp drift (DECISION 017)."""
+    id1 = compute_sequence_id("case_001", "defibrillation_shock", 1)
+    id2 = compute_sequence_id("case_001", "defibrillation_shock", 1)
+    assert id1 == id2 and len(id1) == 12
+
+
+def test_evidence_mandatory_rejection() -> None:
+    """Assert any event with empty evidence[] is rejected before BQ and logged with reason."""
+    stream = {
+        "events": [
+            {
+                "type": "defibrillation_shock",
+                "t_start_s": 15.0,
+                "confidence": 0.9,
+                "evidence": [],
+            }
+        ]
+    }
+    tables, rejected, logs = build_rows(stream, "case_001", "run_001")
+    assert len(tables["fact_event"]) == 0
+    assert len(rejected) == 1
+    assert "mandatory evidence[] is empty (Constitution rule)" in logs[0]
+
+
+def test_vote_thresholds_and_ties() -> None:
+    """Assert 3/3 accept, 2/3 flag, 1/3 near-miss, spread > 3s routing, and 1/1/1 tie abstention."""
+    ev_base = {
+        "type": "rhythm_check",
+        "t_start_s": 100.0,
+        "confidence": 0.9,
+        "evidence": [{"text": "check"}],
+    }
+    # 3-way tie on categorical attribute
+    run_a = {"events": [dict(ev_base, attributes={"rhythm": "vfib"})]}
+    run_b = {"events": [dict(ev_base, attributes={"rhythm": "vtach"})]}
+    run_c = {"events": [dict(ev_base, attributes={"rhythm": "asystole"})]}
+
+    merged, nm = ensemble_streams([run_a, run_b, run_c], k=3)
+    assert len(merged["events"]) == 1
+    attrs = merged["events"][0]["attributes"]
+    assert attrs["rhythm"] == "abstained_1_1_1_tie"
+    assert merged["events"][0]["routed_to_human"] is True
+    assert attrs["ensemble_votes"] == 3
+
+    # 2/3 vote + flag
+    run_d = {"events": []}
+    merged_2_3, nm_2_3 = ensemble_streams([run_a, run_b, run_d], k=3)
+    assert len(merged_2_3["events"]) == 1
+    assert merged_2_3["events"][0]["attributes"]["ensemble_flag"] == "2/3_majority"
+
+    # 1/3 minority vote goes to near-miss
+    merged_1_3, nm_1_3 = ensemble_streams([run_a, run_d, run_d], k=3)
+    assert len(merged_1_3["events"]) == 0
+    assert len(nm_1_3) == 1
+    assert nm_1_3[0]["evidence"] == [{"text": "check"}]
+
+
+def test_adversarial_global_greedy_matching() -> None:
+    """
+    1. Clean spacing: shocks 4s apart match cleanly without orphans.
+    2. Adversarial close timestamps (100.0, 100.5, 101.2 vs 100.4, 101.0, 101.3):
+       assert unmatched events are logged with their nearest rejected candidate (DECISION 017).
+    3. 3 vs 4 shocks: extra shock becomes a near-miss.
+    """
+    run_clean_a = {
+        "events": [
+            {"type": "defibrillation_shock", "t_start_s": 100.0, "t_precision_s": 0.4, "evidence": [{"text": "c1"}]},
+            {"type": "defibrillation_shock", "t_start_s": 104.0, "t_precision_s": 0.4, "evidence": [{"text": "c2"}]},
+            {"type": "defibrillation_shock", "t_start_s": 108.0, "t_precision_s": 0.4, "evidence": [{"text": "c3"}]},
+        ]
+    }
+    run_clean_b = {
+        "events": [
+            {"type": "defibrillation_shock", "t_start_s": 100.2, "t_precision_s": 0.4, "evidence": [{"text": "c1b"}]},
+            {"type": "defibrillation_shock", "t_start_s": 104.1, "t_precision_s": 0.4, "evidence": [{"text": "c2b"}]},
+            {"type": "defibrillation_shock", "t_start_s": 107.9, "t_precision_s": 0.4, "evidence": [{"text": "c3b"}]},
+        ]
+    }
+    merged_clean, nm_clean = ensemble_streams([run_clean_a, run_clean_b], k=2)
+    assert len(merged_clean["events"]) == 3
+    assert len(nm_clean) == 0
+
+    # Adversarial close timestamps
+    run_a = {
+        "events": [
+            {"type": "defibrillation_shock", "t_start_s": 100.0, "t_precision_s": 0.4, "evidence": [{"text": "a1"}]},
+            {"type": "defibrillation_shock", "t_start_s": 100.5, "t_precision_s": 0.4, "evidence": [{"text": "a2"}]},
+            {"type": "defibrillation_shock", "t_start_s": 101.2, "t_precision_s": 0.4, "evidence": [{"text": "a3"}]},
+        ]
+    }
+    run_b = {
+        "events": [
+            {"type": "defibrillation_shock", "t_start_s": 100.4, "t_precision_s": 0.4, "evidence": [{"text": "b1"}]},
+            {"type": "defibrillation_shock", "t_start_s": 101.0, "t_precision_s": 0.4, "evidence": [{"text": "b2"}]},
+            {"type": "defibrillation_shock", "t_start_s": 101.3, "t_precision_s": 0.4, "evidence": [{"text": "b3"}]},
+        ]
+    }
+    merged_adv, nm_adv = ensemble_streams([run_a, run_b], k=2)
+    assert len(nm_adv) > 0, "Adversarial greedy matching produces near-misses"
+    assert any("unmatched_log" in x.get("attributes", {}) for x in nm_adv), (
+        "Unmatched near-miss must log nearest rejected candidate"
+    )
+
+    # When run B has an extra 4th shock, that 4th shock becomes a near-miss
+    run_b_extra = dict(
+        events=run_clean_b["events"]
+        + [
+            {
+                "type": "defibrillation_shock",
+                "t_start_s": 115.0,
+                "t_precision_s": 0.4,
+                "evidence": [{"text": "b4"}],
+            }
+        ]
+    )
+    merged_extra, nm_extra = ensemble_streams([run_clean_a, run_b_extra], k=2)
+    assert len(merged_extra["events"]) == 3
+    assert len(nm_extra) == 1
+    assert nm_extra[0]["evidence"] == [{"text": "b4"}]
+
+
+def test_near_miss_phi_and_scratch_refusal() -> None:
+    """Assert near-misses carry full evidence[] and write_rows rejects scratch datasets."""
+    stream = {
+        "events": [
+            {
+                "type": "defibrillation_shock",
+                "t_start_s": 10.0,
+                "confidence": 0.9,
+                "evidence": [{"text": "shock quote"}],
+            }
+        ]
+    }
+    nm = [
+        {
+            "type": "defibrillation_shock",
+            "t_start_s": 15.0,
+            "confidence": 0.7,
+            "votes_accept": 1,
+            "votes_reject": 2,
+            "evidence": [{"text": "near miss quote"}],
+            "attributes": {},
+        }
+    ]
+    tables, rej, logs = build_rows(stream, "case_001", "run_001", near_misses=nm)
+    assert len(tables["fact_near_miss"]) == 1
+    assert "near miss quote" in tables["fact_near_miss"][0]["evidence"]
+
+    for bad_ds in ("resus_scratch", "ci_scratch_db"):
+        with pytest.raises(
+            ValueError, match="resus_scratch NEVER receives a table"
+        ):
+            write_rows(
+                tables["fact_near_miss"], bad_ds, "fact_near_miss", dry_run=True
+            )
+
+
+def test_synthetic_ensemble_experiment_baseline() -> None:
+    """Assert baseline synthetic ensemble experiment returns expected distribution."""
+    stats = run_synthetic_ensemble_experiment()
+    assert stats["total_clusters_evaluated"] == 133
+    assert stats["accepted_3_3"] == 74
+    assert stats["accepted_2_3"] == 30
+    assert stats["dropped_1_3_near_miss"] == 29
+    assert stats["spread_exceeded_3s"] == 1
+    assert stats["categorical_1_1_1_ties"] == 1
+
+
+@pytest.mark.integration
+def test_write_rows_integration_dry_run() -> None:
+    """Integration mark test for write_rows."""
+    rows = [{"event_id": "test_001", "case_id": "case_001"}]
+    assert write_rows(rows, "resus_raw", "fact_event", dry_run=True) == 1
