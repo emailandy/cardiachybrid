@@ -108,6 +108,13 @@ Date: 2026-08-01  Session: D11  Decided by: human, agent
 4. **Quarantine Blocking**: A single validation failure (`not validation_passed`) or unverified routed field (`routed_to_human and not human_verified`) blocks the entire record, returning `({}, quarantine_reasons)`.
 5. **video_review_complete="1" Interim Default**: Hard-codes `"1"` (Unverified/Incomplete) until an affirmative case-level sign-off table is implemented (`Q-013`). Never emits `"2"` from field-level inference alone.
 
+## 022 — D12 Fixture Architecture & Schema-Aware Coverage Degradation
+Date: 2026-08-01  Session: D12  Decided by: human, agent
+1. **Dynamic Maximal Stream Construction**: `build_event_stream()` in `fixtures/synthetic_maximal.py` dynamically inspects `FIELDS` to build a maximal case without hand-coding counts or literals, exercising all repeating groups at their cap (`defib`: 30, `cci`: 30, `airway`: 8, `rosc`: 20, `vent_delay`: 5), cycling all 21 reason codes across the 30 CCIs, and satisfying all branching conditions.
+2. **Clinical Plausibility in Golden Case (`golden_case_01`)**: Built `fixtures/golden_case_01.py` from an explicit 22-minute clinical resuscitation narrative (`OHCA`, 12 CCIs, 3 defibrillations, 2 airway attempts, 1 ROSC episode, provider crowding occlusion 11:00–11:30, low-confidence arterial line reading at 14:22).
+3. **Schema-Aware Coverage Degradation in `gate_3way`**: Resolved a schema mismatch where `gate_3way` coverage degradation previously emitted `'3'` (`Unable to determine`) for 2-choice REDCap radio fields (`{'1': 'Yes', '2': 'No'}` such as `mccd_applied_ems_v2`), causing REDCap dictionary validation failures. When `f_spec.choices` lacks choice `'3'`, `_check_coverage_degraded()` emits `value = None` (`is_null = True`), `abstained = True`, and `routed = True` with `abstain_reason="Channel coverage degraded"`.
+4. **Split Coverage Assertions**: D12 milestone coverage suite (`tests/test_coverage.py`) splits the headline assertion into two distinct artifacts: `test_reducer_emits_every_expected_column()` proving `reduce_stream()` emits exactly 1,879 columns, and `test_payload_equals_submission_columns()` proving `assemble_submission()` produces exactly 1,891 keys (`IMPORTABLE_COLUMNS | {"record_id", "video_review_complete"}`).
+
 
 
 

@@ -60,11 +60,7 @@ _CHANNEL_ISSUES: dict[str, set[str]] = {
     'airway': {'airway_not_visible'},
 }
 
-_INTERVAL_TYPE_MAP: dict[str, str] = {
-    'cci': 'compression_interruption',
-    'rosc': 'rosc',
-    'vent_delay': 'ventilation_delay',
-}
+_INTERVAL_TYPE_MAP: dict[str, str] = {'cci': 'compression_interruption', 'rosc': 'rosc', 'vent_delay': 'ventilation_delay'}
 
 
 def _get_item_id(item: Event | Interval) -> str:
@@ -286,7 +282,9 @@ def _execute_rule(
             return [_emit_fv(f_name, '1', 'Yes', 'REDUCER_DERIVED', ids, fields_spec, routed=routed)]
         chans = rule.get('coverage_channels', [])
         if _check_coverage_degraded(stream, chans):
-            return [_emit_fv(f_name, '3', 'Unable to determine', 'REDUCER_DERIVED', ['stream_coverage'], fields_spec, routed=routed, abstained=True, abstain_reason="Channel coverage degraded")]
+            f_sp = fields_spec.get(f_name)
+            val = None if (f_sp and f_sp.choices and '3' not in f_sp.choices) else '3'
+            return [_emit_fv(f_name, val, 'Unable to determine', 'REDUCER_DERIVED', ['stream_coverage'], fields_spec, is_null=(val is None), routed=True if val is None else routed, abstained=True, abstain_reason="Channel coverage degraded")]
         return [_emit_fv(f_name, '2', 'No', 'REDUCER_DERIVED', ['stream_absence'], fields_spec, routed=routed)]
 
     if rule_type == 'gate_yesno':
