@@ -115,6 +115,8 @@ CREATE TABLE IF NOT EXISTS `{raw_dataset}.fact_redcap_field` (
   field_name STRING NOT NULL,
   value STRING,
   dict_version STRING,
+  branching_satisfied BOOL,
+  abstained BOOL,
   event_date DATE
 ) PARTITION BY event_date CLUSTER BY case_id, field_name;
 
@@ -253,36 +255,33 @@ LEFT JOIN `{raw_dataset}.fact_redcap_field` f
 
 CREATE OR REPLACE VIEW `{curated_dataset}.v_audit_missing_fields` AS
 SELECT
-  c.case_id,
-  c.run_id,
-  df.field_name
-FROM (SELECT DISTINCT case_id, run_id FROM `{raw_dataset}.fact_redcap_field`) c
-CROSS JOIN `{raw_dataset}.dim_redcap_field` df
-LEFT JOIN `{raw_dataset}.fact_redcap_field` f
-  ON f.case_id = c.case_id
-  AND f.run_id = c.run_id
-  AND f.field_name = df.field_name
+  f.case_id,
+  f.run_id,
+  f.field_name
+FROM `{raw_dataset}.fact_redcap_field` f
+JOIN `{raw_dataset}.dim_redcap_field` df
+  ON f.field_name = df.field_name
 WHERE df.is_importable = TRUE
   AND df.is_calc_field = FALSE
+  AND f.branching_satisfied = TRUE
+  AND f.abstained = FALSE
   AND (f.value IS NULL OR f.value = '');
 
 CREATE OR REPLACE VIEW `{curated_dataset}.v_audit_domain_coverage` AS
 SELECT
-  c.run_id,
+  f.run_id,
   df.form_name AS domain,
-  COUNT(f.value) AS populated_count,
-  COUNT(*) - COUNT(f.value) AS abstained_count,
+  COUNTIF(f.value IS NOT NULL AND f.value != '' AND f.abstained = FALSE) AS populated_count,
+  COUNTIF(f.abstained = TRUE) AS abstained_count,
   COUNT(*) AS total_fields,
-  ROUND(COUNT(f.value) / NULLIF(COUNT(*), 0), 4) AS populated_pct
-FROM (SELECT DISTINCT case_id, run_id FROM `{raw_dataset}.fact_redcap_field`) c
-CROSS JOIN `{raw_dataset}.dim_redcap_field` df
-LEFT JOIN `{raw_dataset}.fact_redcap_field` f
-  ON f.case_id = c.case_id
-  AND f.run_id = c.run_id
-  AND f.field_name = df.field_name
+  ROUND(COUNTIF(f.value IS NOT NULL AND f.value != '' AND f.abstained = FALSE) / NULLIF(COUNT(*), 0), 4) AS populated_pct
+FROM `{raw_dataset}.fact_redcap_field` f
+JOIN `{raw_dataset}.dim_redcap_field` df
+  ON f.field_name = df.field_name
 WHERE df.is_importable = TRUE
   AND df.is_calc_field = FALSE
-GROUP BY c.run_id, df.form_name;
+  AND f.branching_satisfied = TRUE
+GROUP BY f.run_id, df.form_name;
 
 CREATE OR REPLACE VIEW `{curated_dataset}.v_audit_hallucination` AS
 SELECT
@@ -300,18 +299,16 @@ SELECT
   df.field_name,
   df.form_name,
   df.expected_utd_floor,
-  COUNT(f.value) AS populated_count,
-  COUNT(DISTINCT c.case_id) AS total_cases,
-  ROUND(COUNT(f.value) / NULLIF(COUNT(DISTINCT c.case_id), 0), 4) AS actual_utd
-FROM `{raw_dataset}.dim_redcap_field` df
-CROSS JOIN (SELECT DISTINCT case_id, run_id FROM `{raw_dataset}.fact_redcap_field`) c
-LEFT JOIN `{raw_dataset}.fact_redcap_field` f
-  ON f.case_id = c.case_id
-  AND f.run_id = c.run_id
-  AND f.field_name = df.field_name
+  COUNTIF(f.value IS NOT NULL AND f.value != '' AND f.abstained = FALSE) AS populated_count,
+  COUNT(DISTINCT f.case_id) AS total_cases,
+  ROUND(COUNTIF(f.value IS NOT NULL AND f.value != '' AND f.abstained = FALSE) / NULLIF(COUNT(DISTINCT f.case_id), 0), 4) AS actual_utd
+FROM `{raw_dataset}.fact_redcap_field` f
+JOIN `{raw_dataset}.dim_redcap_field` df
+  ON f.field_name = df.field_name
 WHERE df.is_importable = TRUE
   AND df.is_calc_field = FALSE
   AND df.expected_utd_floor > 0.0
+  AND f.branching_satisfied = TRUE
 GROUP BY df.field_name, df.form_name, df.expected_utd_floor
 HAVING actual_utd < df.expected_utd_floor;
 
@@ -324,9 +321,9 @@ SELECT
 FROM `{raw_dataset}.fact_redcap_field` f
 JOIN `{raw_dataset}.dim_redcap_field` df
   ON f.field_name = df.field_name
-WHERE f.value IS NOT NULL
-  AND f.value != ''
-  AND 1=0;
+WHERE f.branching_satisfied = FALSE
+  AND f.value IS NOT NULL
+  AND f.value != '';
 """
     return sql.strip() + "\n"
 

@@ -107,3 +107,12 @@ def test_emit_sql_determinism() -> None:
     assert generate_v_redcap_wide() == generate_v_redcap_wide()
     assert generate_audit_views() == generate_audit_views()
     assert generate_field_seed_jsonl() == generate_field_seed_jsonl()
+
+
+def test_audit_views_branching_discipline() -> None:
+    """Assert audit views filter on branching_satisfied and abstained so Q1 returns zero on healthy cases."""
+    sql = generate_audit_views()
+    assert "f.branching_satisfied = TRUE" in sql, "Audit views must filter on branching_satisfied = TRUE"
+    assert "f.abstained = FALSE" in sql, "v_audit_missing_fields must filter out abstained fields"
+    assert "f.branching_satisfied = FALSE" in sql, "v_audit_branching_violation must check branching_satisfied = FALSE"
+
