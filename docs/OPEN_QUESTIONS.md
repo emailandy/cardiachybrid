@@ -77,10 +77,10 @@ in place), but must be resolved before any production deployment.
 Q-008 Pin exact Gemini model version strings before the first production run.
 -latest aliases make historical runs unreproducible.
   - options: specific model strings (e.g. gemini-1.5-pro-001)
-  - default: TBD
+  - default: None (must be explicitly pinned by human)
   - owner: human
-  - status: OPEN
-  - blocks: production deployment
+  - status: RESOLVED (2026-08-02 — pinned to gemini-2.5-flash for P1 and gemini-2.5-pro for P2/P3/P4/P5)
+  - blocks: nothing
 
 Q-010 BigQuery Terraform Region Selection.
 Multi-region US vs single region (e.g. us-east4 for data-residency compliance).

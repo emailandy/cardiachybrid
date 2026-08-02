@@ -139,3 +139,9 @@ bq load --source_format=NEWLINE_DELIMITED_JSON --replace \
 
 ## 5. Audit View Interpretability Guidelines
 * `v_audit_low_utd`: "v_audit_low_utd requires n >= 20 cases to be interpretable. On a single case the rate is binary. Exclude it from single-case reports."
+
+---
+
+## 6. Video Storage & Cross-Region Sandbox Deviation
+* **Bucket Location**: `gs://resus-qc-demo-video` is provisioned in `us-central1` to serve Vertex AI Gemini models (`gemini-2.5-flash` and `gemini-2.5-pro`) in region `us-central1`.
+* **Cross-Region Deviation**: BigQuery is pinned to `us-east4` (`nodepeel:resus_raw` and `nodepeel:resus_curated`). This cross-region split (`us-central1` GCS/Vertex vs `us-east4` BigQuery) is a sandbox-only deviation due to regional availability of Gemini model garden endpoints. Production deployments must colocate GCS, Vertex AI endpoints, and BigQuery datasets within the same region.
