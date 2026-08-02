@@ -43,7 +43,7 @@ All physical tables reside in the `resus_raw` dataset (`us-east4`, CMEK-encrypte
 3. **v_audit_missing_fields**: Flags empty importable non-calc fields where `branching_satisfied = TRUE AND abstained = FALSE`, excluding `HUMAN_ONLY / ROSTER_JOIN / REDCAP_CALC`.
 4. **v_audit_domain_coverage**: Aggregates populated vs. abstained field counts and percentages by `run_id, domain, source_class` over `branching_satisfied = TRUE` only.
 5. **v_audit_hallucination**: Identifies `AI_DIRECT` fields via single-table scan (`f.source_class = 'AI_DIRECT'`) with non-null/non-empty values (`f.value IS NOT NULL AND f.value != ''`) and empty source events (`ARRAY_LENGTH(f.source_event_ids) = 0`).
-6. **v_audit_low_utd**: Flags HIGH-difficulty importable fields (`df.extraction_difficulty = 'HIGH'`) whose actual population rate falls below `expected_utd_floor` over `branching_satisfied = TRUE` only.
+6. **v_audit_low_utd**: Flags HIGH-difficulty importable fields (`df.extraction_difficulty = 'HIGH'`) whose abstention rate (`actual_utd_rate = abstained / total_cases`) falls below `expected_utd_floor` over `branching_satisfied = TRUE` only, grouped by `domain`. Requires `n >= 20` cases to be interpretable.
 7. **v_audit_branching_violation**: Identifies fields where `branching_satisfied = FALSE AND value IS NOT NULL AND value != ''`.
 8. **v_audit_source_class_drift**: Identifies any row where run-time `f.source_class` differs from schema-time `df.source_class` (`f.source_class != df.source_class`). Must always return zero rows.
 

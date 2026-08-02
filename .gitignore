@@ -21,3 +21,4 @@ generated/*
 *.tfstate.backup
 .terraform.lock.hcl
 
+tests/video/

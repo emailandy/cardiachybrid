@@ -425,11 +425,11 @@ WHERE f.source_class != df.source_class;
 CREATE OR REPLACE VIEW `{curated_dataset}.v_audit_low_utd` AS
 SELECT
   df.field_name,
-  df.form_name,
+  df.domain,
   df.expected_utd_floor,
-  COUNTIF(f.value IS NOT NULL AND f.value != '' AND f.abstained = FALSE) AS populated_count,
-  COUNT(DISTINCT f.case_id) AS total_cases,
-  ROUND(COUNTIF(f.value IS NOT NULL AND f.value != '' AND f.abstained = FALSE) / NULLIF(COUNT(DISTINCT f.case_id), 0), 4) AS actual_utd
+  COUNTIF(f.abstained = TRUE) AS abstained_count,
+  COUNT(*) AS total_cases,
+  ROUND(COUNTIF(f.abstained = TRUE) / NULLIF(COUNT(*), 0), 4) AS actual_utd_rate
 FROM `{raw_dataset}.fact_redcap_field` f
 JOIN `{raw_dataset}.dim_redcap_field` df
   ON f.field_name = df.field_name
@@ -438,8 +438,8 @@ WHERE df.is_importable = TRUE
   AND df.extraction_difficulty = 'HIGH'
   AND df.expected_utd_floor > 0.0
   AND f.branching_satisfied = TRUE
-GROUP BY df.field_name, df.form_name, df.expected_utd_floor
-HAVING actual_utd < df.expected_utd_floor;
+GROUP BY df.field_name, df.domain, df.expected_utd_floor
+HAVING actual_utd_rate < df.expected_utd_floor;
 
 CREATE OR REPLACE VIEW `{curated_dataset}.v_audit_branching_violation` AS
 SELECT

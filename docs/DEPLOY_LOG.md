@@ -134,3 +134,8 @@ bq load --source_format=NEWLINE_DELIMITED_JSON --replace \
   nodepeel:resus_raw.dim_redcap_field \
   generated/dim_redcap_field_seed.jsonl
 ```
+
+---
+
+## 5. Audit View Interpretability Guidelines
+* `v_audit_low_utd`: "v_audit_low_utd requires n >= 20 cases to be interpretable. On a single case the rate is binary. Exclude it from single-case reports."
