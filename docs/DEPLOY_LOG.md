@@ -48,7 +48,7 @@ Deployed the generated DDL (`generated/bq_ddl.sql` and `generated/audit_views.sq
 
 ### B. Seed Dictionary Table (`dim_redcap_field` — Reconciled 22-Column Schema)
 Loaded `generated/dim_redcap_field_seed.jsonl` into `nodepeel:resus_raw.dim_redcap_field` via `bq load --source_format=NEWLINE_DELIMITED_JSON --replace`:
-* **Reconciled Schema (22 columns)**: Includes all 19 original dictionary schema columns (`dict_version`, `field_name`, `form_name`, `field_type`, `field_label`, `choices`, `validation`, `val_min`, `val_max`, `branching_logic`, `is_required`, `export_columns`, `source_class`, `extraction_difficulty`, `target_accuracy`, `owning_event_types`, `expected_utd_floor`, `repeat_group`, `repeat_index`) plus 3 explicit boolean query optimization flags (`is_importable`, `is_calc_field`, `is_phi`).
+* **Reconciled Schema (21 columns)**: Includes all 19 original dictionary schema columns (`dict_version`, `field_name`, `form_name`, `field_type`, `field_label`, `choices`, `validation`, `val_min`, `val_max`, `branching_logic`, `is_required`, `export_columns`, `source_class`, `extraction_difficulty`, `target_accuracy`, `owning_event_types`, `expected_utd_floor`, `repeat_group`, `repeat_index`) plus 2 explicit boolean query optimization flags (`is_importable`, `is_calc_field`). Note: `is_phi` was dropped as an unused classification to prevent maintenance rot.
 * **System Fields Included**: Contains the 909 data dictionary fields plus 2 REDCap system fields (`record_id`, `video_review_complete`) assigned `source_class: "AI_DERIVED"`, yielding exactly **911 rows**.
 * **Verification Query**:
   ```sql
@@ -64,8 +64,14 @@ Loaded `generated/dim_redcap_field_seed.jsonl` into `nodepeel:resus_raw.dim_redc
   +-----+----+
   ```
 
-### C. Audit View Execution Against Empty Tables
-Every curated view executed against empty base tables without raising an error or exceeding query limits:
+### C. Audit View Execution Against Empty Tables & Reconciled Predicates
+Every curated view was audited against its stated purpose and corrected where necessary, then executed against empty base tables without raising an error or exceeding query limits:
+* `v_audit_missing_fields`: flags `f.branching_satisfied = TRUE AND f.abstained = FALSE AND (f.value IS NULL OR f.value = '')`, excluding `df.source_class IN ('HUMAN_ONLY', 'ROSTER_JOIN', 'REDCAP_CALC')`.
+* `v_audit_branching_violation`: flags `f.branching_satisfied = FALSE AND f.value IS NOT NULL AND f.value != ''`.
+* `v_audit_low_utd`: flags `df.extraction_difficulty = 'HIGH'` fields whose population rate falls below `expected_utd_floor` over `branching_satisfied = TRUE`.
+* `v_audit_domain_coverage`: aggregates populated/abstained counts and percentages by `(run_id, domain, source_class)` over `branching_satisfied = TRUE`.
+* `v_exemplar_store`: selects corrected field values over `f.human_verified = TRUE AND f.human_value IS NOT NULL AND f.human_value != f.value`.
+* `v_audit_hallucination`: flags `df.source_class = 'AI_DIRECT'` fields with `f.value IS NOT NULL AND f.value != '' AND ARRAY_LENGTH(f.source_event_ids) = 0`.
 ```bash
 for v in v_audit_missing_fields v_audit_domain_coverage \
          v_audit_hallucination v_audit_low_utd \

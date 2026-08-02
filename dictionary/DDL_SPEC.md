@@ -18,15 +18,15 @@ All physical tables reside in the `resus_raw` dataset (`us-east4`, CMEK-encrypte
 
 1. **dim_case**: Case-level metadata and registry enrollment demographics.
 2. **dim_run**: Execution metadata for individual AI pipeline runs.
-3. **dim_redcap_field**: Metadata and dictionary definitions for REDCap export columns. Includes the 19 original dictionary schema columns (`dict_version`, `field_name`, `form_name`, `field_type`, `field_label`, `choices`, `validation`, `val_min`, `val_max`, `branching_logic`, `is_required`, `export_columns`, `source_class`, `extraction_difficulty`, `target_accuracy`, `owning_event_types`, `expected_utd_floor`, `repeat_group`, `repeat_index`) plus 3 explicit query optimization boolean flags (`is_importable`, `is_calc_field`, `is_phi`).
-   - **Why `is_importable`, `is_calc_field`, and `is_phi` are retained**: While derivable from `source_class`, `field_type`, and `identifier`, materializing these boolean flags directly on `dim_redcap_field` simplifies BigQuery audit view predicates and analytical queries without requiring string matching or UDFs.
+3. **dim_redcap_field**: Metadata and dictionary definitions for REDCap export columns. Includes the 19 original dictionary schema columns (`dict_version`, `field_name`, `form_name`, `field_type`, `field_label`, `choices`, `validation`, `val_min`, `val_max`, `branching_logic`, `is_required`, `export_columns`, `source_class`, `extraction_difficulty`, `target_accuracy`, `owning_event_types`, `expected_utd_floor`, `repeat_group`, `repeat_index`) plus 2 explicit query optimization boolean flags (`is_importable`, `is_calc_field`).
+   - **Why `is_importable` and `is_calc_field` are retained**: Derived strictly from `spec.carries_data and not spec.server_computed` and `spec.server_computed`; materializing these boolean flags directly on `dim_redcap_field` simplifies BigQuery audit view predicates and analytical queries without requiring string matching or UDFs. (`is_phi` was dropped as an unused classification to prevent maintenance rot).
    - **System Fields**: Includes 2 REDCap system fields (`record_id`, `video_review_complete`) with `source_class: "AI_DERIVED"` (911 total rows).
 4. **fact_event**: Video-observed clinical events and AI detections; `evidence` stored as JSON.
 5. **fact_interval**: Clinical intervals (`compression_interruption`, `rosc`, etc.).
 6. **fact_utterance**: Verbatim speech transcripts and speaker attributions (PHI restricted).
    - **NOTE (Q-011 DEFERRED)**: `text_embedding` (`ARRAY<FLOAT64>`) is explicitly DROPPED from this specification.
 7. **fact_sensor_interval**: Monotonic time-series sensor intervals (`S1` optical flow, `S2` audio periodicity).
-8. **fact_redcap_field**: Normalized EAV (Entity-Attribute-Value) fact records for REDCap field values.
+8. **fact_redcap_field**: Normalized EAV (Entity-Attribute-Value) fact records for REDCap field values. Includes `source_event_ids ARRAY<STRING>`, `human_verified BOOL`, and `human_value STRING`.
 9. **redcap_submission**: Assembled payload submission history and API response logs.
 10. **fact_metric**: Derived clinical quality metrics (e.g., CCF, compression depth, time-to-defib).
 11. **fact_coverage_note**: Coverage and truncation notes from anchor pass or windowing.
@@ -38,12 +38,12 @@ All physical tables reside in the `resus_raw` dataset (`us-east4`, CMEK-encrypte
 ## 3. Curated and Audit Views (`resus_curated` — 7 Views)
 
 1. **v_redcap_wide**: Generated pivot view over `fact_redcap_field`, containing exactly `len(IMPORTABLE_COLUMNS)` (1,889) `MAX(IF(...))` column expressions plus `case_id, run_id, event_date`. The two server-computed calc fields (`dur_mccd_app_ed_secs_v2`, `duration_ventilator_place_v2`) are excluded to prevent permanently-NULL extraction columns. Reducer-populated count fields (`num_cci_v2`, `num_times_defib_ed_v2`, etc.) are text fields with number validation and are present in `IMPORTABLE_COLUMNS`.
-2. **v_exemplar_store**: Authorized view joining `fact_event` and `fact_redcap_field` for clinical review.
-3. **v_audit_missing_fields**: Returns zero rows when all importable fields are populated (coverage proof Q1).
-4. **v_audit_domain_coverage**: Populated vs. abstained field counts aggregated by domain/form (Q2).
-5. **v_audit_hallucination**: Identifies `AI_DIRECT` events with non-null values and empty `evidence` (Q3).
-6. **v_audit_low_utd**: Flags HIGH-difficulty importable fields below `expected_utd_floor` (Q4).
-7. **v_audit_branching_violation**: Identifies populated fields that should be hidden/suppressed by branching logic (Q5).
+2. **v_exemplar_store**: Authorized view over `fact_redcap_field` for clinical review where `f.human_verified = TRUE AND f.human_value IS NOT NULL AND f.human_value != f.value`.
+3. **v_audit_missing_fields**: Flags empty importable non-calc fields where `branching_satisfied = TRUE AND abstained = FALSE`, excluding `HUMAN_ONLY / ROSTER_JOIN / REDCAP_CALC`.
+4. **v_audit_domain_coverage**: Aggregates populated vs. abstained field counts and percentages by `run_id, domain, source_class` over `branching_satisfied = TRUE` only.
+5. **v_audit_hallucination**: Identifies `AI_DIRECT` fields (`df.source_class = 'AI_DIRECT'`) with non-null/non-empty values (`f.value IS NOT NULL AND f.value != ''`) and empty source events (`ARRAY_LENGTH(f.source_event_ids) = 0`).
+6. **v_audit_low_utd**: Flags HIGH-difficulty importable fields (`df.extraction_difficulty = 'HIGH'`) whose actual population rate falls below `expected_utd_floor` over `branching_satisfied = TRUE` only.
+7. **v_audit_branching_violation**: Identifies fields where `branching_satisfied = FALSE AND value IS NOT NULL AND value != ''`.
 
 ---
 

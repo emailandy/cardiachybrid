@@ -63,8 +63,7 @@ CREATE TABLE IF NOT EXISTS `{raw_dataset}.dim_redcap_field` (
   repeat_group STRING,
   repeat_index INT64,
   is_importable BOOL,
-  is_calc_field BOOL,
-  is_phi BOOL
+  is_calc_field BOOL
 ) CLUSTER BY field_name, form_name;
 
 CREATE TABLE IF NOT EXISTS `{raw_dataset}.fact_event` (
@@ -129,6 +128,9 @@ CREATE TABLE IF NOT EXISTS `{raw_dataset}.fact_redcap_field` (
   dict_version STRING,
   branching_satisfied BOOL,
   abstained BOOL,
+  source_event_ids ARRAY<STRING>,
+  human_verified BOOL,
+  human_value STRING,
   event_date DATE
 ) PARTITION BY event_date CLUSTER BY case_id, field_name;
 
@@ -223,7 +225,6 @@ def generate_field_seed_jsonl() -> str:
             "repeat_index": None,
             "is_importable": True,
             "is_calc_field": False,
-            "is_phi": True,
         },
         {
             "dict_version": dict_version,
@@ -247,7 +248,6 @@ def generate_field_seed_jsonl() -> str:
             "repeat_index": None,
             "is_importable": True,
             "is_calc_field": False,
-            "is_phi": False,
         },
     ]
 
@@ -274,9 +274,8 @@ def generate_field_seed_jsonl() -> str:
             "expected_utd_floor": float(getattr(spec, "expected_utd_floor", 0.95)),
             "repeat_group": spec.repeat_group or "",
             "repeat_index": spec.repeat_index,
-            "is_importable": not spec.server_computed,
-            "is_calc_field": spec.field_type == "calc",
-            "is_phi": bool(spec.identifier),
+            "is_importable": bool(spec.carries_data and not spec.server_computed),
+            "is_calc_field": bool(spec.server_computed),
         }
         all_rows.append(row)
 
@@ -316,19 +315,16 @@ def generate_audit_views() -> str:
 
 CREATE OR REPLACE VIEW `{curated_dataset}.v_exemplar_store` AS
 SELECT
-  e.event_id,
-  e.case_id,
-  e.run_id,
-  e.event_type,
-  e.timestamp_s,
+  f.case_id,
+  f.run_id,
   f.field_name,
-  f.value,
-  e.event_date
-FROM `{raw_dataset}.fact_event` e
-LEFT JOIN `{raw_dataset}.fact_redcap_field` f
-  ON e.case_id = f.case_id
-  AND e.run_id = f.run_id
-  AND e.event_date = f.event_date;
+  f.value AS ai_value,
+  f.human_value,
+  f.event_date
+FROM `{raw_dataset}.fact_redcap_field` f
+WHERE f.human_verified = TRUE
+  AND f.human_value IS NOT NULL
+  AND f.human_value != f.value;
 
 CREATE OR REPLACE VIEW `{curated_dataset}.v_audit_missing_fields` AS
 SELECT
@@ -364,14 +360,16 @@ GROUP BY f.run_id, df.form_name, df.source_class;
 
 CREATE OR REPLACE VIEW `{curated_dataset}.v_audit_hallucination` AS
 SELECT
-  event_id,
-  case_id,
-  run_id,
-  event_type,
-  timestamp_s
-FROM `{raw_dataset}.fact_event`
-WHERE source = 'AI_DIRECT'
-  AND (evidence IS NULL OR JSON_TYPE(evidence) = 'null' OR (JSON_TYPE(evidence) = 'array' AND ARRAY_LENGTH(JSON_QUERY_ARRAY(evidence)) = 0));
+  f.case_id,
+  f.run_id,
+  f.field_name,
+  f.value
+FROM `{raw_dataset}.fact_redcap_field` f
+JOIN `{raw_dataset}.dim_redcap_field` df
+  ON f.field_name = df.field_name
+WHERE df.source_class = 'AI_DIRECT'
+  AND f.value IS NOT NULL AND f.value != ''
+  AND (f.source_event_ids IS NULL OR ARRAY_LENGTH(f.source_event_ids) = 0);
 
 CREATE OR REPLACE VIEW `{curated_dataset}.v_audit_low_utd` AS
 SELECT
@@ -386,6 +384,7 @@ JOIN `{raw_dataset}.dim_redcap_field` df
   ON f.field_name = df.field_name
 WHERE df.is_importable = TRUE
   AND df.is_calc_field = FALSE
+  AND df.extraction_difficulty = 'HIGH'
   AND df.expected_utd_floor > 0.0
   AND f.branching_satisfied = TRUE
 GROUP BY df.field_name, df.form_name, df.expected_utd_floor

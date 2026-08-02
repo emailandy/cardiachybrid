@@ -109,7 +109,6 @@ def test_field_seed_jsonl_count_and_content() -> None:
         "repeat_index",
         "is_importable",
         "is_calc_field",
-        "is_phi",
     ):
         assert key in first_row, f"Required governance key {key} missing from seed JSONL"
 
@@ -164,6 +163,44 @@ def test_seed_columns_match_ddl_spec() -> None:
         unknown = refs["dim_redcap_field"] - ddl_cols
         assert not unknown, f"{view} references undeclared columns: {unknown}"
 
+
+def extract_view(view_name: str, sql: str) -> str:
+    match = re.search(
+        rf"CREATE OR REPLACE VIEW `.*?\.{re.escape(view_name)}` AS(.*?)(?=(?:CREATE OR REPLACE VIEW|\Z))",
+        sql,
+        re.DOTALL,
+    )
+    if not match:
+        raise ValueError(f"View {view_name} not found")
+    return match.group(1)
+
+
+def test_hallucination_view_filters_on_ai_direct() -> None:
+    """AI_DERIVED fields legitimately have empty source_event_ids — their
+    value derives from event ABSENCE. Filtering on importability instead of
+    source_class makes this view meaningless."""
+    sql = Path("generated/audit_views.sql").read_text()
+    block = extract_view("v_audit_hallucination", sql)
+    assert "source_class = 'AI_DIRECT'" in block
+    assert "is_importable" not in block
+
+
+def seed_rows() -> list[dict]:
+    seed = generate_field_seed_jsonl()
+    rows = []
+    for line in seed.splitlines():
+        if line.strip():
+            data = json.loads(line)
+            if data["field_name"] in FIELDS:
+                rows.append(data)
+    return rows
+
+
+def test_boolean_flags_derive_from_source_class() -> None:
+    for row in seed_rows():
+        spec = FIELDS[row["field_name"]]
+        assert row["is_calc_field"] == spec.server_computed
+        assert row["is_importable"] == (spec.carries_data and not spec.server_computed)
 
 
 def test_emit_sql_determinism() -> None:
