@@ -25,32 +25,32 @@ team_anchors:
 
 model_binding:
   pass_1:
-    model: "gemini-2.5-flash"
+    model: "gemini-3.6-flash"
     temperature: 0.6
-    top_k: 3
+    ensemble_k: 3
     thinking: "low"
   pass_2:
-    model: "gemini-2.5-pro"
+    model: "gemini-3.1-pro-preview"
     temperature: 0.6
-    top_k: 3
+    ensemble_k: 3
     thinking: "medium"
   pass_3:
-    model: "gemini-2.5-pro"
+    model: "gemini-3.1-pro-preview"
     temperature: 0.0
-    top_k: 1
+    ensemble_k: 1
     thinking: "high"
   pass_4a:
-    model: "gemini-2.5-pro"
+    model: "gemini-3.1-pro-preview"
     temperature: 0.4
-    top_k: 3
+    ensemble_k: 3
     thinking: "high"
   pass_4b:
-    model: "gemini-2.5-pro"
+    model: "gemini-3.1-pro-preview"
     temperature: 0.4
-    top_k: 3
+    ensemble_k: 3
     thinking: "high"
   pass_5:
-    model: "gemini-2.5-pro"
+    model: "gemini-3.1-pro-preview"
     temperature: 0.3
-    top_k: 1
+    ensemble_k: 1
     thinking: "low"

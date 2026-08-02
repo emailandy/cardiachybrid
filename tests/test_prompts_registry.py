@@ -125,3 +125,11 @@ def test_placeholder_validation():
     # Unused declared placeholder should raise ValueError
     with pytest.raises(ValueError, match="declares unused placeholders"):
         validate_template_placeholders(" {chunk_index} ", "p1_harvest")
+
+
+def test_no_top_k_in_model_binding():
+    m = manifest()
+    for pass_name, binding in m.get("model_binding", {}).items():
+        assert "top_k" not in binding, (
+            f"model_binding for {pass_name} contains forbidden key 'top_k'; use 'ensemble_k'"
+        )
