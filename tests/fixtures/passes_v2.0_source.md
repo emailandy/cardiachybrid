@@ -139,13 +139,13 @@ Auto-repair only where a single unambiguous fix exists. Otherwise FLAG.
 
 ## JOB 4 — CASE FIELDS                                             # ▲ EXPANDED
 Resolve each with cited evidence, using symbolic values from the contract:
-  ohca_ihca · video_start_late · cpr_in_progress_upon_arrival ·
+  arrest_location · recording_started_late · cpr_in_progress_upon_arrival ·
   brought_by_ems · adv_airway_on_arrival · ems_pads_switched ·
   mccd_ed_provenance · ed_mccd_outcome · dnr_basis
-video_start_late: bias toward TRUE. If true, you MUST null
+recording_started_late: bias toward TRUE. If true, you MUST null
 time_first_team_member_ent, time_pt_enters_room, and backboard_preplaced —
 those observations are not in the recording.
-review_trigger is administrative metadata, not in the video. Always null.
+review trigger metadata is administrative metadata, not in the video. Always null.
 
 ## JOB 5 — COVERAGE CONSOLIDATION                                  # ▲ NEW
 Merge per-window coverage_notes into case-level intervals per issue code.
@@ -164,7 +164,7 @@ Completeness beats brevity.
 {"events":[...], "case_fields":{...}, "coverage_summary":{...},
  "merges":[...], "repairs":[...], "flags":[...], "unresolved":[...]}
 
-=== P4 ===
+=== P4A ===
 # TASK: TEAM RATINGS — ITEMS 1 THROUGH 11
 # metric_definition_version: {metric_version}
 
@@ -179,18 +179,6 @@ Evaluate whoever held leadership longest; state this if it changed.
 
 ## OBJECTIVE METRICS — from fact_metric. GROUND TRUTH. Do not recompute.  # ▲
 {metrics_table}
-  chest_compression_fraction ........ {v} (num {n} / den {d})
-  n_cci_over_10s .................... {v}
-  longest_cci_s ..................... {v}
-  median_peri_shock_pause_s ......... {v}
-  n_pre_charged_shocks .............. {v} of {n_shocks}
-  arrival_to_pads_s ................. {v}
-  arrival_to_first_epi_s ............ {v}
-  shockable_to_first_shock_s ........ {v}
-  n_airway_attempts / first_pass .... {v} / {v}
-  cci_seconds_attributable_to_airway  {v}
-  closed_loop_completion_rate ....... {v}
-  n_unacknowledged_directives ....... {v}
 A metric shown as NULL was not computable (denominator zero or inputs
 incomplete). Treat NULL as absence of information, never as zero.       # ▲
 
@@ -223,7 +211,65 @@ Every score traces to timestamped observations. Never score from overall vibe.
 ## SCOPE
 You are rating TEAMWORK, not clinical correctness. Objective metrics are
 evidence of coordination outcomes, not a protocol-compliance grade.
-Call B (global rating) unchanged, except it also receives {coverage_summary} and the NULL-metric rule.
+
+=== P4B ===
+# TASK: TEAM ITEM 12 — GLOBAL RATING (1 = Poor … 10 = Exceptional)
+# metric_definition_version: {metric_definition_version}
+
+You have NOT been shown the individual TEAM item scores for this case. This is
+deliberate. The global rating is an independent gestalt judgment of overall
+clinical safety and efficacy, not an average of the eleven items. Seeing them
+first would anchor you.
+
+## OBJECTIVE METRICS — from fact_metric. GROUND TRUTH. Do not recompute.
+{objective_metrics_block}
+
+A metric shown as NULL was not computable — the denominator was zero, an input
+was missing, or it depends on a pipeline stage that does not yet exist. Treat
+NULL as ABSENCE OF INFORMATION. It is never zero, never poor performance, and
+never evidence of anything.
+
+## COVERAGE
+{coverage_summary}
+
+Behaviour you could not observe is not behaviour that did not occur. If the
+recording was degraded during a clinically significant interval, say so in your
+justification and widen your uncertainty rather than scoring down.
+
+## CASE
+{event_summary}
+{transcript_highlights}
+
+## CALIBRATION ANCHORS
+{three_anchor_cases}
+
+## PROCEDURE — in this order
+ 1. Place this case against the anchors. State which two it falls between and
+    why. If no anchors are available, say so explicitly and score in absolute
+    terms, noting that absolute scoring is less well calibrated.
+ 2. Name the two strongest features of this team's performance, each with a
+    timestamp and a concrete observation.
+ 3. Name the two most significant deficiencies, each with a timestamp and a
+    concrete observation.
+ 4. Assign the global score, 1 to 10.
+ 5. State what would have had to be different for the score to be one point
+    higher. If you cannot name something specific, your score is probably one
+    point too low.
+
+## SCOPE
+You are rating TEAMWORK — coordination, communication, adaptability, composure
+— not clinical correctness. A team can execute flawless ACLS with poor
+communication, or communicate beautifully while deviating from protocol. The
+objective metrics are evidence of coordination OUTCOMES, not a protocol
+compliance grade.
+
+## OUTPUT
+{"score": 0,
+ "placement": "",
+ "strengths": [{"t": 0.0, "observation": ""}],
+ "deficiencies": [{"t": 0.0, "observation": ""}],
+ "justification": "",
+ "one_point_higher": ""}
 
 === P5 ===
 # TASK: SECTION NOTES — {section_name} → {target_field}
@@ -259,4 +305,4 @@ HARD RULES
 
 Output is passed through PHI scrubbing before storage. Do not rely on that as a
 substitute for the rules above.
-Bind to the seven fields: ed_defib_notes_v2 · ed_details_notes_v2 · ed_cci_notes_v2 · ed_airway_notes_v2 · ventilation_notes_v2 · ed_drugs_notes_v2 · rosc_notes_v2.
+Bind to the seven section notes: defib · details · cci · airway · ventilation · drugs · rosc.

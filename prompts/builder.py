@@ -491,3 +491,407 @@ def build_p2(
         anchor_library_version=anchor_library_version,
         template_hash=template_hash,
     )
+
+
+def _render_metrics_table(metrics_input: Any) -> str:
+    if isinstance(metrics_input, str):
+        return metrics_input
+    if not isinstance(metrics_input, (list, tuple)):
+        return str(metrics_input)
+    lines = []
+    for m in metrics_input:
+        name = getattr(m, "metric_name", str(m))
+        val = getattr(m, "value", None)
+        num = getattr(m, "numerator", None)
+        den = getattr(m, "denominator", None)
+        reason = getattr(m, "null_reason", None)
+        if val is None or str(val).upper() == "NULL":
+            line = f"  {name:35} NULL ({reason or 'unspecified'})"
+        else:
+            val_str = f"{val:.2f}" if isinstance(val, float) else str(val)
+            if num is not None and den is not None:
+                line = f"  {name:35} {val_str} (num {num} / den {den})"
+            else:
+                line = f"  {name:35} {val_str}"
+        lines.append(line)
+    return "\n".join(lines)
+
+
+def _load_calibration_anchor(key: str) -> tuple[str, bool]:
+    """Loads a calibration anchor card from manifest. Returns (content, is_blocked)."""
+    text = load(key)
+    is_blocked = "status: BLOCKED" in text or "blocked_by: Q-015" in text
+    return text, is_blocked
+
+
+def format_truncation_report(stream: Any, group_name: str = "cci") -> str:
+    """Formats a mandatory truncation report for P5 when repeating group true count exceeds cap."""
+    if isinstance(stream, str):
+        return stream
+    if not hasattr(stream, "intervals") and not hasattr(stream, "events"):
+        return str(stream)
+
+    max_cap = 30 if group_name == "cci" else 100
+    items = []
+    if group_name == "cci":
+        items = [i for i in getattr(stream, "intervals", []) if getattr(i, "type", "") == "compression_interruption"]
+    elif group_name == "defib":
+        items = [e for e in getattr(stream, "events", []) if getattr(e, "type", "") == "defibrillation_shock"]
+    elif group_name == "airway":
+        items = [e for e in getattr(stream, "events", []) if getattr(e, "type", "") == "airway_attempt"]
+    elif group_name == "rosc":
+        items = [e for e in getattr(stream, "events", []) if getattr(e, "type", "") == "rosc_detected"]
+
+    true_count = len(items)
+    if true_count <= max_cap:
+        return ""
+
+    sorted_items = sorted(
+        items,
+        key=lambda x: ((x.t_end_s - x.t_start_s) if getattr(x, "t_end_s", None) else 0.0),
+        reverse=True,
+    )
+    dropped = sorted_items[max_cap:]
+    dropped.sort(key=lambda x: getattr(x, "timestamp_s", getattr(x, "t_start_s", 0.0)))
+
+    parts = []
+    for it in dropped:
+        ts = getattr(it, "timestamp_s", getattr(it, "t_start_s", 0.0))
+        mins = int(ts) // 60
+        secs = int(ts) % 60
+        dur = (it.t_end_s - it.t_start_s) if getattr(it, "t_end_s", None) else 0.0
+        desc = "pulse check" if getattr(it, "type", "") == "compression_interruption" else str(getattr(it, "type", ""))
+        parts.append(f"[t={mins:02d}:{secs:02d}, {dur:.1f}s, {desc}]")
+
+    return f"{true_count} interruptions were identified; the instrument records {max_cap}. The following were not captured: {'; '.join(parts)}"
+
+
+def build_p3(
+    events: str = "",
+    compression_track: str = "",
+    transcript: str = "",
+    monitor_ocr: str = "",
+    coverage: str = "",
+    clock_json: str | dict[str, Any] = "",
+) -> BuiltPrompt:
+    """Builds the P3 (case-level adjudication) prompt and metadata."""
+    (
+        contract_version,
+        dict_version,
+        constitution_hash,
+        anchor_library_version,
+    ) = _get_versions_metadata()
+
+    system_template = load("system_prompt")
+    system = (
+        system_template.replace("{contract_version}", contract_version)
+        .replace("{dict_version}", dict_version)
+    )
+
+    template = load("pass_3")
+    validate_template_placeholders(template, "p3_adjudicate")
+    template_hash = hashlib.sha256(template.encode("utf-8")).hexdigest()
+
+    if isinstance(clock_json, dict):
+        clock_str = json.dumps(clock_json, indent=2, sort_keys=True)
+    else:
+        clock_str = str(clock_json)
+
+    user = template
+    user = user.replace("{events}", events)
+    user = user.replace("{compression_track}", compression_track)
+    user = user.replace("{transcript}", transcript)
+    user = user.replace("{monitor_ocr}", monitor_ocr)
+    user = user.replace("{coverage}", coverage)
+    user = user.replace("{clock_json}", clock_str)
+    user = user.replace("{contract_version}", contract_version)
+
+    _validate_no_unfilled_placeholders(user, "p3_adjudicate")
+    assert_no_field_names(
+        f"{system}\n---\n{user}", "p3_adjudicate assembled prompt"
+    )
+
+    prompt_hash = compute_prompt_hash(system, user)
+    write_prompt_snapshot(prompt_hash, system, user)
+
+    response_schema = {}
+    estimated_text_input_tokens = (len(system) + len(user)) // 4
+
+    return BuiltPrompt(
+        system=system,
+        user=user,
+        response_schema=response_schema,
+        prompt_hash=prompt_hash,
+        selected_anchors=[],
+        selection_reasons={},
+        estimated_text_input_tokens=estimated_text_input_tokens,
+        contract_version=contract_version,
+        dict_version=dict_version,
+        constitution_hash=constitution_hash,
+        anchor_library_version=anchor_library_version,
+        template_hash=template_hash,
+    )
+
+
+build_p3_prompt = build_p3
+
+
+def build_p4a(
+    leader_speaker_id: str = "SPK_01",
+    n_directive: int = 0,
+    n_total_directive: int = 0,
+    leader_presence_pct: float | int = 100,
+    leader_stability: str = "stable",
+    metrics_table: Any = "",
+    coverage_summary: str = "No coverage degradation observed.",
+    metric_version: str = "unknown",
+) -> BuiltPrompt:
+    """Builds the P4a (TEAM items 1-11) prompt and metadata."""
+    (
+        contract_version,
+        dict_version,
+        constitution_hash,
+        anchor_library_version,
+    ) = _get_versions_metadata()
+
+    system_template = load("system_prompt")
+    system = (
+        system_template.replace("{contract_version}", contract_version)
+        .replace("{dict_version}", dict_version)
+    )
+
+    template = load("pass_4a")
+    validate_template_placeholders(template, "p4a_team_items")
+    template_hash = hashlib.sha256(template.encode("utf-8")).hexdigest()
+
+    rendered_metrics = _render_metrics_table(metrics_table)
+
+    low_txt, low_blocked = _load_calibration_anchor("low")
+    mid_txt, mid_blocked = _load_calibration_anchor("mid")
+    high_txt, high_blocked = _load_calibration_anchor("high")
+
+    user = template
+    if low_blocked or mid_blocked or high_blocked:
+        old_block = (
+            "## CALIBRATION ANCHORS\n"
+            "{anchor_case_low}   consensus global 2\n"
+            "{anchor_case_mid}   consensus global 6\n"
+            "{anchor_case_high}  consensus global 9\n"
+            "Place this case relative to these three BEFORE assigning any score."
+        )
+        new_block = (
+            "## CALIBRATION ANCHORS — NONE AVAILABLE\n"
+            "No consensus-rated anchor cases exist for this department (Q-015). You are\n"
+            "scoring in absolute terms without comparative reference. Absolute scoring is\n"
+            "less well calibrated than comparative placement, so state your uncertainty\n"
+            "explicitly in each justification, and prefer the middle of the scale unless\n"
+            "the evidence is unambiguous."
+        )
+        if old_block in user:
+            user = user.replace(old_block, new_block)
+        else:
+            user = user.replace("{anchor_case_low}", "NONE AVAILABLE (Q-015)")
+            user = user.replace("{anchor_case_mid}", "NONE AVAILABLE (Q-015)")
+            user = user.replace("{anchor_case_high}", "NONE AVAILABLE (Q-015)")
+    else:
+        user = user.replace("{anchor_case_low}", low_txt)
+        user = user.replace("{anchor_case_mid}", mid_txt)
+        user = user.replace("{anchor_case_high}", high_txt)
+
+    user = user.replace("{leader_speaker_id}", str(leader_speaker_id))
+    user = user.replace("{n_directive}", str(n_directive))
+    user = user.replace("{n_total_directive}", str(n_total_directive))
+    user = user.replace("{leader_presence_pct}", str(leader_presence_pct))
+    user = user.replace("{leader_stability}", str(leader_stability))
+    user = user.replace("{metrics_table}", rendered_metrics)
+    user = user.replace("{coverage_summary}", str(coverage_summary))
+    user = user.replace("{metric_version}", str(metric_version))
+
+    _validate_no_unfilled_placeholders(user, "p4a_team_items")
+    assert_no_field_names(
+        f"{system}\n---\n{user}", "p4a_team_items assembled prompt"
+    )
+
+    prompt_hash = compute_prompt_hash(system, user)
+    write_prompt_snapshot(prompt_hash, system, user)
+
+    response_schema = {}
+    estimated_text_input_tokens = (len(system) + len(user)) // 4
+
+    return BuiltPrompt(
+        system=system,
+        user=user,
+        response_schema=response_schema,
+        prompt_hash=prompt_hash,
+        selected_anchors=[],
+        selection_reasons={},
+        estimated_text_input_tokens=estimated_text_input_tokens,
+        contract_version=contract_version,
+        dict_version=dict_version,
+        constitution_hash=constitution_hash,
+        anchor_library_version=anchor_library_version,
+        template_hash=template_hash,
+    )
+
+
+build_p4a_prompt = build_p4a
+
+
+def build_p4b(
+    objective_metrics_block: Any = "",
+    coverage_summary: str = "No coverage degradation observed.",
+    event_summary: str = "",
+    transcript_highlights: str = "",
+    metric_definition_version: str = "unknown",
+) -> BuiltPrompt:
+    """Builds the P4b (TEAM global rating item 12) prompt and metadata."""
+    (
+        contract_version,
+        dict_version,
+        constitution_hash,
+        anchor_library_version,
+    ) = _get_versions_metadata()
+
+    system_template = load("system_prompt")
+    system = (
+        system_template.replace("{contract_version}", contract_version)
+        .replace("{dict_version}", dict_version)
+    )
+
+    template = load("pass_4b")
+    validate_template_placeholders(template, "p4b_team_global")
+    template_hash = hashlib.sha256(template.encode("utf-8")).hexdigest()
+
+    rendered_metrics = _render_metrics_table(objective_metrics_block)
+
+    low_txt, low_blocked = _load_calibration_anchor("low")
+    mid_txt, mid_blocked = _load_calibration_anchor("mid")
+    high_txt, high_blocked = _load_calibration_anchor("high")
+
+    user = template
+    if low_blocked or mid_blocked or high_blocked:
+        old_block = "## CALIBRATION ANCHORS\n{three_anchor_cases}"
+        new_block = (
+            "## CALIBRATION ANCHORS — NONE AVAILABLE\n"
+            "No consensus-rated anchor cases exist for this department (Q-015). You are\n"
+            "scoring in absolute terms without comparative reference. Absolute scoring is\n"
+            "less well calibrated than comparative placement, so state your uncertainty\n"
+            "explicitly in each justification, and prefer the middle of the scale unless\n"
+            "the evidence is unambiguous."
+        )
+        if old_block in user:
+            user = user.replace(old_block, new_block)
+        else:
+            user = user.replace("{three_anchor_cases}", "NONE AVAILABLE (Q-015)")
+    else:
+        combined_anchors = f"{low_txt}\n---\n{mid_txt}\n---\n{high_txt}"
+        user = user.replace("{three_anchor_cases}", combined_anchors)
+
+    user = user.replace("{objective_metrics_block}", rendered_metrics)
+    user = user.replace("{coverage_summary}", str(coverage_summary))
+    user = user.replace("{event_summary}", str(event_summary))
+    user = user.replace("{transcript_highlights}", str(transcript_highlights))
+    user = user.replace("{metric_definition_version}", str(metric_definition_version))
+
+    _validate_no_unfilled_placeholders(user, "p4b_team_global")
+    assert_no_field_names(
+        f"{system}\n---\n{user}", "p4b_team_global assembled prompt"
+    )
+
+    prompt_hash = compute_prompt_hash(system, user)
+    write_prompt_snapshot(prompt_hash, system, user)
+
+    response_schema = {}
+    estimated_text_input_tokens = (len(system) + len(user)) // 4
+
+    return BuiltPrompt(
+        system=system,
+        user=user,
+        response_schema=response_schema,
+        prompt_hash=prompt_hash,
+        selected_anchors=[],
+        selection_reasons={},
+        estimated_text_input_tokens=estimated_text_input_tokens,
+        contract_version=contract_version,
+        dict_version=dict_version,
+        constitution_hash=constitution_hash,
+        anchor_library_version=anchor_library_version,
+        template_hash=template_hash,
+    )
+
+
+build_p4b_prompt = build_p4b
+
+
+def build_p5(
+    section_name: str = "Resuscitation Notes",
+    target_field: str = "cci_notes",
+    section_events: str = "",
+    section_flags: str = "",
+    section_abstentions: str = "",
+    coverage_windows: str = "",
+    truncation_report: Any = "",
+    cap: int | str = 30,
+) -> BuiltPrompt:
+    """Builds the P5 (section notes) prompt and metadata."""
+    (
+        contract_version,
+        dict_version,
+        constitution_hash,
+        anchor_library_version,
+    ) = _get_versions_metadata()
+
+    system_template = load("system_prompt")
+    system = (
+        system_template.replace("{contract_version}", contract_version)
+        .replace("{dict_version}", dict_version)
+    )
+
+    template = load("pass_5")
+    validate_template_placeholders(template, "p5_notes")
+    template_hash = hashlib.sha256(template.encode("utf-8")).hexdigest()
+
+    group_name = "cci" if "cci" in target_field else ("defib" if "defib" in target_field else ("airway" if "airway" in target_field else ("rosc" if "rosc" in target_field else "general")))
+    if not isinstance(truncation_report, str):
+        trunc_str = format_truncation_report(truncation_report, group_name=group_name)
+    else:
+        trunc_str = truncation_report
+
+    user = template
+    user = user.replace("{section_name}", str(section_name))
+    user = user.replace("{target_field}", str(target_field))
+    user = user.replace("{section_events}", str(section_events))
+    user = user.replace("{section_flags}", str(section_flags))
+    user = user.replace("{section_abstentions}", str(section_abstentions))
+    user = user.replace("{coverage_windows}", str(coverage_windows))
+    user = user.replace("{truncation_report}", str(trunc_str))
+    user = user.replace("{cap}", str(cap))
+
+    _validate_no_unfilled_placeholders(user, "p5_notes")
+    assert_no_field_names(
+        f"{system}\n---\n{user}", "p5_notes assembled prompt"
+    )
+
+    prompt_hash = compute_prompt_hash(system, user)
+    write_prompt_snapshot(prompt_hash, system, user)
+
+    response_schema = {}
+    estimated_text_input_tokens = (len(system) + len(user)) // 4
+
+    return BuiltPrompt(
+        system=system,
+        user=user,
+        response_schema=response_schema,
+        prompt_hash=prompt_hash,
+        selected_anchors=[],
+        selection_reasons={},
+        estimated_text_input_tokens=estimated_text_input_tokens,
+        contract_version=contract_version,
+        dict_version=dict_version,
+        constitution_hash=constitution_hash,
+        anchor_library_version=anchor_library_version,
+        template_hash=template_hash,
+    )
+
+
+build_p5_prompt = build_p5

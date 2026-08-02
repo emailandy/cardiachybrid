@@ -104,3 +104,139 @@ p2_verify:
     type: markdown_block
     source: sensor
     description: "Sliced sensor evidence across all channels within the verification clip interval."
+
+p3_adjudicate:
+  clock_json:
+    type: string
+    source: clock
+    description: "Clock synchronization JSON metadata."
+  compression_track:
+    type: markdown_block
+    source: sensor
+    description: "Authoritative S1 CPR sensor track compression intervals."
+  contract_version:
+    type: string
+    source: contract
+    description: "Version string of the extraction contract."
+  coverage:
+    type: markdown_block
+    source: coverage
+    description: "Case-level coverage notes and quality intervals."
+  events:
+    type: markdown_block
+    source: reducer
+    description: "Verified event candidates from P2 verify pass."
+  monitor_ocr:
+    type: markdown_block
+    source: sensor
+    description: "Authoritative S3 monitor OCR text series."
+  transcript:
+    type: markdown_block
+    source: sensor
+    description: "Authoritative S4 ASR diarized audio transcript."
+
+p4a_team_items:
+  anchor_case_high:
+    type: markdown_block
+    source: calibration
+    description: "Calibration anchor case for global rating 9."
+  anchor_case_low:
+    type: markdown_block
+    source: calibration
+    description: "Calibration anchor case for global rating 2."
+  anchor_case_mid:
+    type: markdown_block
+    source: calibration
+    description: "Calibration anchor case for global rating 6."
+  coverage_summary:
+    type: markdown_block
+    source: p3_adjudicate
+    description: "Summary of channel coverage and degradation intervals."
+  leader_presence_pct:
+    type: number
+    source: p3_adjudicate
+    description: "Percentage of resuscitation time leader was present."
+  leader_speaker_id:
+    type: string
+    source: p3_adjudicate
+    description: "Diarized speaker ID of primary resuscitation leader."
+  leader_stability:
+    type: string
+    source: p3_adjudicate
+    description: "Stability description of leadership role across case."
+  metric_version:
+    type: string
+    source: metrics
+    description: "Version string of the objective metric definitions."
+  metrics_table:
+    type: markdown_block
+    source: metrics
+    description: "Rendered table of objective resuscitation metrics."
+  n_directive:
+    type: integer
+    source: p3_adjudicate
+    description: "Number of directive utterances by primary leader."
+  n_total_directive:
+    type: integer
+    source: p3_adjudicate
+    description: "Total directive utterances by all team members."
+
+p4b_team_global:
+  coverage_summary:
+    type: markdown_block
+    source: p3_adjudicate
+    description: "Summary of channel coverage and degradation intervals."
+  event_summary:
+    type: markdown_block
+    source: p3_adjudicate
+    description: "Summary of adjudicated resuscitation events."
+  metric_definition_version:
+    type: string
+    source: metrics
+    description: "Version string of the objective metric definitions."
+  objective_metrics_block:
+    type: markdown_block
+    source: metrics
+    description: "Rendered block of objective resuscitation metrics."
+  three_anchor_cases:
+    type: markdown_block
+    source: calibration
+    description: "Three consensus calibration anchor cases."
+  transcript_highlights:
+    type: markdown_block
+    source: p3_adjudicate
+    description: "Notable transcript excerpts and leader communications."
+
+p5_notes:
+  cap:
+    type: integer
+    source: registry
+    description: "Maximum repeating group item capacity in REDCap dictionary."
+  coverage_windows:
+    type: markdown_block
+    source: coverage
+    description: "Coverage degradation windows relevant to this section."
+  section_abstentions:
+    type: markdown_block
+    source: reducer
+    description: "List of abstained fields and reasons for this section."
+  section_events:
+    type: markdown_block
+    source: reducer
+    description: "Verified events belonging to this clinical section."
+  section_flags:
+    type: markdown_block
+    source: p3_adjudicate
+    description: "Adjudication flags belonging to this clinical section."
+  section_name:
+    type: string
+    source: registry
+    description: "Human-readable clinical section title."
+  target_field:
+    type: string
+    source: registry
+    description: "Target REDCap note export column name."
+  truncation_report:
+    type: markdown_block
+    source: reducer
+    description: "Report of dropped repeating group items exceeding capacity."

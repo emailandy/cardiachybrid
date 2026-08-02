@@ -115,6 +115,10 @@ Date: 2026-08-01  Session: D12  Decided by: human, agent
 3. **Schema-Aware Coverage Degradation in `gate_3way`**: Resolved a schema mismatch where `gate_3way` coverage degradation previously emitted `'3'` (`Unable to determine`) for 2-choice REDCap radio fields (`{'1': 'Yes', '2': 'No'}` such as `mccd_applied_ems_v2`), causing REDCap dictionary validation failures. When `f_spec.choices` lacks choice `'3'`, `_check_coverage_degraded()` emits `value = None` (`is_null = True`), `abstained = True`, and `routed = True` with `abstain_reason="Channel coverage degraded"`.
 4. **Split Coverage Assertions**: D12 milestone coverage suite (`tests/test_coverage.py`) splits the headline assertion into two distinct artifacts: `test_reducer_emits_every_expected_column()` proving `reduce_stream()` emits exactly 1,879 columns, and `test_payload_equals_submission_columns()` proving `assemble_submission()` produces exactly 1,891 keys (`IMPORTABLE_COLUMNS | {"record_id", "video_review_complete"}`).
 
+## 023 — A06 Fixture Split & P4b Verbatim Placement
+Date: 2026-08-01  Session: A06  Decided by: human, agent
+1. `tests/fixtures/passes_v2.0_source.md` amended: `=== P4 ===` split into `=== P4A ===` and `=== P4B ===`, and the P4b template supplied in full. The original staging carried only a one-line pointer for Call B because the v2.0 prompt spec described it as a delta against v1 rather than restating it. Text supplied by the human author; not agent-generated. The fixture remains the golden source and the round-trip test now covers six sections.
+
 
 
 

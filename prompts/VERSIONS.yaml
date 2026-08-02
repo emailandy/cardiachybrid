@@ -19,9 +19,9 @@ fragments:
   failure_modes: "prompts/fragments/failure_modes.md"
 
 team_anchors:
-  team_1: "prompts/anchors/team_1.txt"
-  team_2: "prompts/anchors/team_2.txt"
-  team_3: "prompts/anchors/team_3.txt"
+  low: "prompts/calibration/team_anchor_low.yaml"
+  mid: "prompts/calibration/team_anchor_mid.yaml"
+  high: "prompts/calibration/team_anchor_high.yaml"
 
 model_binding:
   pass_1:

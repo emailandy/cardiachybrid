@@ -18,6 +18,10 @@ from prompts.builder import (
     to_vertex_schema,
     build_p1,
     build_p2,
+    build_p3,
+    build_p4a,
+    build_p4b,
+    build_p5,
     write_prompt_snapshot,
     _validate_no_unfilled_placeholders,
     _all_anchor_event_types,
@@ -198,3 +202,56 @@ def test_snapshot_writer_idempotent(tmp_path, monkeypatch):
 def test_no_unfilled_placeholders():
     with pytest.raises(ValueError, match="Unfilled placeholder '{chunk_index}'"):
         _validate_no_unfilled_placeholders("This text still has {chunk_index} unfilled.", "p1_harvest")
+
+
+def test_p4a_metrics_block_inline_null_reason_no_zero():
+    from metrics.compute import MetricRow
+    rows = [
+        MetricRow("c1", "chest_compression_fraction", 0.83, 1494, 1800, None, "v1"),
+        MetricRow("c1", "closed_loop_completion_rate", None, None, None, "requires S7 diarized ASR", "v1"),
+        MetricRow("c1", "median_peri_shock_pause_s", None, None, None, "zero shocks in case", "v1"),
+    ]
+    p4a = build_p4a(metrics_table=rows)
+    assert "chest_compression_fraction          0.83 (num 1494 / den 1800)" in p4a.user
+    assert "closed_loop_completion_rate         NULL (requires S7 diarized ASR)" in p4a.user
+    assert "median_peri_shock_pause_s           NULL (zero shocks in case)" in p4a.user
+    # Ensure NULL metrics do not render as 0, "0", "0.0", or empty string
+    for line in p4a.user.splitlines():
+        if "closed_loop_completion_rate" in line or "median_peri_shock_pause_s" in line:
+            assert "NULL" in line
+            assert " 0 " not in line and " 0.0 " not in line
+
+
+def test_p4a_p4b_calibration_stubs_q015_substring():
+    p4a = build_p4a()
+    p4b = build_p4b()
+    assert "Q-015" in p4a.user
+    assert "Q-015" in p4b.user
+    assert "status: BLOCKED" not in p4a.user and "status: BLOCKED" not in p4b.user
+    assert "blocked_by:" not in p4a.user and "blocked_by:" not in p4b.user
+
+
+def test_p5_truncation_report_names_all_five_dropped_items():
+    from fixtures.synthetic_streams import get_overflow_stream
+    stream = get_overflow_stream()
+    p5 = build_p5(target_field="cci_notes", truncation_report=stream)
+    assert "35 interruptions were identified; the instrument records 30." in p5.user
+    for expected_ts in ["05:05", "05:15", "05:25", "05:35", "05:45"]:
+        assert expected_ts in p5.user
+    assert p5.user.count("pulse check") >= 5
+
+
+def test_builder_determinism_100x_all_four():
+    from fixtures.synthetic_streams import get_overflow_stream
+    stream = get_overflow_stream()
+    for builder, kwargs in [
+        (build_p3, {"events": "ev", "compression_track": "comp", "transcript": "trn", "monitor_ocr": "ocr", "coverage": "cov", "clock_json": "{}"}),
+        (build_p4a, {"leader_speaker_id": "SPK_01"}),
+        (build_p4b, {"coverage_summary": "cov"}),
+        (build_p5, {"target_field": "cci_notes", "truncation_report": stream}),
+    ]:
+        hashes = set()
+        for _ in range(100):
+            res = builder(**kwargs)
+            hashes.add(res.prompt_hash)
+        assert len(hashes) == 1, f"Builder {builder.__name__} was not 100x deterministic"
