@@ -29,27 +29,43 @@ from prompts.builder import (
 from generated.models import EventStream, Event
 
 
-def test_select_anchors_none_returns_all_39():
+def test_select_anchors_none_returns_default_tier():
     selected, reasons = select_anchors(None)
-    assert len(selected) == 39
-    assert all("fail_safe: sensor_data is None" in r for r in reasons.values())
+    assert len(selected) == 16
+    assert all("self_detection: default resuscitation core tier" in r for r in reasons.values())
     assert selected == sorted(selected)
     assert list(reasons.keys()) == sorted(reasons.keys())
 
 
-def test_select_anchors_empty_returns_all_39():
+def test_select_anchors_empty_returns_default_tier():
     selected, reasons = select_anchors({})
-    assert len(selected) == 39
-    assert reasons["compression_interruption"] == "always_include: high frequency default"
-    assert "fail_safe: empty sensor_data" in reasons["airway_attempt"]
+    assert len(selected) == 16
+    assert reasons["compression_interruption"] == "self_detection: default resuscitation core tier"
     assert selected == sorted(selected)
 
 
-def test_select_anchors_quiet_window_returns_all_39():
+def test_select_anchors_quiet_window_returns_default_tier():
     data = json.loads(Path("tests/fixtures/sensors/quiet_window.json").read_text())
     selected, reasons = select_anchors(data)
-    assert len(selected) == 39
-    assert "fail_safe: empty sensor_data" in reasons["airway_attempt"]
+    assert len(selected) == 16
+    assert "self_detection: default resuscitation core tier" in reasons["airway_attempt"]
+
+
+def test_build_p1_self_detection_mode():
+    p1 = build_p1(
+        chunk_index=1,
+        chunk_total=4,
+        video_duration_s=1363.78,
+        win_start=0.0,
+        win_end=480.0,
+        primary_end=440.0,
+        overlap_lead=0.0,
+        win_start_primary=0.0,
+        sensor_data=None,
+    )
+    assert "SELF-DETECTION MODE" in p1.user
+    assert len(p1.selected_anchors) == 16
+
 
 
 def test_select_anchors_dense_window_returns_triggered_subset():
@@ -65,11 +81,11 @@ def test_select_anchors_dense_window_returns_triggered_subset():
 def test_select_anchors_degraded_and_malformed():
     deg = json.loads(Path("tests/fixtures/sensors/degraded_window.json").read_text())
     sel_deg, _ = select_anchors(deg)
-    assert len(sel_deg) == 39
+    assert len(sel_deg) == 16
 
     mal = json.loads(Path("tests/fixtures/sensors/malformed.json").read_text())
     sel_mal, _ = select_anchors(mal)
-    assert len(sel_mal) == 39
+    assert len(sel_mal) == 16
 
 
 def test_select_anchors_error_fallback():
@@ -100,7 +116,7 @@ def test_build_p1_returns_dataclass():
     assert isinstance(p1.user, str) and len(p1.user) > 0
     assert isinstance(p1.response_schema, dict)
     assert isinstance(p1.prompt_hash, str) and len(p1.prompt_hash) == 64
-    assert isinstance(p1.selected_anchors, list) and len(p1.selected_anchors) == 39
+    assert isinstance(p1.selected_anchors, list) and len(p1.selected_anchors) == 16
     assert isinstance(p1.selection_reasons, dict)
     assert isinstance(p1.estimated_text_input_tokens, int) and p1.estimated_text_input_tokens > 0
     assert isinstance(p1.contract_version, str)

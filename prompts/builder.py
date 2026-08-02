@@ -66,6 +66,25 @@ ALWAYS_INCLUDE_TIER = [
     "rhythm_check",
 ]
 
+DEFAULT_HARVEST_TIER = [
+    "airway_attempt",
+    "airway_confirmation",
+    "compression_active_start",
+    "compression_interruption",
+    "compression_mode_change",
+    "cpr_initiated_ed",
+    "defib_charge_aborted",
+    "defibrillation_shock",
+    "medication_administration",
+    "pad_application",
+    "pad_reposition",
+    "pulse_check",
+    "rhythm_check",
+    "rosc_detected",
+    "rosc_lost",
+    "vitals_reading",
+]
+
 
 def _all_anchor_event_types() -> list[str]:
     """Returns a sorted list of all 39 anchor card event types."""
@@ -83,27 +102,17 @@ def select_anchors(
     """
     Recall-biased anchor card selector for P1 window harvesting.
     
-    Omitting a card makes that event type unemittable in the window (silent total recall loss).
-    Therefore, selection defaults fail-safe to including ALL 39 cards when sensor_data is None,
-    when sensor_data is empty ({}), or when any parsing error occurs.
+    In SELF-DETECTION MODE (when sensor_data is None or empty and no keywords fire),
+    returns DEFAULT_HARVEST_TIER (16 core resuscitation cards) rather than all 39 cards.
     
     Returns:
         (selected_event_types, selection_reasons) where both collections are sorted by key.
     """
     all_types = _all_anchor_event_types()
     
-    if sensor_data is None:
-        reasons = {t: "fail_safe: sensor_data is None" for t in all_types}
-        return all_types, reasons
-        
-    if sensor_data == {}:
-        reasons = {}
-        for t in all_types:
-            if t in ALWAYS_INCLUDE_TIER:
-                reasons[t] = "always_include: high frequency default"
-            else:
-                reasons[t] = "fail_safe: empty sensor_data (suspicious/uninformative)"
-        return all_types, reasons
+    if (sensor_data is None or sensor_data == {}) and not keywords:
+        reasons = {t: "self_detection: default resuscitation core tier" for t in sorted(DEFAULT_HARVEST_TIER)}
+        return sorted(DEFAULT_HARVEST_TIER), reasons
 
     try:
         selected_set: set[str] = set()
@@ -146,15 +155,10 @@ def select_anchors(
                             selected_set.add(t)
                             reasons[t] = f"keyword_trigger: '{kw}'"
 
-        # 5. Fail-safe protection against empty sensors / no triggers fired
+        # 5. Default resuscitation core tier when no specific sensor or keyword triggers fired
         if selected_set == set(ALWAYS_INCLUDE_TIER):
-            reasons = {}
-            for t in all_types:
-                if t in ALWAYS_INCLUDE_TIER:
-                    reasons[t] = "always_include: high frequency default"
-                else:
-                    reasons[t] = "fail_safe: empty sensor_data (suspicious/uninformative)"
-            return all_types, reasons
+            reasons = {t: "self_detection: default resuscitation core tier" for t in sorted(DEFAULT_HARVEST_TIER)}
+            return sorted(DEFAULT_HARVEST_TIER), reasons
 
         sorted_types = sorted(selected_set)
         sorted_reasons = dict(sorted(reasons.items()))
@@ -380,6 +384,20 @@ def build_p1(
     user = user.replace(
         "{quality_windows}", _format_sensor_channel("quality_track")
     )
+    if not sensor_data or all(
+        not sensor_data.get(k)
+        for k in [
+            "compressions_active",
+            "device_audio",
+            "monitor_ocr",
+            "asr_diarized",
+            "quality_track",
+        ]
+    ):
+        user = user.replace(
+            "## SENSOR TRACKS (authoritative — annotate, do not re-detect)",
+            "## SENSOR TRACKS (SELF-DETECTION MODE — no sensor tracks provided; detect all clinical events directly from video and audio)",
+        )
     user = user.replace("{contract_slice}", contract_slice_str)
     user = user.replace("{anchor_cards}", anchor_cards_str)
     user = user.replace("{contract_version}", contract_version)
