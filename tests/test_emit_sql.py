@@ -74,10 +74,10 @@ def test_wide_view_checksum() -> None:
 
 
 def test_audit_views_count() -> None:
-    """Assert exactly 6 CREATE VIEW statements in audit_views.sql."""
+    """Assert exactly 7 CREATE VIEW statements in audit_views.sql."""
     sql = generate_audit_views()
     create_views = re.findall(r"CREATE OR REPLACE VIEW `\{curated_dataset\}\.[a-z0-9_]+`", sql)
-    assert len(create_views) == 6, f"Expected 6 views in audit_views.sql, found: {len(create_views)} ({create_views})"
+    assert len(create_views) == 7, f"Expected 7 views in audit_views.sql, found: {len(create_views)} ({create_views})"
 
 
 def test_field_seed_jsonl_count_and_content() -> None:
@@ -91,6 +91,7 @@ def test_field_seed_jsonl_count_and_content() -> None:
         "dict_version",
         "field_name",
         "form_name",
+        "domain",
         "field_type",
         "field_label",
         "choices",
@@ -183,6 +184,7 @@ def test_hallucination_view_filters_on_ai_direct() -> None:
     block = extract_view("v_audit_hallucination", sql)
     assert "source_class = 'AI_DIRECT'" in block
     assert "is_importable" not in block
+    assert "JOIN" not in block.upper(), "v_audit_hallucination must be a single table scan"
 
 
 def seed_rows() -> list[dict]:
@@ -201,6 +203,18 @@ def test_boolean_flags_derive_from_source_class() -> None:
         spec = FIELDS[row["field_name"]]
         assert row["is_calc_field"] == spec.server_computed
         assert row["is_importable"] == (spec.carries_data and not spec.server_computed)
+
+
+def test_dim_redcap_field_has_13_domains() -> None:
+    """Assert all 911 seed rows have non-null domain and exactly 13 distinct registry domains."""
+    domains = set()
+    for line in generate_field_seed_jsonl().splitlines():
+        if line.strip():
+            row = json.loads(line)
+            domain = row.get("domain")
+            assert domain is not None and domain != "", f"Field {row.get('field_name')} has null/empty domain"
+            domains.add(domain)
+    assert len(domains) == 13, f"Expected 13 domains, got {len(domains)}: {sorted(domains)}"
 
 
 def test_emit_sql_determinism() -> None:

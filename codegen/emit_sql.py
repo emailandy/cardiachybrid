@@ -9,6 +9,7 @@ Artifacts produced in generated/:
 """
 
 import json
+import yaml
 import hashlib
 from pathlib import Path
 from generated.redcap_fields import FIELDS, IMPORTABLE_COLUMNS
@@ -46,6 +47,7 @@ CREATE TABLE IF NOT EXISTS `{raw_dataset}.dim_redcap_field` (
   dict_version STRING NOT NULL,
   field_name STRING NOT NULL,
   form_name STRING,
+  domain STRING NOT NULL,
   field_type STRING,
   field_label STRING,
   choices JSON,
@@ -126,6 +128,7 @@ CREATE TABLE IF NOT EXISTS `{raw_dataset}.fact_redcap_field` (
   field_name STRING NOT NULL,
   value STRING,
   dict_version STRING,
+  source_class STRING,
   branching_satisfied BOOL,
   abstained BOOL,
   source_event_ids ARRAY<STRING>,
@@ -195,6 +198,39 @@ CREATE TABLE IF NOT EXISTS `{raw_dataset}.fact_team_score` (
     return ddl.strip() + "\n"
 
 
+def _get_field_domain_map() -> dict[str, str]:
+    """Returns mapping of field_name -> 13 registry section domain names."""
+    reg_path = Path("mapping/registry.yaml")
+    reg = yaml.safe_load(reg_path.read_text())
+    group_to_section = {
+        "defib": "pad_and_defibrillation",
+        "cci": "cci",
+        "airway": "airway",
+        "rosc": "rosc",
+        "vent_delay": "ventilation",
+    }
+    domain_map = {}
+    for sec in reg.get("sections", []):
+        sec_name = sec["name"]
+        for item in sec.get("fields", []):
+            fname = item["field"] if isinstance(item, dict) else item
+            domain_map[fname] = sec_name
+
+    for f_name, spec in FIELDS.items():
+        if spec.repeat_group in group_to_section:
+            domain_map[f_name] = group_to_section[spec.repeat_group]
+        elif spec.source_class in ("ROSTER_JOIN", "HUMAN_ONLY"):
+            domain_map[f_name] = "redcap_internal"
+        elif f_name == "dur_mccd_app_ed_secs_v2":
+            domain_map[f_name] = "mccd"
+        elif f_name == "duration_ventilator_place_v2":
+            domain_map[f_name] = "ventilation"
+
+    domain_map["record_id"] = "redcap_internal"
+    domain_map["video_review_complete"] = "redcap_internal"
+    return domain_map
+
+
 def generate_field_seed_jsonl() -> str:
     """Produces JSONL seed rows for dim_redcap_field (909 dictionary fields + 2 REDCap system fields = 911 rows)."""
     dict_version = "v1.0.0"
@@ -202,11 +238,14 @@ def generate_field_seed_jsonl() -> str:
     if dict_ver_path.exists():
         dict_version = dict_ver_path.read_text().strip()
 
+    domain_map = _get_field_domain_map()
+
     system_fields = [
         {
             "dict_version": dict_version,
             "field_name": "record_id",
             "form_name": "video_review",
+            "domain": "redcap_internal",
             "field_type": "text",
             "field_label": "Record ID (REDCap system field not present in dictionary export)",
             "choices": {},
@@ -230,6 +269,7 @@ def generate_field_seed_jsonl() -> str:
             "dict_version": dict_version,
             "field_name": "video_review_complete",
             "form_name": "video_review",
+            "domain": "redcap_internal",
             "field_type": "radio",
             "field_label": "Complete? (REDCap system form completion field not present in dictionary export)",
             "choices": {"0": "Incomplete", "1": "Unverified", "2": "Complete"},
@@ -258,6 +298,7 @@ def generate_field_seed_jsonl() -> str:
             "dict_version": dict_version,
             "field_name": spec.field_name,
             "form_name": spec.form_name,
+            "domain": domain_map.get(spec.field_name, "redcap_internal"),
             "field_type": spec.field_type,
             "field_label": spec.field_label,
             "choices": spec.choices,
@@ -344,7 +385,7 @@ WHERE df.is_importable = TRUE
 CREATE OR REPLACE VIEW `{curated_dataset}.v_audit_domain_coverage` AS
 SELECT
   f.run_id,
-  df.form_name AS domain,
+  df.domain,
   df.source_class,
   COUNTIF(f.value IS NOT NULL AND f.value != '' AND f.abstained = FALSE) AS populated_count,
   COUNTIF(f.abstained = TRUE) AS abstained_count,
@@ -356,7 +397,7 @@ JOIN `{raw_dataset}.dim_redcap_field` df
 WHERE df.is_importable = TRUE
   AND df.is_calc_field = FALSE
   AND f.branching_satisfied = TRUE
-GROUP BY f.run_id, df.form_name, df.source_class;
+GROUP BY f.run_id, df.domain, df.source_class;
 
 CREATE OR REPLACE VIEW `{curated_dataset}.v_audit_hallucination` AS
 SELECT
@@ -365,11 +406,21 @@ SELECT
   f.field_name,
   f.value
 FROM `{raw_dataset}.fact_redcap_field` f
-JOIN `{raw_dataset}.dim_redcap_field` df
-  ON f.field_name = df.field_name
-WHERE df.source_class = 'AI_DIRECT'
+WHERE f.source_class = 'AI_DIRECT'
   AND f.value IS NOT NULL AND f.value != ''
   AND (f.source_event_ids IS NULL OR ARRAY_LENGTH(f.source_event_ids) = 0);
+
+CREATE OR REPLACE VIEW `{curated_dataset}.v_audit_source_class_drift` AS
+SELECT
+  f.case_id,
+  f.run_id,
+  f.field_name,
+  f.source_class AS run_value,
+  df.source_class AS schema_value
+FROM `{raw_dataset}.fact_redcap_field` f
+JOIN `{raw_dataset}.dim_redcap_field` df
+  USING (field_name)
+WHERE f.source_class != df.source_class;
 
 CREATE OR REPLACE VIEW `{curated_dataset}.v_audit_low_utd` AS
 SELECT
