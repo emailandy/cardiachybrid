@@ -13,26 +13,35 @@ CURATED_DS="resus_curated"
 
 echo "=== Resus QC IAM Verification Script (Project: ${PROJECT}) ==="
 
-cleanup() {
-  echo "Tearing down verification fixtures..."
-  bq rm -f --table "${PROJECT}:${CURATED_DS}.v_redcap_wide" 2>/dev/null || true
-  bq rm -f --table "${PROJECT}:${CURATED_DS}.v_exemplar_store" 2>/dev/null || true
-  bq rm -f --table "${PROJECT}:${RAW_DS}.fact_utterance" 2>/dev/null || true
-  bq rm -f --table "${PROJECT}:${RAW_DS}.fact_event" 2>/dev/null || true
-  echo "Fixtures removed."
-}
+PY_CMD="python3"
+if [[ -x ".venv/bin/python3" ]]; then
+  PY_CMD=".venv/bin/python3"
+fi
 
-trap cleanup EXIT
-cleanup
+if ! bq show "${PROJECT}:${RAW_DS}.fact_event" >/dev/null 2>&1; then
+  cleanup() {
+    echo "Tearing down verification fixtures..."
+    bq rm -f --table "${PROJECT}:${CURATED_DS}.v_redcap_wide" 2>/dev/null || true
+    bq rm -f --table "${PROJECT}:${CURATED_DS}.v_exemplar_store" 2>/dev/null || true
+    bq rm -f --table "${PROJECT}:${RAW_DS}.fact_utterance" 2>/dev/null || true
+    bq rm -f --table "${PROJECT}:${RAW_DS}.fact_event" 2>/dev/null || true
+    echo "Fixtures removed."
+  }
 
-echo "Creating test fixtures in ${RAW_DS} and ${CURATED_DS}..."
-bq mk --table --project_id="${PROJECT}" "${RAW_DS}.fact_utterance" utterance_id:STRING,text:STRING,timestamp_s:FLOAT >/dev/null
-bq mk --table --project_id="${PROJECT}" "${RAW_DS}.fact_event" event_id:STRING,event_type:STRING,timestamp_s:FLOAT,evidence:JSON >/dev/null
-bq mk --use_legacy_sql=false --view="SELECT event_id, event_type, timestamp_s FROM \`${PROJECT}.${RAW_DS}.fact_event\`" --project_id="${PROJECT}" "${CURATED_DS}.v_redcap_wide" >/dev/null
-bq mk --use_legacy_sql=false --view="SELECT event_id, event_type, timestamp_s FROM \`${PROJECT}.${RAW_DS}.fact_event\`" --project_id="${PROJECT}" "${CURATED_DS}.v_exemplar_store" >/dev/null
+  trap cleanup EXIT
+  cleanup
+
+  echo "Creating test fixtures in ${RAW_DS} and ${CURATED_DS}..."
+  bq mk --table --project_id="${PROJECT}" "${RAW_DS}.fact_utterance" utterance_id:STRING,text:STRING,timestamp_s:FLOAT >/dev/null
+  bq mk --table --project_id="${PROJECT}" "${RAW_DS}.fact_event" event_id:STRING,event_type:STRING,timestamp_s:FLOAT,evidence:JSON >/dev/null
+  bq mk --use_legacy_sql=false --view="SELECT event_id, event_type, timestamp_s FROM \`${PROJECT}.${RAW_DS}.fact_event\`" --project_id="${PROJECT}" "${CURATED_DS}.v_redcap_wide" >/dev/null
+  bq mk --use_legacy_sql=false --view="SELECT event_id, event_type, timestamp_s FROM \`${PROJECT}.${RAW_DS}.fact_event\`" --project_id="${PROJECT}" "${CURATED_DS}.v_exemplar_store" >/dev/null
+else
+  echo "Real tables exist in ${RAW_DS} and ${CURATED_DS}; testing against actual schema without temporary fixtures..."
+fi
 
 echo "Executing negative proof queries against BigQuery..."
-python3 - "${PROJECT}" <<'EOF'
+"${PY_CMD}" - "${PROJECT}" <<'EOF'
 import sys
 import subprocess
 import google.oauth2.credentials

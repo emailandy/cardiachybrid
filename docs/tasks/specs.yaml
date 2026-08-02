@@ -321,3 +321,8 @@ D13:
   - D12
   gate: "CI green; exportFieldNames set-equals IMPORTABLE_COLUMNS (NOT EXPORT_COLUMNS \u2014 calc fields are absent from that API); round-trip byte-equal on scratch"
   gate_note: "Whether record_id and video_review_complete appear in exportFieldNames is UNVERIFIED. record_id almost certainly does; form _complete fields may not, since they are auto-generated rather than dictionary-defined. Resolve empirically here \u2014 do not assume."
+DEMO-0:
+  title: "Deploy BigQuery schema to nodepeel and verify"
+  creates: [docs/DEPLOY_LOG.md]
+  depends: [D07, D07a]
+  gate: "13 tables + 7 views exist in nodepeel; all 5 audit views execute against empty tables; IAM negative proof re-passes"

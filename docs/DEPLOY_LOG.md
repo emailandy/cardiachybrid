@@ -1,0 +1,130 @@
+# resus_qc — BigQuery Deployment & Verification Log (DEMO-0)
+**Date**: 2026-08-01  
+**Project**: `nodepeel` (US-East4 Single-Region Deployment, Q-010)  
+**Task**: DEMO-0 — Deploy BigQuery Schema to `nodepeel` and Verify  
+
+---
+
+## 1. What Was Created
+Deployed the generated DDL (`generated/bq_ddl.sql` and `generated/audit_views.sql`) to the `nodepeel` BigQuery project:
+* **`nodepeel:resus_raw` (13 physical tables)**:
+  1. `dim_case` (clustered by `case_id`)
+  2. `dim_run` (partitioned by `DAY(event_date)`, clustered by `case_id, run_id`)
+  3. `dim_redcap_field` (clustered by `field_name, form_name`)
+  4. `fact_event` (partitioned by `DAY(event_date)`, clustered by `case_id, event_type`)
+  5. `fact_interval` (partitioned by `DAY(event_date)`, clustered by `case_id, interval_type`)
+  6. `fact_utterance` (partitioned by `DAY(event_date)`, clustered by `case_id, run_id`)
+  7. `fact_sensor_interval` (partitioned by `DAY(event_date)`, clustered by `case_id, sensor_type`)
+  8. `fact_redcap_field` (partitioned by `DAY(event_date)`, clustered by `case_id, field_name`)
+  9. `redcap_submission` (partitioned by `DAY(event_date)`, clustered by `case_id, run_id`)
+  10. `fact_metric` (partitioned by `DAY(event_date)`, clustered by `case_id, metric_name`)
+  11. `fact_coverage_note` (partitioned by `DAY(event_date)`, clustered by `case_id, target_domain`)
+  12. `fact_near_miss` (partitioned by `DAY(event_date)`, clustered by `case_id, event_type`)
+  13. `fact_team_score` (partitioned by `DAY(event_date)`, clustered by `case_id, domain`)
+* **`nodepeel:resus_curated` (7 views)**:
+  1. `v_redcap_wide` (pivots `1,889` non-server-computed `IMPORTABLE_COLUMNS`)
+  2. `v_exemplar_store` (event feedback loop view)
+  3. `v_audit_missing_fields`
+  4. `v_audit_domain_coverage`
+  5. `v_audit_hallucination`
+  6. `v_audit_low_utd`
+  7. `v_audit_branching_violation`
+
+---
+
+## 2. Verification Outputs
+
+### A. Dataset Listing & Scratch Target Refusal
+* `nodepeel:resus_raw`: **13 tables** present.
+* `nodepeel:resus_curated`: **7 views** present.
+* `nodepeel:resus_scratch`: **Empty** (0 tables/views).
+* **Scratch Target Refusal**: Running `python -m bq.deploy --project nodepeel --dataset resus_scratch --dry-run` raised the expected refusal error:
+  ```
+  ValueError: resus_scratch NEVER receives a table from generated/bq_ddl.sql. It exists solely as a --dataset-prefix target for ephemeral CI deployments (attempted dataset: resus_scratch).
+  ```
+* **Curated Direct Target Refusal**: Running `python -m bq.deploy --project nodepeel --dataset resus_curated` raised the expected error:
+  ```
+  ValueError: Cannot deploy raw tables directly to resus_curated.
+  ```
+
+### B. Seed Dictionary Table (`dim_redcap_field`)
+Loaded `generated/dim_redcap_field_seed.jsonl` into `nodepeel:resus_raw.dim_redcap_field` via `bq load --source_format=NEWLINE_DELIMITED_JSON --replace`:
+* **Note on Query Schema**: Querying `SELECT COUNT(*) n, COUNT(DISTINCT source_class) sc` returns `Unrecognized name: source_class`. In `FIELDS`, `source_class` is a Python domain attribute; the physical BigQuery table schema columns are `field_name`, `dict_version`, `form_name`, `field_type`, `field_label`, `choices`, `is_importable`, `expected_utd_floor`, `is_calc_field`, and `is_phi`.
+* **Working Verification Query**:
+  ```sql
+  SELECT COUNT(*) n, COUNT(DISTINCT form_name) forms, COUNT(DISTINCT field_type) types
+  FROM nodepeel.resus_raw.dim_redcap_field;
+  ```
+  **Output**:
+  ```
+  +-----+-------+-------+
+  |  n  | forms | types |
+  +-----+-------+-------+
+  | 909 |     1 |     6 |
+  +-----+-------+-------+
+  ```
+
+### C. Audit View Execution Against Empty Tables
+Every curated view executed against empty base tables without raising an error or exceeding query limits:
+```bash
+for v in v_audit_missing_fields v_audit_domain_coverage \
+         v_audit_hallucination v_audit_low_utd \
+         v_audit_branching_violation v_redcap_wide v_exemplar_store; do
+  echo "── $v"
+  bq query --nouse_legacy_sql --max_rows=1 \
+    "SELECT * FROM nodepeel.resus_curated.$v LIMIT 1"
+done
+```
+**Output**: All 7 views returned **0 rows cleanly without error**, including `v_redcap_wide` with `1,889` expressions.
+
+### D. IAM Negative Proof Against Real PHI Tables (`infra/verify_iam.sh`)
+Executed `bash infra/verify_iam.sh nodepeel` against the actual PHI tables in `nodepeel:resus_raw` (without creating or deleting temporary fixtures):
+```
+=== Resus QC IAM Verification Script (Project: nodepeel) ===
+Real tables exist in resus_raw and resus_curated; testing against actual schema without temporary fixtures...
+Executing negative proof queries against BigQuery...
+
+--- Testing Service Account: sa-analyst@nodepeel.iam.gserviceaccount.com ---
+  [SUCCESS - EXPECTED]   v_redcap_wide (curated view) -> 0 rows returned
+  [SUCCESS - EXPECTED]   v_exemplar_store (curated view) -> 0 rows returned
+  [DENIED - EXPECTED]    fact_utterance (base PHI table) -> 403 Access Denied: User does not have permission to query table nodepeel:resus_raw.fact_utterance
+  [DENIED - EXPECTED]    fact_event.evidence (base PHI column) -> 403 Access Denied: User does not have permission to query table nodepeel:resus_raw.fact_event
+
+--- Testing Service Account: sa-reviewer@nodepeel.iam.gserviceaccount.com ---
+  [SUCCESS - EXPECTED]   v_redcap_wide (curated view) -> 0 rows returned
+  [SUCCESS - EXPECTED]   v_exemplar_store (curated view) -> 0 rows returned
+  [DENIED - EXPECTED]    fact_utterance (base PHI table) -> 403 Access Denied: User does not have permission to query table nodepeel:resus_raw.fact_utterance
+  [DENIED - EXPECTED]    fact_event.evidence (base PHI column) -> 403 Access Denied: User does not have permission to query table nodepeel:resus_raw.fact_event
+
+✓ IAM NEGATIVE PROOF VERIFIED (2 successes + 2 403 denials per SA).
+```
+
+---
+
+## 3. CMEK Status
+**CMEK (Customer-Managed Encryption Keys) is currently a PLACEHOLDER per D07a.**  
+All tables deployed to `nodepeel:resus_raw` and `nodepeel:resus_curated` are currently encrypted with **default Google-managed encryption keys**. Cloud KMS customer-managed key integration is staged in architecture but has not been provisioned or applied to this deployment.
+
+---
+
+## 4. Teardown & Redeploy Commands
+
+### Teardown (Remove All Tables & Views)
+To wipe all physical tables and curated views from `nodepeel`:
+```bash
+# Wipe and recreate empty datasets
+bq rm -f -r nodepeel:resus_raw
+bq rm -f -r nodepeel:resus_curated
+bq mk --dataset --location=us-east4 nodepeel:resus_raw
+bq mk --dataset --location=us-east4 nodepeel:resus_curated
+```
+
+### Redeploy (Re-create Schema & Reload Seed Dictionary)
+To deploy all 13 tables, 7 views, and reload the dictionary seed from scratch:
+```bash
+source .venv/bin/activate
+python -m bq.deploy --project nodepeel --dataset resus_raw
+bq load --source_format=NEWLINE_DELIMITED_JSON --replace \
+  nodepeel:resus_raw.dim_redcap_field \
+  generated/dim_redcap_field_seed.jsonl
+```

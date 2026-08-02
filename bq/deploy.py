@@ -79,6 +79,13 @@ def resolve_datasets(dataset_arg: str) -> tuple[str, str]:
     return raw, curated
 
 
+def _strip_leading_comments(sql: str) -> str:
+    lines = sql.splitlines()
+    while lines and lines[0].strip().startswith("--"):
+        lines.pop(0)
+    return "\n".join(lines).strip()
+
+
 def deploy_sql_artifact(
     sql_text: str,
     raw_ds: str,
@@ -93,7 +100,11 @@ def deploy_sql_artifact(
         scratch_dataset=f"{raw_ds[:-4]}_scratch" if raw_ds.endswith("_raw") else "resus_scratch",
     )
 
-    statements = [s.strip() for s in formatted_sql.split(";") if s.strip()]
+    statements = [
+        _strip_leading_comments(s)
+        for s in formatted_sql.split(";")
+        if _strip_leading_comments(s)
+    ]
 
     if dry_run:
         print(f"--- [DRY RUN] Would execute {len(statements)} BigQuery SQL statements ---")
