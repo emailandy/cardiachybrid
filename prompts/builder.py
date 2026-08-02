@@ -111,8 +111,8 @@ def select_anchors(
     all_types = _all_anchor_event_types()
     
     if (sensor_data is None or sensor_data == {}) and not keywords:
-        reasons = {t: "self_detection: default resuscitation core tier" for t in sorted(DEFAULT_HARVEST_TIER)}
-        return sorted(DEFAULT_HARVEST_TIER), reasons
+        reasons = {t: "self_detection: all 39 cards included (recall bias in absence of sensors)" for t in all_types}
+        return all_types, reasons
 
     try:
         selected_set: set[str] = set()

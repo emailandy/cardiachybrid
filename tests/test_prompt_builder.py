@@ -29,18 +29,26 @@ from prompts.builder import (
 from generated.models import EventStream, Event
 
 
-def test_select_anchors_none_returns_default_tier():
+def test_select_anchors_none_returns_all_39():
     selected, reasons = select_anchors(None)
-    assert len(selected) == 16
-    assert all("self_detection: default resuscitation core tier" in r for r in reasons.values())
+    assert len(selected) == 39
+    assert all("self_detection: all 39 cards included" in r for r in reasons.values())
     assert selected == sorted(selected)
     assert list(reasons.keys()) == sorted(reasons.keys())
 
 
-def test_select_anchors_empty_returns_default_tier():
+def test_self_detection_mode_includes_all_anchors():
+    """No sensors means no signal to slice on. Omitting a card makes that
+    event type unemittable — silent total recall loss."""
+    sel, _ = select_anchors(sensor_data=None)
+    all_39 = _all_anchor_event_types()
+    assert len(sel) == 39, f"dropped {39-len(sel)}: {sorted(set(all_39) - set(sel))}"
+
+
+def test_select_anchors_empty_returns_all_39():
     selected, reasons = select_anchors({})
-    assert len(selected) == 16
-    assert reasons["compression_interruption"] == "self_detection: default resuscitation core tier"
+    assert len(selected) == 39
+    assert reasons["compression_interruption"] == "self_detection: all 39 cards included (recall bias in absence of sensors)"
     assert selected == sorted(selected)
 
 
@@ -64,7 +72,7 @@ def test_build_p1_self_detection_mode():
         sensor_data=None,
     )
     assert "SELF-DETECTION MODE" in p1.user
-    assert len(p1.selected_anchors) == 16
+    assert len(p1.selected_anchors) == 39
 
 
 

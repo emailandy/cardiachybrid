@@ -145,3 +145,8 @@ bq load --source_format=NEWLINE_DELIMITED_JSON --replace \
 ## 6. Video Storage & Cross-Region Sandbox Deviation
 * **Bucket Location**: `gs://resus-qc-demo-video` is provisioned in `us-central1` to serve Vertex AI Gemini models (`gemini-2.5-flash` and `gemini-2.5-pro`) in region `us-central1`.
 * **Cross-Region Deviation**: BigQuery is pinned to `us-east4` (`nodepeel:resus_raw` and `nodepeel:resus_curated`). This cross-region split (`us-central1` GCS/Vertex vs `us-east4` BigQuery) is a sandbox-only deviation due to regional availability of Gemini model garden endpoints. Production deployments must colocate GCS, Vertex AI endpoints, and BigQuery datasets within the same region.
+
+---
+
+## 7. Media Resolution Behavior & Vertex AI SDK Observation
+* **MEDIUM Resolution Fallback**: Empirically observed during B0 resolution probe that `MEDIA_RESOLUTION_LOW` and `MEDIA_RESOLUTION_MEDIUM` both consume exactly `9,455` tokens on a 60s slice of video (`simvideo2.mp4` at `fps=2.0`), whereas `MEDIA_RESOLUTION_HIGH` consumes `33,215` tokens. This indicates that `MEDIUM` is unsupported on `gemini-3.6-flash` (`global`) and falls back to `LOW`.
