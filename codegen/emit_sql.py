@@ -43,14 +43,26 @@ CREATE TABLE IF NOT EXISTS `{raw_dataset}.dim_run` (
 ) PARTITION BY event_date CLUSTER BY case_id, run_id;
 
 CREATE TABLE IF NOT EXISTS `{raw_dataset}.dim_redcap_field` (
-  field_name STRING NOT NULL,
   dict_version STRING NOT NULL,
+  field_name STRING NOT NULL,
   form_name STRING,
   field_type STRING,
   field_label STRING,
   choices JSON,
-  is_importable BOOL,
+  validation STRING,
+  val_min STRING,
+  val_max STRING,
+  branching_logic STRING,
+  is_required BOOL,
+  export_columns JSON,
+  source_class STRING,
+  extraction_difficulty STRING,
+  target_accuracy FLOAT64,
+  owning_event_types JSON,
   expected_utd_floor FLOAT64,
+  repeat_group STRING,
+  repeat_index INT64,
+  is_importable BOOL,
   is_calc_field BOOL,
   is_phi BOOL
 ) CLUSTER BY field_name, form_name;
@@ -182,29 +194,94 @@ CREATE TABLE IF NOT EXISTS `{raw_dataset}.fact_team_score` (
 
 
 def generate_field_seed_jsonl() -> str:
-    """Produces JSONL seed rows for dim_redcap_field."""
+    """Produces JSONL seed rows for dim_redcap_field (909 dictionary fields + 2 REDCap system fields = 911 rows)."""
     dict_version = "v1.0.0"
     dict_ver_path = Path("dictionary/dict_version.txt")
     if dict_ver_path.exists():
         dict_version = dict_ver_path.read_text().strip()
 
-    rows = []
+    system_fields = [
+        {
+            "dict_version": dict_version,
+            "field_name": "record_id",
+            "form_name": "video_review",
+            "field_type": "text",
+            "field_label": "Record ID (REDCap system field not present in dictionary export)",
+            "choices": {},
+            "validation": "",
+            "val_min": "",
+            "val_max": "",
+            "branching_logic": "",
+            "is_required": True,
+            "export_columns": ["record_id"],
+            "source_class": "AI_DERIVED",
+            "extraction_difficulty": "LOW",
+            "target_accuracy": 1.0,
+            "owning_event_types": [],
+            "expected_utd_floor": 1.0,
+            "repeat_group": "",
+            "repeat_index": None,
+            "is_importable": True,
+            "is_calc_field": False,
+            "is_phi": True,
+        },
+        {
+            "dict_version": dict_version,
+            "field_name": "video_review_complete",
+            "form_name": "video_review",
+            "field_type": "radio",
+            "field_label": "Complete? (REDCap system form completion field not present in dictionary export)",
+            "choices": {"0": "Incomplete", "1": "Unverified", "2": "Complete"},
+            "validation": "",
+            "val_min": "",
+            "val_max": "",
+            "branching_logic": "",
+            "is_required": False,
+            "export_columns": ["video_review_complete"],
+            "source_class": "AI_DERIVED",
+            "extraction_difficulty": "LOW",
+            "target_accuracy": 1.0,
+            "owning_event_types": [],
+            "expected_utd_floor": 1.0,
+            "repeat_group": "",
+            "repeat_index": None,
+            "is_importable": True,
+            "is_calc_field": False,
+            "is_phi": False,
+        },
+    ]
+
+    all_rows = list(system_fields)
     for f_name in sorted(FIELDS.keys()):
         spec = FIELDS[f_name]
         row = {
-            "field_name": spec.field_name,
             "dict_version": dict_version,
+            "field_name": spec.field_name,
             "form_name": spec.form_name,
             "field_type": spec.field_type,
             "field_label": spec.field_label,
             "choices": spec.choices,
+            "validation": spec.validation,
+            "val_min": str(spec.val_min) if spec.val_min is not None else "",
+            "val_max": str(spec.val_max) if spec.val_max is not None else "",
+            "branching_logic": spec.branching_raw,
+            "is_required": bool(spec.required),
+            "export_columns": list(spec.export_columns),
+            "source_class": spec.source_class,
+            "extraction_difficulty": spec.difficulty,
+            "target_accuracy": getattr(spec, "target_accuracy", 1.0),
+            "owning_event_types": list(spec.owning_event_types),
+            "expected_utd_floor": float(getattr(spec, "expected_utd_floor", 0.95)),
+            "repeat_group": spec.repeat_group or "",
+            "repeat_index": spec.repeat_index,
             "is_importable": not spec.server_computed,
-            "expected_utd_floor": getattr(spec, "expected_utd_floor", 0.95),
             "is_calc_field": spec.field_type == "calc",
             "is_phi": bool(spec.identifier),
         }
-        rows.append(json.dumps(row, sort_keys=True))
-    return "\n".join(rows) + "\n"
+        all_rows.append(row)
+
+    all_rows.sort(key=lambda r: r["field_name"])
+    return "\n".join(json.dumps(r, sort_keys=True) for r in all_rows) + "\n"
 
 
 def generate_v_redcap_wide() -> str:
@@ -263,6 +340,7 @@ JOIN `{raw_dataset}.dim_redcap_field` df
   ON f.field_name = df.field_name
 WHERE df.is_importable = TRUE
   AND df.is_calc_field = FALSE
+  AND df.source_class NOT IN ('HUMAN_ONLY', 'ROSTER_JOIN', 'REDCAP_CALC')
   AND f.branching_satisfied = TRUE
   AND f.abstained = FALSE
   AND (f.value IS NULL OR f.value = '');
@@ -271,6 +349,7 @@ CREATE OR REPLACE VIEW `{curated_dataset}.v_audit_domain_coverage` AS
 SELECT
   f.run_id,
   df.form_name AS domain,
+  df.source_class,
   COUNTIF(f.value IS NOT NULL AND f.value != '' AND f.abstained = FALSE) AS populated_count,
   COUNTIF(f.abstained = TRUE) AS abstained_count,
   COUNT(*) AS total_fields,
@@ -281,7 +360,7 @@ JOIN `{raw_dataset}.dim_redcap_field` df
 WHERE df.is_importable = TRUE
   AND df.is_calc_field = FALSE
   AND f.branching_satisfied = TRUE
-GROUP BY f.run_id, df.form_name;
+GROUP BY f.run_id, df.form_name, df.source_class;
 
 CREATE OR REPLACE VIEW `{curated_dataset}.v_audit_hallucination` AS
 SELECT

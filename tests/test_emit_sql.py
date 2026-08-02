@@ -81,24 +81,89 @@ def test_audit_views_count() -> None:
 
 
 def test_field_seed_jsonl_count_and_content() -> None:
-    """Assert seed file has exactly len(FIELDS) rows and required governance keys."""
+    """Assert seed file has exactly len(FIELDS)+2 rows and required governance keys."""
     seed = generate_field_seed_jsonl()
     lines = [l for l in seed.splitlines() if l.strip()]
-    assert len(lines) == len(FIELDS), f"Expected {len(FIELDS)} rows, got {len(lines)}"
+    expected_count = len(FIELDS) + 2
+    assert len(lines) == expected_count, f"Expected {expected_count} rows, got {len(lines)}"
     first_row = json.loads(lines[0])
     for key in (
-        "field_name",
         "dict_version",
+        "field_name",
         "form_name",
         "field_type",
         "field_label",
         "choices",
-        "is_importable",
+        "validation",
+        "val_min",
+        "val_max",
+        "branching_logic",
+        "is_required",
+        "export_columns",
+        "source_class",
+        "extraction_difficulty",
+        "target_accuracy",
+        "owning_event_types",
         "expected_utd_floor",
+        "repeat_group",
+        "repeat_index",
+        "is_importable",
         "is_calc_field",
         "is_phi",
     ):
         assert key in first_row, f"Required governance key {key} missing from seed JSONL"
+
+
+def parse_ddl_columns(table_name: str, ddl_path: Path) -> set[str]:
+    content = ddl_path.read_text()
+    pattern = rf"CREATE TABLE IF NOT EXISTS `\{{raw_dataset\}}\.{re.escape(table_name)}` \((.*?)\) (?:PARTITION|CLUSTER)"
+    match = re.search(pattern, content, re.DOTALL)
+    if not match:
+        raise ValueError(f"Table {table_name} not found in {ddl_path}")
+    block = match.group(1)
+    cols = set()
+    for line in block.splitlines():
+        line = line.strip().rstrip(",")
+        if line and not line.startswith("--"):
+            parts = line.split()
+            if parts:
+                cols.add(parts[0])
+    return cols
+
+
+def first_line_of_seed() -> str:
+    seed_path = Path("generated/dim_redcap_field_seed.jsonl")
+    with seed_path.open() as f:
+        return f.readline().strip()
+
+
+def parse_view_column_refs(views_path: Path) -> dict[str, dict[str, set[str]]]:
+    content = views_path.read_text()
+    view_blocks = re.findall(
+        r"CREATE OR REPLACE VIEW `[^`]+\.([^`]+)` AS(.*?)(?=(?:CREATE OR REPLACE VIEW|\Z))",
+        content,
+        re.DOTALL,
+    )
+    result = {}
+    for view_name, block_text in view_blocks:
+        refs = {"dim_redcap_field": set()}
+        if "dim_redcap_field" in block_text:
+            for match in re.finditer(r"\bdf\.([a-zA-Z0-9_]+)", block_text):
+                refs["dim_redcap_field"].add(match.group(1))
+        result[view_name] = refs
+    return result
+
+
+def test_seed_columns_match_ddl_spec() -> None:
+    """dim_redcap_field's seed must match its DDL, and every column referenced by an audit view must exist in the DDL."""
+    ddl_cols = parse_ddl_columns("dim_redcap_field", Path("generated/bq_ddl.sql"))
+    seed_cols = set(json.loads(first_line_of_seed()))
+    assert seed_cols == ddl_cols, f"seed/DDL mismatch: {seed_cols ^ ddl_cols}"
+
+    for view, refs in parse_view_column_refs(Path("generated/audit_views.sql")).items():
+        unknown = refs["dim_redcap_field"] - ddl_cols
+        assert not unknown, f"{view} references undeclared columns: {unknown}"
+
 
 
 def test_emit_sql_determinism() -> None:

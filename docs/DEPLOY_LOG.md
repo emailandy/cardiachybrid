@@ -35,33 +35,33 @@ Deployed the generated DDL (`generated/bq_ddl.sql` and `generated/audit_views.sq
 ## 2. Verification Outputs
 
 ### A. Dataset Listing & Scratch Target Refusal
-* `nodepeel:resus_raw`: **13 tables** present.
+* `nodepeel:resus_raw`: **13 tables** present. All 13 physical tables were audited against `dictionary/DDL_SPEC.md` and match their specifications with zero mismatch.
 * `nodepeel:resus_curated`: **7 views** present.
 * `nodepeel:resus_scratch`: **Empty** (0 tables/views).
+* **IMPORTANT — `--dataset` Flag Deployment Behavior**:
+  * Passing `--dataset resus_raw` deploys **BOTH** raw physical tables to `resus_raw` **AND** curated/audit views to `resus_curated`.
+  * Passing `--dataset resus_curated` raises an explicit refusal error (`ValueError: Cannot deploy raw tables directly to resus_curated.`). Do not attempt to deploy with `--dataset resus_curated`; always target `--dataset resus_raw`.
 * **Scratch Target Refusal**: Running `python -m bq.deploy --project nodepeel --dataset resus_scratch --dry-run` raised the expected refusal error:
   ```
   ValueError: resus_scratch NEVER receives a table from generated/bq_ddl.sql. It exists solely as a --dataset-prefix target for ephemeral CI deployments (attempted dataset: resus_scratch).
   ```
-* **Curated Direct Target Refusal**: Running `python -m bq.deploy --project nodepeel --dataset resus_curated` raised the expected error:
-  ```
-  ValueError: Cannot deploy raw tables directly to resus_curated.
-  ```
 
-### B. Seed Dictionary Table (`dim_redcap_field`)
+### B. Seed Dictionary Table (`dim_redcap_field` — Reconciled 22-Column Schema)
 Loaded `generated/dim_redcap_field_seed.jsonl` into `nodepeel:resus_raw.dim_redcap_field` via `bq load --source_format=NEWLINE_DELIMITED_JSON --replace`:
-* **Note on Query Schema**: Querying `SELECT COUNT(*) n, COUNT(DISTINCT source_class) sc` returns `Unrecognized name: source_class`. In `FIELDS`, `source_class` is a Python domain attribute; the physical BigQuery table schema columns are `field_name`, `dict_version`, `form_name`, `field_type`, `field_label`, `choices`, `is_importable`, `expected_utd_floor`, `is_calc_field`, and `is_phi`.
-* **Working Verification Query**:
+* **Reconciled Schema (22 columns)**: Includes all 19 original dictionary schema columns (`dict_version`, `field_name`, `form_name`, `field_type`, `field_label`, `choices`, `validation`, `val_min`, `val_max`, `branching_logic`, `is_required`, `export_columns`, `source_class`, `extraction_difficulty`, `target_accuracy`, `owning_event_types`, `expected_utd_floor`, `repeat_group`, `repeat_index`) plus 3 explicit boolean query optimization flags (`is_importable`, `is_calc_field`, `is_phi`).
+* **System Fields Included**: Contains the 909 data dictionary fields plus 2 REDCap system fields (`record_id`, `video_review_complete`) assigned `source_class: "AI_DERIVED"`, yielding exactly **911 rows**.
+* **Verification Query**:
   ```sql
-  SELECT COUNT(*) n, COUNT(DISTINCT form_name) forms, COUNT(DISTINCT field_type) types
+  SELECT COUNT(*) n, COUNT(DISTINCT source_class) sc
   FROM nodepeel.resus_raw.dim_redcap_field;
   ```
   **Output**:
   ```
-  +-----+-------+-------+
-  |  n  | forms | types |
-  +-----+-------+-------+
-  | 909 |     1 |     6 |
-  +-----+-------+-------+
+  +-----+----+
+  |  n  | sc |
+  +-----+----+
+  | 911 |  7 |
+  +-----+----+
   ```
 
 ### C. Audit View Execution Against Empty Tables

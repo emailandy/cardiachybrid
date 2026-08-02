@@ -18,7 +18,9 @@ All physical tables reside in the `resus_raw` dataset (`us-east4`, CMEK-encrypte
 
 1. **dim_case**: Case-level metadata and registry enrollment demographics.
 2. **dim_run**: Execution metadata for individual AI pipeline runs.
-3. **dim_redcap_field**: Metadata and dictionary definitions for REDCap export columns.
+3. **dim_redcap_field**: Metadata and dictionary definitions for REDCap export columns. Includes the 19 original dictionary schema columns (`dict_version`, `field_name`, `form_name`, `field_type`, `field_label`, `choices`, `validation`, `val_min`, `val_max`, `branching_logic`, `is_required`, `export_columns`, `source_class`, `extraction_difficulty`, `target_accuracy`, `owning_event_types`, `expected_utd_floor`, `repeat_group`, `repeat_index`) plus 3 explicit query optimization boolean flags (`is_importable`, `is_calc_field`, `is_phi`).
+   - **Why `is_importable`, `is_calc_field`, and `is_phi` are retained**: While derivable from `source_class`, `field_type`, and `identifier`, materializing these boolean flags directly on `dim_redcap_field` simplifies BigQuery audit view predicates and analytical queries without requiring string matching or UDFs.
+   - **System Fields**: Includes 2 REDCap system fields (`record_id`, `video_review_complete`) with `source_class: "AI_DERIVED"` (911 total rows).
 4. **fact_event**: Video-observed clinical events and AI detections; `evidence` stored as JSON.
 5. **fact_interval**: Clinical intervals (`compression_interruption`, `rosc`, etc.).
 6. **fact_utterance**: Verbatim speech transcripts and speaker attributions (PHI restricted).
