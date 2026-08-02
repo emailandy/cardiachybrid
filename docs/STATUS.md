@@ -1,0 +1,100 @@
+# resus_qc — System Status & Handoff Report
+**Date**: 2026-08-01  
+**Phase**: Phase 1 (Schema Spine & Reducer Engine) & Phase 2 (Prompt Layer & Ingestion) Complete  
+
+---
+
+## 1. Built and Verified
+We distinguish **INTERNALLY VERIFIED** work (codegen agreeing with codegen, fixtures built from the same contract the reducer reads) from **EXTERNALLY VERIFIED** work (tested against external infrastructure or live negative proofs). **Very little is currently externally verified.**
+
+### Externally Verified (Live Infrastructure / Proofs)
+* **D07a — BigQuery Infrastructure & IAM Negative Proof**: Terraform deployment (`nodepeel` dev environment, 17 resources added cleanly). Externally proven via live BigQuery queries: service accounts `sa-analyst` and `sa-reviewer` query curated views in `resus_curated` successfully, while direct queries against `fact_utterance` or `fact_event.evidence` in `resus_raw` return HTTP 403 `PERMISSION_DENIED`.
+* **D13a / Round-Trip Harness (`tests/test_roundtrip.py`)**: Implementation of live network round-trip testing harness with a hardened 4-part safety guard (`assert_safe_scratch_project`: title contains `'scratch'`, `<10` records, PID allowlist, token != production token). Externally verified to skip cleanly with an informative offline message when offline/uncredentialed (`Q-014`).
+
+### Internally Verified (Codegen, Reducer Engine, Prompt Layer, & Synthetic Fixtures)
+* **D00–D04 — Schema Spine, Ingestion Contract, & Validation Rules**: Verified contract JSON generation (`generated/extraction_contract.json`), dictionary hashing, and 12 declarative cross-field validation rules (`V1–V12` in `config/validators.yaml`) with non-coercing evaluation.
+* **D05 — Reducer Engine (`reducer/engine.py`)**: Verified deterministic reduction (<500 lines, zero REDCap field literals) across 5 synthetic streams (`maximal`, `degraded`, `overflow`, `sparse`, `contradictory`). Verified non-negotiable semantics (`gate_3way` No-vs-UTD asymmetry, `gate_yesno` integer 1/0 emission, checkbox dictionary choice iteration, repeating group truncation, and provenance guard `AI_DIRECT`).
+* **D06 — Cross-Field Validator Execution (`test_validators.py`)**: Verified V1–V12 rule execution without input coercion or mutation, REDCap datetime formatting trap (`Y-m-d H:M:S`), and dynamic YAML severity overrides.
+* **D07 — BigQuery SQL Codegen (`codegen/emit_sql.py`)**: Generated DDL for 13 physical tables in `resus_raw` and 7 curated views in `resus_curated` (`v_redcap_wide`, `v_exemplar_store`, audit views), pivoting strictly on `IMPORTABLE_COLUMNS` (1,889 expressions) and excluding server-computed fields.
+* **D08 — Event Ingestion & Ensemble Voting (`ingest/loader.py`, `ingest/ensemble.py`)**: Verified deterministic sequence-based event IDs (`sha1(case_id|type|ordinal)[:12]`), mandatory evidence rejection before BigQuery, 3-way voting thresholds (3/3 accept, 2/3 flag, 1/3 near-miss table), 1/1/1 categorical ties, and monotonic nearest-neighbor matching (`|Δt| <= sum(t_precision_s)`).
+* **D09 — Confidence Router & HITL Queue (`router/policy.py`, `router/queue.py`)**: Verified dynamic difficulty thresholds (`LOW: 0.80`, `MEDIUM: 0.85`, `HIGH: 0.92`), mandatory TEAM field review (`rule == 'team_score'`), deep-link ROI URLs (`#t={max(0, t-10)}`), objective-first queue sorting, and A3 exemplar few-shot feedback loop.
+* **D10 — QI Metrics Layer (`metrics/compute.py`)**: Verified CCF denominator candidate (c) (*first compression to termination excluding sustained ROSC*), explicit NULL vs 0 contract (`MetricRow(value=None, null_reason=...)`), ratio numerator/denominator tracking, and declarative SHA-256 formula versioning.
+* **D11 — REDCap Client & Payload Assembly (`redcap/assemble.py`, `redcap/client.py`)**: Verified exact set-equality of assembled payload keys against `SUBMISSION_COLUMNS` (1,891 keys: 1,879 reducer-emitted + `record_id` + `video_review_complete` + 10 present-and-blank keys for `ROSTER_JOIN`/`HUMAN_ONLY`), checkbox completeness defaulting to `"0"`, quarantine blocking on validation failure or unverified human routing, and HTTP 400 non-retry vs 5xx exponential backoff.
+* **D12 — Fixtures & Coverage Milestone (`fixtures/synthetic_maximal.py`, `golden_case_01.py`, `test_coverage.py`)**: Verified dynamic maximal stream construction from `FIELDS` exercising all repeating groups at cap (`defib`: 30, `cci`: 30, `airway`: 8, `rosc`: 20, `vent_delay`: 5) and cycling 21 reason codes. Verified clinical plausibility on a 22-minute OHCA narrative (`golden_case_01.py`). Resolved schema-aware coverage degradation for 2-choice radio fields emitting clean nulls (`abstained=True`).
+* **D13a / D14 — CI Workflow & Contract Codegen (`.github/workflows/ci.yml`, `codegen/emit_contract.py`)**: Verified GitHub Actions CI pipeline with dictionary hash verification, linting, unit tests, 2x determinism double-run check, REDCap token secret scan, invariant script (`scripts/check_invariants.sh`), and contract generation.
+* **A01–A06 — Prompt Layer, Calibration Anchors, & Builder (`prompts/`)**: Verified 6-section byte-identical round-trip reconstruction from `tests/fixtures/passes_v2.0_source.md` (`P1`, `P2`, `P3`, `P4A`, `P4B`, `P5`), bidirectional placeholder validation (`validate_template_placeholders`), strict no-field-name literal assertions (`assert_no_field_names`), `Q-015` calibration anchor stub fallback handling, and 100x prompt builder determinism.
+
+---
+
+## 2. The Numbers
+* **Dictionary Variables**: `909` instrument variables (`911` total including system fields `record_id` and `video_review_complete`).
+* **REDCap Column Counts**:
+  * `1891` export columns (`EXPORT_COLUMNS`).
+  * `1889` importable columns (`IMPORTABLE_COLUMNS`, excluding 2 server-computed calc fields).
+  * `1879` reducer-emitted clinical/technical columns (excluding 10 human-only/roster-join fields and 2 system fields).
+  * `1891` submission payload keys (`SUBMISSION_COLUMNS`, exactly matching REDCap import requirements).
+* **Domain Elements**: `39` anchor cards (`40` files in `prompts/anchors/` including `_SCHEMA.yaml`), `42` total event types (`39` anchor-backed clinical events + `3` interval types), `858` branching expressions parsed from instrument logic.
+* **Authoritative Version Hashes**:
+  * `dict_version`: `e7c08437adcef4a5` (from `dictionary/dict_version.txt`)
+  * `prompt_set_sha`: `953bc7173931a1e2` (`prompt_set_sha(strict=True)`)
+  * `contract_version`: `1` (`requires_contract_version` in manifest / `extraction_contract.json`)
+  * `anchor_library_version`: `56a2381cace7ee75` (`56a2381cace7ee758607ea3fb065e400b337d087f92f0014305f4b2e0ecadd16`)
+* **Test Suite & Invariants**: **134 unit tests** and **6 invariants (`I1–I6`)** passing cleanly in CI and local execution (`pytest -q -m "not integration" && bash scripts/check_invariants.sh`).
+
+---
+
+## 3. Not Built
+* **Sensors (`S1–S7`)**: Physical sensor streaming and hardware ingestion pipelines are unbuilt:
+  * **S1 (Chest-ROI Optical Flow)**: Unlocks automated video compression motion detection, compression rates, and CCF intervals without LLM estimation.
+  * **S2 (Compression-Audio Periodicity)**: Unlocks audio-based CPR compression cadence and periodicity tracking.
+  * **S3 (Monitor OCR / Display Text)**: Unlocks authoritative defibrillator and monitor display text extraction and time-series logging.
+  * **S4 (Monitor Waveform Telemetry)**: Unlocks physiological telemetry ingestion (ETCO2, SpO2, arterial line waveforms, ECG rhythm strips).
+  * **S5 (Clock Anchor Synchronization)**: Unlocks zero-time synchronization across audio, video, and monitor feeds.
+  * **S6 (Speaker Diarization)**: Unlocks primary resuscitation leader acoustic identification and presence percentage tracking.
+  * **S7 (Diarized ASR Transcription)**: Unlocks leader directive counts, utterance logging, and closed-loop communication acknowledgment rates.
+* **Gold Set**: 25 dual-annotated resuscitation cases with third-rater adjudication.
+* **Clinical Review of Anchor Cards**: Human clinical review of the 39 structural anchor cards against clinical reality (`CR-001..CR-005`).
+* **Live REDCap Round-Trip**: Execution of `tests/test_roundtrip.py` against a live, provisioned scratch REDCap instance (`D13b`).
+* **TEAM Calibration Anchors**: Consensus-rated anchor cases (`low=2`, `mid=6`, `high=9`) for P4 TEAM global score calibration.
+
+---
+
+## 4. Open Questions (Q-001 to Q-015)
+Six clinical questions (`Q-001..Q-006`) have been open since scaffolding; all block clinical sign-off or production validity.
+
+| ID | Subject | Owner | Status | Blocks |
+|---|---|---|---|---|
+| **Q-001** | CCI truncation policy when count > 30 | Clinical Lead | OPEN (default: 30 longest by duration) | Clinical sign-off |
+| **Q-002** | `new_pad_position` when repositioned twice | Clinical Lead | OPEN (default: last position) | Clinical sign-off |
+| **Q-003** | `mccd_obstacles` obesity/cachexia suppression | Clinical Lead | OPEN (default: hard-suppressed, GOV-07) | Clinical sign-off |
+| **Q-004** | MCCD adjustment window with multiple adjustments | Clinical Lead | OPEN (default: envelope) | Clinical sign-off |
+| **Q-005** | `intub_assist` bougie + fiberoptic precedence | Clinical Lead | OPEN (default: bougie precedence) | Clinical sign-off |
+| **Q-006** | TEAM autonomy threshold | Clinical Lead | OPEN (default: always HITL until ICC ≥ 0.75) | Clinical sign-off |
+| **Q-007** | Institutional pip index (`us-python.pkg.dev`) override | Human / Platform | OPEN (interim: venv-scoped override to `pypi.org`) | Production deployment |
+| **Q-008** | Pin exact Gemini model version strings | Human | OPEN | Production deployment |
+| **Q-009** | Clinical review of all 39 anchor cards | Clinical Lead | OPEN (structural checks pass; unreviewed clinically) | Production deployment |
+| **Q-010** | BigQuery Terraform Region Selection | Human | **RESOLVED** (`us-east4` single region) | Nothing |
+| **Q-011** | `text_embedding` storage in `fact_utterance` | Clinical Lead / Gov | **DEFERRED** (requires PHI/biometric governance review) | Nothing |
+| **Q-012** | CCF denominator definition | Clinical Lead | OPEN (default: candidate c, first comp to term excl ROSC) | D10 clinical sign-off |
+| **Q-013** | Affirmative case sign-off for `video_review_complete="2"` | Clinical Lead / Eng | OPEN (default: hard-code `"1"` in `assemble_submission`) | D11 production release |
+| **Q-014** | Scratch REDCap project & API token for D13b test | Human / Admin | OPEN | D13b live round-trip proof |
+| **Q-015** | Three TEAM calibration anchor cases (`low`, `mid`, `high`) | Clinical Lead | OPEN (stubs staged as `status: BLOCKED`) | TEAM score clinical validity |
+
+---
+
+## 5. What Would Happen If You Ran a Real Video Tomorrow?
+**An honest assessment:**
+1. **Degraded Sensor Mode**: Because sensors **S1–S7 do not exist**, the pipeline would run in complete sensor-degraded mode. Pass 1 (Harvest) would be forced to self-detect chest compression intervals from video/audio using LLM estimation, yielding compression timing boundaries accurate to at best ±2–4 seconds rather than optical/audio sensor precision.
+2. **Unmeasurable Accuracy**: Because the **25-case Gold Set does not exist**, extraction accuracy, sensitivity, and positive predictive value cannot be measured or proven.
+3. **Unvalidated Clinical Extraction**: The 39 anchor cards are structurally whole (`check_anchors` passes), but **have never been reviewed by a clinician (`Q-009`)**. Extraction quality against real-world clinical nuance is unknown.
+4. **Uncalibrated TEAM Scoring**: Pass 4 (TEAM teamwork rating) would render with the explicit `Q-015` fallback block ("no calibration anchors available"), scoring teamwork in uncalibrated absolute terms.
+5. **Net Outcome**: The system would produce a **structurally flawless, schema-valid 1,891-key REDCap payload** that imports without error, but the data would be **clinically unvalidated, uncalibrated, and unproven**.
+
+---
+
+## 6. The Next Three Things (In Exact Order)
+No new implementation work should be started in this repository until these external prerequisites are advanced:
+
+1. **Gold Set (`25 cases`)**: Complete dual-annotated abstraction and third-rater adjudication across 25 historical resuscitation cases (10–15 days of human clinical work). This is the critical long pole that gates every accuracy claim and calibration task.
+2. **Sensors S1 + S2 + S5 (`Chest Motion, Compression Audio, Clock Anchor`)**: Build and integrate the three foundational hardware/signal processing sensors. Together, S1, S2, and S5 produce an authoritative Chest Compression Fraction (CCF) and peri-shock pause report **with no LLM in the loop**, representing the immediate high-value clinical shipping milestone.
+3. **Clinical Review of the 39 Anchor Cards (`CR-001..CR-005`, `Q-009`)**: Perform rigorous clinical audit and sign-off on all 39 anchor cards in `prompts/anchors/` to ensure event definitions, negative examples, and boundary conditions reflect real-world emergency department resuscitation reality.

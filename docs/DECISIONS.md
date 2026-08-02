@@ -119,6 +119,14 @@ Date: 2026-08-01  Session: D12  Decided by: human, agent
 Date: 2026-08-01  Session: A06  Decided by: human, agent
 1. `tests/fixtures/passes_v2.0_source.md` amended: `=== P4 ===` split into `=== P4A ===` and `=== P4B ===`, and the P4b template supplied in full. The original staging carried only a one-line pointer for Call B because the v2.0 prompt spec described it as a delta against v1 rather than restating it. Text supplied by the human author; not agent-generated. The fixture remains the golden source and the round-trip test now covers six sections.
 
+## 024 — A06 P3 Case-Field Name Reconciliation (Agent-Initiated)
+Date: 2026-08-01  Session: A06  Decided by: agent
+1. **Agent-Initiated Case-Field Rename in P3**: In `tests/fixtures/passes_v2.0_source.md` and `prompts/passes/p3_adjudicate.v2.0.md`, updated `ohca_ihca` -> `arrest_location` and `video_start_late` -> `recording_started_late` to match D05 contract symbol renaming, and changed `review_trigger` -> `review trigger metadata` (without underscore) to prevent REDCap export column literal collisions (`assert_no_field_names`, Invariant I2). The semantic instruction that administrative review metadata is not determinable from video and is always null is preserved verbatim.
+
+## 025 — A06 P4a Illustrative Metric Tokens Without Braces
+Date: 2026-08-01  Session: A06  Decided by: human, agent
+1. **Brace-Free Illustrative Metric Format Tokens**: Replaced `{v}`, `{n}`, `{d}` in `p4a_team_items` illustrative objective metrics example block with brace-free `<value>`, `<numerator>`, `<denominator>` formatting tokens in both `tests/fixtures/passes_v2.0_source.md` and `prompts/passes/p4a_team_items.v2.0.md`, and deleted `d`, `n`, `v` declarations from `prompts/passes/_PLACEHOLDERS.yaml`. This prevents illustrative sub-tokens from being swept into placeholder declarations and ensures `validate_template_placeholders` and `_validate_no_unfilled_placeholders` operate strictly on builder-supplied values.
+
 
 
 

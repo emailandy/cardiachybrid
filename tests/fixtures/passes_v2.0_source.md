@@ -179,6 +179,9 @@ Evaluate whoever held leadership longest; state this if it changed.
 
 ## OBJECTIVE METRICS — from fact_metric. GROUND TRUTH. Do not recompute.  # ▲
 {metrics_table}
+  chest_compression_fraction ........ <value> (num <numerator> / den <denominator>)
+  closed_loop_completion_rate ....... NULL (requires S7 diarized ASR)
+  median_peri_shock_pause_s ......... NULL (zero shocks in case)
 A metric shown as NULL was not computable (denominator zero or inputs
 incomplete). Treat NULL as absence of information, never as zero.       # ▲
 
