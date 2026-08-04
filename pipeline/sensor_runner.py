@@ -22,7 +22,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Sequence
 
-from sensors.s1_s6_motion import S1ChestMotionDetector, S6CoverageDetector
+from sensors.s1_s6_motion import (
+    NoPeriodicMotion,
+    S1ChestMotionDetector,
+    S6CoverageDetector,
+)
 from sensors.s2_compression_audio import S2CompressionAudioDetector
 from sensors.s3_defib import S3DefibDetector
 from sensors.s4_monitor_ocr import S4MonitorOCRDetector
@@ -131,10 +135,14 @@ class SensorPipelineRunner:
         )
 
         # S1: Chest motion & CCI pause intervals
-        compressions = self.s1_detector.detect_from_video(
-            vp, max_duration_s=max_duration_s
-        )
-        pauses = self.s1_detector.detect_cci_intervals(compressions)
+        try:
+            compressions = self.s1_detector.detect_from_video(
+                vp, max_duration_s=max_duration_s
+            )
+            pauses = self.s1_detector.detect_cci_intervals(compressions)
+        except NoPeriodicMotion:
+            compressions = []
+            pauses = []
 
         # S2: Compression audio cadence periodicity
         s2_intervals = self.s2_detector.detect_cadence_intervals(ap)

@@ -3,7 +3,8 @@
 # See CR-003 and SENSOR_SPECS.md Section 3.
 
 default:
-  calibrated_on: "simvideo2.mp4, n=4 positives, n=2 negatives"
+  calibrated_on: "simvideo2.mp4 — ONE fully characterized charge tone (742.21s, 515->796 Hz over 3s, r>=0.70) plus 3 transients with tones not individually characterized, and 2 negatives. Effective n=1 for tone parameters."
+  known_failure: "385.07s — 15 saw-tooth fragments in 400-1000 Hz, all restarting near 440 Hz. No monotonic tone recoverable. Cause under investigation."
   device_model: "UNKNOWN — see CR-003"
   warning: >
     Fitted, not general. Different manufacturers produce different charge
@@ -18,7 +19,8 @@ default:
   min_transient_ratio: 5.0
 
 UNKNOWN:
-  calibrated_on: "simvideo2.mp4, n=4 positives, n=2 negatives"
+  calibrated_on: "simvideo2.mp4 — ONE fully characterized charge tone (742.21s, 515->796 Hz over 3s, r>=0.70) plus 3 transients with tones not individually characterized, and 2 negatives. Effective n=1 for tone parameters."
+  known_failure: "385.07s — 15 saw-tooth fragments in 400-1000 Hz, all restarting near 440 Hz. No monotonic tone recoverable. Cause under investigation."
   device_model: "UNKNOWN — see CR-003"
   warning: >
     Fitted, not general. Different manufacturers produce different charge

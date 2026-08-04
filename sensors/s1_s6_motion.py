@@ -95,6 +95,12 @@ class SensorFailure(RuntimeError):
     pass
 
 
+class NoPeriodicMotion(SensorFailure):
+    """Raised when energy modulation falls below the calibrated floor, indicating no periodic motion in the window."""
+
+    pass
+
+
 class S1ChestMotionDetector:
     """
     Sensor S1: Detects CPR chest compression motion intervals and pause CCIs
@@ -155,24 +161,123 @@ class S1ChestMotionDetector:
         kernel = np.ones(win, dtype=float) / float(win)
         energy = np.convolve(filtered**2, kernel, mode="same")
 
-        # Outlier-resistant percentile statistics excluding camera bump / global motion
         bump_mask = np.abs(vy_arr_clean) > 30.0
-        valid_energy = energy[~bump_mask] if np.any(~bump_mask) else energy
+        n_frames = len(energy)
+        duration_s = float(n_frames / fps)
+        conf_val = float(self.s1_config.get("confidence", 0.85))
+
+        if duration_s < 60.0:
+            return self._detect_cci_window(
+                energy,
+                filtered,
+                bump_mask,
+                fps,
+                t_offset=0.0,
+                min_active_s=min_active_s,
+                conf_val=conf_val,
+                start_idx=1,
+            )
+
+        win_frames = int(60.0 * fps)
+        hop_frames = int(30.0 * fps)
+        raw_events: list[CompressionMotionEvent] = []
+        idx_counter = 1
+
+        for w_start in range(0, n_frames, hop_frames):
+            w_end = min(n_frames, w_start + win_frames)
+            if (w_end - w_start) / fps < 10.0:
+                continue
+            try:
+                win_evs = self._detect_cci_window(
+                    energy[w_start:w_end],
+                    filtered[w_start:w_end],
+                    bump_mask[w_start:w_end],
+                    fps,
+                    t_offset=float(w_start / fps),
+                    min_active_s=min_active_s,
+                    conf_val=conf_val,
+                    start_idx=idx_counter,
+                )
+                raw_events.extend(win_evs)
+                idx_counter += len(win_evs)
+            except NoPeriodicMotion:
+                continue
+
+        if not raw_events:
+            raise NoPeriodicMotion(
+                "No periodic CPR motion detected across track"
+            )
+
+        # Merge overlapping or contiguous events across windows
+        raw_events.sort(key=lambda e: e.t_start_s)
+        merged: list[CompressionMotionEvent] = [raw_events[0]]
+        for curr in raw_events[1:]:
+            last = merged[-1]
+            if curr.t_start_s <= last.t_end_s + 0.5:
+                new_end = max(last.t_end_s, curr.t_end_s)
+                dur_last = last.t_end_s - last.t_start_s
+                dur_curr = curr.t_end_s - curr.t_start_s
+                new_cad = round(
+                    (
+                        last.cadence_cpm * dur_last
+                        + curr.cadence_cpm * dur_curr
+                    )
+                    / max(dur_last + dur_curr, 1e-6),
+                    1,
+                )
+                merged[-1] = CompressionMotionEvent(
+                    id=last.id,
+                    event_type="compression_motion",
+                    t_start_s=last.t_start_s,
+                    t_end_s=new_end,
+                    cadence_cpm=new_cad,
+                    confidence=last.confidence,
+                )
+            else:
+                merged.append(
+                    CompressionMotionEvent(
+                        id=f"s1_{len(merged) + 1}",
+                        event_type="compression_motion",
+                        t_start_s=curr.t_start_s,
+                        t_end_s=curr.t_end_s,
+                        cadence_cpm=curr.cadence_cpm,
+                        confidence=curr.confidence,
+                    )
+                )
+
+        return merged
+
+    def _detect_cci_window(
+        self,
+        energy_win: np.ndarray,
+        filtered_win: np.ndarray,
+        bump_win: np.ndarray,
+        fps: float,
+        t_offset: float,
+        min_active_s: float,
+        conf_val: float,
+        start_idx: int = 1,
+    ) -> list[CompressionMotionEvent]:
+        valid_energy = (
+            energy_win[~bump_win] if np.any(~bump_win) else energy_win
+        )
         baseline = float(np.percentile(valid_energy, 10))
         active_p = float(np.percentile(valid_energy, 90))
         min_mod = float(self.s1_config.get("min_modulation", 0.85))
         if (active_p - baseline) < min_mod:
-            return []  # No periodic motion ("energy modulation below floor")
+            raise NoPeriodicMotion(
+                f"Energy modulation ({active_p - baseline:.4f}) below floor ({min_mod})"
+            )
         threshold = baseline + 0.3 * (active_p - baseline)
 
-        active_mask = (energy > threshold) & (~bump_mask)
-        duration_s = float(n_frames / fps)
+        active_mask = (energy_win > threshold) & (~bump_win)
+        duration_s = float(len(energy_win) / fps)
         self._validate_track(active_mask, duration_s)
 
         gap_merge_s = float(self.s1_config.get("gap_merge_duration_s", 0.5))
         gap_merge_frames = int(gap_merge_s * fps)
         last_active = -100000
-        for i in range(n_frames):
+        for i in range(len(energy_win)):
             if active_mask[i]:
                 if 0 < (i - last_active) <= gap_merge_frames:
                     active_mask[last_active:i] = True
@@ -181,8 +286,8 @@ class S1ChestMotionDetector:
         events: list[CompressionMotionEvent] = []
         in_active = False
         s_idx = 0
-        idx_counter = 1
-        t_axis = np.arange(n_frames) / float(fps)
+        idx_counter = start_idx
+        t_axis = t_offset + np.arange(len(energy_win)) / float(fps)
 
         for i, is_act in enumerate(active_mask):
             if is_act and not in_active:
@@ -193,7 +298,7 @@ class S1ChestMotionDetector:
                 e_idx = i - 1
                 dur = float(t_axis[e_idx] - t_axis[s_idx])
                 if dur >= min_active_s:
-                    seg_filtered = filtered[s_idx : e_idx + 1]
+                    seg_filtered = filtered_win[s_idx : e_idx + 1]
                     cadence = self._estimate_cadence_cpm(seg_filtered, fps)
                     events.append(
                         CompressionMotionEvent(
@@ -208,10 +313,10 @@ class S1ChestMotionDetector:
                     idx_counter += 1
 
         if in_active:
-            e_idx = n_frames - 1
+            e_idx = len(energy_win) - 1
             dur = float(t_axis[e_idx] - t_axis[s_idx])
             if dur >= min_active_s:
-                seg_filtered = filtered[s_idx : e_idx + 1]
+                seg_filtered = filtered_win[s_idx : e_idx + 1]
                 cadence = self._estimate_cadence_cpm(seg_filtered, fps)
                 events.append(
                     CompressionMotionEvent(
@@ -275,18 +380,9 @@ class S1ChestMotionDetector:
 
         sorted_events = sorted(motion_events, key=lambda e: e.t_start_s)
         if not sorted_events:
-            if total_duration_s >= min_pause_s:
-                ccis.append(
-                    {
-                        "id": f"cci_{idx}",
-                        "type": "compression_interruption",
-                        "t_start_s": 0.0,
-                        "t_end_s": float(total_duration_s),
-                        "duration_s": float(total_duration_s),
-                        "confidence": conf_val,
-                    }
-                )
-            return ccis
+            raise NoPeriodicMotion(
+                "No active CPR compression intervals found across track"
+            )
 
         first_t = float(sorted_events[0].t_start_s)
         if first_t >= min_pause_s:
