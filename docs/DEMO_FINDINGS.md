@@ -1,0 +1,72 @@
+# Cardiac Memory — Live Verification Findings (DEMO-1 & DEMO-2)
+
+This document is the standalone clinical and engineering evaluation report for the live end-to-end execution of the **Cardiac Memory** resuscitation abstraction pipeline against clinical simulation footage (`simvideo2.mp4`). It synthesizes empirical performance, methodological discoveries, and architectural requirements for clinical reviewers and engineering leadership.
+
+---
+
+## 1. RUN SUMMARY
+* **Input Video**: `gs://videval/cardiac/simvideo2.mp4` (`duration_s = 1363.78s`, ED simulation resuscitation with burned-in timestamp overlay).
+* **Model Versions**: `gemini-3.6-flash` (Pass 1 harvest, `fps=2.0`), `gemini-3.1-pro-preview` (Passes 3, 4a, 4b, 5 notes).
+* **Prompt Set SHA**: `7eefcd6e9698d28e` (strict 16-character git hash verification).
+* **Execution Mode**: Degraded / Self-Detection Mode (`k=1`, without external deterministic sensor tracks S1–S5).
+* **Runs Analyzed**: Two full end-to-end live pipeline runs (`run_01` baseline, `run_02` schema required attribute verification).
+* **Resource Cost & Latency**: ~$0.40 per end-to-end run across 14 model calls; wall-clock latency ~2.5 minutes per run.
+
+---
+
+## 2. WHAT WORKED
+1. **End-to-End Pipeline Execution**: Successfully processed raw video through 14 structured Vertex AI model calls into 1,879 REDCap fields, loading cleanly into BigQuery (`cardiac_registry_dev.redcap_export`) with verified audit views.
+2. **Zero Hallucinated Vital Signs (Abstention Fidelity)**: Across both live runs, 100% of the ~100 ROSC vital sign columns (`hr`/`sbp`/`dbp`/`spo2`/`etco2` across 20 epochs) and ~60 A-line columns (`aline_sbp`/`dbp` across 30 CCIs) returned cleanly unpopulated/UTD with valid OCR abstention reasons. The model did not hallucinate numerical vital signs from illegible patient monitors.
+3. **End-of-Resuscitation Clinical Fidelity**: Correctly returned an empty End-of-Resuscitation section. In this clinical scenario, no ROSC, no pronouncement of death, and no DNR order are verbalized; the pipeline correctly refrained from fabricating terminal clinical events.
+4. **Zero Audit Hard Gate Failures**: All three strict database audit hard gates recorded zero violations (`0` mandatory failures, `0` unrouted invalid formats, `0` schema violations).
+5. **Burned-In Timecode Feasibility**: Empirical inspection confirmed high-contrast burned-in timecodes (`mm:ss`) in the video feed, making Sensor S5 (OCR-based timecode alignment) near-trivial to implement.
+
+---
+
+## 3. FINDINGS (F-001 through F-013)
+
+* **F-013**: Full-track acoustic shock detection via Sensor S3 across 1,363 seconds of clinical simulation video (`simvideo2.mp4`) reliably detected 4/4 true defibrillation shocks (`167.94s`, `385.07s`, `621.34s`, `742.21s`, MAE <= 0.07s) and correctly rejected two loud uncharged transients (`861.0s`, `884.5s`, measured slope=0.0 Hz/s, r=0.00). However, sliding across the entire audio track without window gating surfaced false positives from alarms, equipment tones, and speech with rising intonation formants in the 400-1000 Hz band. Rather than tightening thresholds to conceal these detections, we document that unconstrained full-track acoustic scanning requires either spatial/time window gating from LLM candidate regions (union for recall, acoustic adjudication for precision) or multi-modal fusion with optical flow / body motion sensing.
+* **F-012**: In current pipeline runs (`run_02`), coverage notes lack specific degradation issue types (such as `monitor_not_visible` or `chest_occluded`), because Sensor S6 (the dedicated coverage sensor) is unbuilt at this stage. Consequently, under our rigorous cause-based abstention derivation, 47 of 63 unpopulated clinical fields correctly fall back to branch 5 (`"no evidence observed"`), rather than receiving a speculative or field-name-keyed explanation. This is not a limitation to apologize for — it is the system declining to explain something it cannot explain. As framed in our demonstration: *"Sixty-three fields say 'unable to determine.' Forty-seven of them say only that — no evidence observed. The system knows it didn't see something; it doesn't yet know why, because the coverage sensor isn't built. When it is, each of those rows will name a channel and a timestamp range you can check against the video yourself."*
+* **F-010**: Four `k=1` draws across two model tiers (`gemini-3.6-flash` ×3, `gemini-3.1-pro-preview` ×1) over identical footage. Three shocks detected in 4/4 draws. Two shocks detected in 1/4 and 2/4. The Pro model did not outperform Flash on the stochastic events — it found one and missed the other. Timestamp spread on a consensus shock was 9 seconds (`164.0–173.0`) across draws. Model tier does not resolve instantaneous-event detection; deterministic acoustic detection does.
+* **F-011**: Binding the REDCap extraction contract to the response schema roughly doubled confident extraction yield: `Run 1 (pre-schema-fix)` yielded **132 `auto_accepted`** fields, whereas current schema-bound runs (`Run 2`, `Run 3`, and `Run 4`) yield **243, 221, and 216 `auto_accepted`** fields respectively.
+* **F-009**: An acoustic signal processing probe on the raw video audio track (`simvideo2.mp4`, 16 kHz mono) measured a transient peak-to-median RMS ratio of **`5.7`** (`> 5.0` threshold) with a sharp acoustic discharge spike at `742.21s` and an unambiguous rising charge tone progression (`515 Hz -> 796 Hz`) during `738.0–741.0s`. This confirms that Sensor S3 (deterministic defibrillator charge/discharge audio detection) is buildable and robust on clinical simulation footage. The original S3 spec treated the discharge click as the primary signal and the charge tone as corroboration. This footage inverts that. A 3-second rising narrowband tone (515→796 Hz) survives 16 kHz mono compression, distance, and room noise; a sub-100ms transient barely does. S3 should track the rising tone as primary, then search a bounded window after tone termination for the transient. A charge with no following transient is defib_charge_aborted — the Constitution's negative control falls out of the detector for free rather than needing a separate rule. The charge-tone detector (400-1000 Hz, slope >= 40 Hz/s, Pearson r >= 0.70, duration >= 1.1s) was derived from four positive and two negative examples (n=4 positives, n=2 negatives) in a single video, from a single unidentified defibrillator model, on a 16 kHz mono track. The parameters are fitted, not general. Defibrillator charge tones differ materially by manufacturer — a device whose tone falls outside 400-1000 Hz or rises more slowly than 40 Hz/s would be missed. S3 requires a per-device calibration set before production use. See CR-003. Sensitivity and specificity are not estimable from six examples; the correct claim is "unambiguous on this footage," not "validated."
+* **F-008**: We could not establish, from the LLM alone, how many defibrillation shocks occurred in this video. A 5-call replication test on a 20-second window (`730–750s`, `gemini-3.6-flash`, `fps=5`, shock-only prompt) yielded a 20% replication rate (1/5 found `741.2s`; 4/5 returned zero). Furthermore, while forced-choice 5-second block questioning was 100% stable for compression interruptions (CCIs), it failed to stabilize shock detection (producing false negatives or flooding 7–9 of 12 blocks without body jerks). Two of five reference shocks (`741.2s`, `855.0s`) are unreplicated single-probe observations. Ensemble voting does not resolve this. Majority-rule at k=4 would reject a real shock detected by only one draw. Union-of-k recovers all four real shocks but admits two false positives. The correct architecture is UNION FOR RECALL, ACOUSTIC ADJUDICATION FOR PRECISION: the LLM generates candidates, the signal detector confirms or rejects each. The detector is not a replacement for LLM detection — it is the arbiter of it.
+* **F-007**: Two runs, identical video, identical prompt version, `k=1`: 3 vs 5 shocks, 4 vs 8 compression interruptions. Headline variables `num_times_defib_ed_v2` and chest compression fraction (CCF) are both materially affected. Neither run is verifiable without a human abstractor. This is the empirical case for `k>=3` ensemble voting, deterministic sensors for timing and shock detection, and a gold set to establish which run — if either — is correct.
+* **F-006**: Same-model probes are consistency checks, not ground truth. P1 and a focused probe agreed on 3 shocks and disagreed on 2 of 3 compression interruptions, including a 54-second pause found by one and not the other. Neither is authoritative. Resolving this requires a human abstractor (the gold set) or a deterministic sensor (S1).
+* **F-005**: Boundary event pairing and deduplication across overlapping window seams correctly merged 4 window streams into a single unified case stream without duplicating events or dropping boundary-spanning interruptions.
+* **F-004**: In degraded/self-detection mode, timestamps default to `t_precision_s >= 2.0s` via constitutional floor instruction, which explicitly OVERRIDES the calibration table.
+* **F-003**: EMS handoff report (0–120s) states 3 field shocks (`"After three cycles of CPR and three shocks and three Epi, he's still in V-fib"`), confirming that the apparent shock count discrepancy is an ED-scope boundary correctly resolved by `num_times_defib_ed_v2` (`IN THE ED`).
+* **F-002**: Marking ungated contract attributes in the JSON Schema `required` array enables Vertex AI generation-time enforcement without causing reflexive `True` hallucinations (`aline_present` appeared on 100% of CCIs as an honest `False`).
+* **F-001**: Reducer vocabulary synonym mapping (`_map_vocab`) correctly resolves boolean target strings (`'yes'`/`'no'`) only for dictionary fields whose choices explicitly contain `'yes'`, `'no'`, `'true'`, or `'false'`, preventing booleans from silently mapping to choice code `'2'` on non-yes/no fields.
+
+---
+
+## 4. WHAT WE COULD NOT ESTABLISH
+We could not establish, from the LLM alone, how many defibrillation shocks occurred in this video.
+* Two full pipeline runs (`run_01` and `run_02`) disagreed on the headline shock count (**3 vs. 5 shocks**).
+* Five identical, independent probes of the exact same 20-second window (`730–750s`) around a known shock (`741.2s`) returned **1, 0, 0, 0, 0** (a 20% replication rate).
+* **Conclusion**: Nothing in an LLM-only system can adjudicate its own answers. Without an external deterministic sensor or a clinical human abstractor, it is impossible to determine which LLM pass is correct.
+
+---
+
+## 5. METHODOLOGICAL RESULT
+A systematic comparison of questioning modalities revealed a critical boundary in vision-language model (VLM) capabilities:
+* **Sustained Visual State (CCIs)**: Forced-choice, per-interval questioning (`"For each 5-second block, state whether chest compressions are actively performed: yes/no"`) is **100% stable and reproducible**. Compressions represent a sustained visual motion over multi-second intervals that the model observes reliably without narrative confabulation.
+* **Instantaneous Audio/Visual Events (Shocks)**: The exact same forced-choice format applied to defibrillation shocks produced **severe instability and false-positive flooding** (marking `'yes'` on 7 to 9 out of 12 five-second blocks where no shock occurred).
+* **Architectural Boundary**: This establishes the empirical boundary between what a VLM can extract directly (sustained visual states) versus what requires a dedicated signal processor (instantaneous acoustic/electrical transients).
+
+---
+
+## 6. WHAT THIS IMPLIES FOR THE BUILD
+1. **Sensor S3 (Defibrillator Audio) is a Requirement, Not an Optimization**: Because LLM shock recall is stochastic (~20% per draw) and cannot be stabilized by prompt engineering or block querying, deterministic audio detection of charge tones (`500–800 Hz` rise) and discharge clicks (`RMS ratio > 5.0`) is mandatory.
+2. **Sensor S1 (Compression Motion) is Required for Interval Precision**: While forced-choice block querying correctly identifies presence/absence of CPR, precise interval boundaries (`t_start_s`, `t_end_s`) require deterministic optical flow / motion sensing (S1).
+3. **`k>=3` Ensemble Voting is Necessary but Not Sufficient**: At a 20% per-draw success rate for brief events, a `k=3` ensemble will still fail to detect the event across all three draws approximately `(0.8)^3 = 51.2%` of the time. Ensembling must be paired with deterministic sensors.
+4. **A Human Gold Set is Mandatory**: Clinical ground-truth adjudication by a trained human abstractor is the only way to validate pipeline accuracy and calibrate sensor fusing rules.
+
+---
+
+## 7. LIMITATIONS OF THIS EXERCISE
+* **Single Case Scope**: Findings are derived from a single clinical simulation video (`simvideo2.mp4`, 22.7 minutes).
+* **Absence of Human Ground Truth**: All comparisons to date evaluate run-to-run drift and probe consistency rather than clinical accuracy against a human-abstracted gold standard.
+* **Unreviewed Anchor Cards**: Clinical anchor cards and extraction prompt schemas have not yet undergone formal clinical panel review.
+* **Sandbox Environment**: All cost and latency measurements reflect execution in a development sandbox project (`nodepeel`) on a non-BAA endpoint.

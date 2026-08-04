@@ -1,0 +1,33 @@
+# sensors/calibration/defib_profiles.yaml — Defibrillator Acoustic Calibration Profiles
+# Keyed by device model, never hardcoded in logic.
+# See CR-003 and SENSOR_SPECS.md Section 3.
+
+default:
+  calibrated_on: "simvideo2.mp4, n=4 positives, n=2 negatives"
+  device_model: "UNKNOWN — see CR-003"
+  warning: >
+    Fitted, not general. Different manufacturers produce different charge
+    tones. A device outside 400-1000 Hz or rising slower than 40 Hz/s would
+    be missed. Per-device calibration required before production.
+  freq_min_hz: 400
+  freq_max_hz: 1000
+  min_slope_hz_s: 40.0
+  min_r: 0.70
+  min_duration_s: 0.50
+  transient_search_window_s: 4.0
+  min_transient_ratio: 4.0
+
+UNKNOWN:
+  calibrated_on: "simvideo2.mp4, n=4 positives, n=2 negatives"
+  device_model: "UNKNOWN — see CR-003"
+  warning: >
+    Fitted, not general. Different manufacturers produce different charge
+    tones. A device outside 400-1000 Hz or rising slower than 40 Hz/s would
+    be missed. Per-device calibration required before production.
+  freq_min_hz: 400
+  freq_max_hz: 1000
+  min_slope_hz_s: 40.0
+  min_r: 0.70
+  min_duration_s: 0.50
+  transient_search_window_s: 4.0
+  min_transient_ratio: 4.0
