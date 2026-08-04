@@ -5,6 +5,14 @@
 default:
   calibrated_on: "simvideo2.mp4 — ONE fully characterized charge tone (742.21s, 515->796 Hz over 3s, r>=0.70) plus 3 transients with tones not individually characterized, and 2 negatives. Effective n=1 for tone parameters."
   known_failure: "385.07s — 15 saw-tooth fragments in 400-1000 Hz, all restarting near 440 Hz. No monotonic tone recoverable. Cause under investigation."
+  discriminator: "total_rise >= 200 Hz AND transient_ratio >= 5.0"
+  selection_basis: >
+    Chosen by evaluating 5 candidate gates against a single characterized
+    tone (742.21s, rise 234.4 Hz). A gate tuned to retain exactly one known
+    positive and reject all else is fitted by construction. The 200 Hz
+    threshold sits 34 Hz below the only measured rise — that margin is
+    arbitrary. Requires a second characterized tone before it can be
+    considered validated. See CR-003.
   device_model: "UNKNOWN — see CR-003"
   warning: >
     Fitted, not general. Different manufacturers produce different charge
@@ -15,12 +23,21 @@ default:
   min_slope_hz_s: 40.0
   min_r: 0.70
   min_duration_s: 1.1
+  min_total_rise_hz: 200.0
   transient_search_window_s: 3.0
   min_transient_ratio: 5.0
 
 UNKNOWN:
   calibrated_on: "simvideo2.mp4 — ONE fully characterized charge tone (742.21s, 515->796 Hz over 3s, r>=0.70) plus 3 transients with tones not individually characterized, and 2 negatives. Effective n=1 for tone parameters."
   known_failure: "385.07s — 15 saw-tooth fragments in 400-1000 Hz, all restarting near 440 Hz. No monotonic tone recoverable. Cause under investigation."
+  discriminator: "total_rise >= 200 Hz AND transient_ratio >= 5.0"
+  selection_basis: >
+    Chosen by evaluating 5 candidate gates against a single characterized
+    tone (742.21s, rise 234.4 Hz). A gate tuned to retain exactly one known
+    positive and reject all else is fitted by construction. The 200 Hz
+    threshold sits 34 Hz below the only measured rise — that margin is
+    arbitrary. Requires a second characterized tone before it can be
+    considered validated. See CR-003.
   device_model: "UNKNOWN — see CR-003"
   warning: >
     Fitted, not general. Different manufacturers produce different charge
@@ -31,5 +48,6 @@ UNKNOWN:
   min_slope_hz_s: 40.0
   min_r: 0.70
   min_duration_s: 1.1
+  min_total_rise_hz: 200.0
   transient_search_window_s: 3.0
   min_transient_ratio: 5.0

@@ -44,7 +44,7 @@ def test_report_calibration_surface() -> None:
     """Verifies that report_calibration_surface returns all required config sections."""
     surf = report_calibration_surface("simvideo2")
     assert surf["profile_name"] == "simvideo2"
-    assert "chest_roi" in surf and surf["chest_roi"]["width"] == 640
+    assert "chest_roi" in surf and surf["chest_roi"]["width"] == 140
     assert "s1_motion" in surf and surf["s1_motion"]["vy_bandpass_min_hz"] == 1.3
     assert (
         "s6_coverage" in surf

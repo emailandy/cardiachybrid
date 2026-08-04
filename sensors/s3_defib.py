@@ -236,9 +236,13 @@ class S3DefibDetector:
                     curr = dict(nxt)
             merged.append(curr)
 
+        min_total_rise = float(self.profile.get("min_total_rise_hz", 200.0))
         tones: list[DefibChargeTone] = []
         for m in merged:
-            if m["t_e"] - m["t_s"] >= min_dur:
+            total_rise = abs(float(m["f_end"]) - float(m["f_start"]))
+            if (m["t_e"] - m["t_s"] >= min_dur) and (
+                total_rise >= min_total_rise
+            ):
                 span_mask = positive[m["s"] : m["e"] + 1]
                 t_pts = t_sp[m["s"] : m["e"] + 1][span_mask]
                 f_pts = dom_f_med[m["s"] : m["e"] + 1][span_mask]

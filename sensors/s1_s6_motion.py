@@ -439,6 +439,16 @@ class S1ChestMotionDetector:
         Computes dense Lucas-Kanade optical flow over the calibrated chest ROI
         in a video file and detects CPR motion intervals.
         """
+    def extract_vy_signal(
+        self,
+        video_path: str | Path,
+        t0: float = 0.0,
+        t1: float | None = None,
+    ) -> np.ndarray:
+        """
+        Extracts optical flow vertical velocity signal vy(t) across the configured
+        chest ROI between timestamps t0 and t1.
+        """
         path = Path(video_path)
         if not path.exists():
             raise FileNotFoundError(f"Video file not found: {path}")
@@ -461,16 +471,20 @@ class S1ChestMotionDetector:
             -1, 1, 2
         )
 
+        start_frame = int(t0 * fps)
+        if start_frame > 0:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
+
         vy_signal: list[float] = []
         ret, prev_frame = cap.read()
         if not ret or prev_frame is None:
             cap.release()
-            return []
+            return np.array([], dtype=float)
 
         prev_gray = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
         frame_count = 1
         max_frames = (
-            int(max_duration_s * fps) if max_duration_s is not None else None
+            int((t1 - t0) * fps) if t1 is not None else None
         )
 
         while True:
@@ -494,6 +508,24 @@ class S1ChestMotionDetector:
             frame_count += 1
 
         cap.release()
+        return np.array(vy_signal, dtype=float)
+
+    def detect_from_video(
+        self,
+        video_path: str | Path,
+        max_duration_s: float | None = None,
+    ) -> list[CompressionMotionEvent]:
+        """
+        Executes S1 motion detection on a video recording.
+        Accepts max_duration_s for rapid unit test verification.
+        """
+        path = Path(video_path)
+        cap = cv2.VideoCapture(str(path))
+        fps = float(cap.get(cv2.CAP_PROP_FPS) or 30.0)
+        cap.release()
+        vy_signal = self.extract_vy_signal(
+            video_path, t0=0.0, t1=max_duration_s
+        )
         return self.detect_from_vy_signal(vy_signal, fps=fps)
 
 
