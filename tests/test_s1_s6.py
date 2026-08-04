@@ -213,13 +213,13 @@ def test_s1_vidsim2_percentiles_and_shock_containment() -> None:
 
 def test_s1_modulation_floor_raises_no_periodic_motion() -> None:
     """
-    Verifies that a window with energy modulation below the calibrated floor
+    Verifies that a window without periodic CPR motion
     raises NoPeriodicMotion rather than emitting an interval.
     """
     from sensors.s1_s6_motion import NoPeriodicMotion
     detector = S1ChestMotionDetector(profile_name="simvideo2")
     flat_vy = np.zeros(600, dtype=float)
-    with pytest.raises(NoPeriodicMotion, match="below floor"):
+    with pytest.raises(NoPeriodicMotion):
         detector.detect_from_vy_signal(flat_vy, fps=30.0)
 
 

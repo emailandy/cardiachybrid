@@ -15,7 +15,10 @@ from typing import Any, Sequence
 import cv2
 import numpy as np
 from scipy import signal
+from scipy.ndimage import median_filter
 from codegen.yamlio import StrictLoader
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -128,6 +131,29 @@ class S1ChestMotionDetector:
                     f"{frac:.1%} active over {duration_s:.1f}s — threshold is outside the signal"
                 )
 
+    def _reject_impulses(
+        self,
+        vy: np.ndarray,
+    ) -> tuple[np.ndarray, int]:
+        """
+        Rejects isolated single-frame optical flow glitch spikes via median filter MAD isolation.
+        Replaces spikes with median value rather than zeroing to prevent filter discontinuity.
+        """
+        k = float(self.s1_config.get("impulse_rejection_k", 8.0))
+        win = int(self.s1_config.get("impulse_rejection_win", 5))
+        min_spike = float(self.s1_config.get("impulse_min_spike_px", 2.0))
+
+        med = median_filter(vy, size=win)
+        diff = np.abs(vy - med)
+        mad = float(np.median(diff))
+        spike = (diff > k * mad) & (diff > min_spike)
+        vy_clean = vy.copy()
+        vy_clean[spike] = med[spike]
+        n_spikes = int(spike.sum())
+        if n_spikes > 0:
+            logger.info("Rejected %d optical flow impulse spikes", n_spikes)
+        return vy_clean, n_spikes
+
     def detect_from_vy_signal(
         self,
         vy_signal: np.ndarray | Sequence[float],
@@ -141,9 +167,8 @@ class S1ChestMotionDetector:
         if n_frames < 4 or fps <= 0:
             return []
 
-        # Camera bump exclusion: vy > 30 px/frame is global motion / camera bump, not compression
-        bump_mask = np.abs(vy_arr) > 30.0
-        vy_arr_clean = np.where(bump_mask, 0.0, vy_arr)
+        # Reject isolated single-frame impulse spikes
+        vy_arr_clean, n_spikes = self._reject_impulses(vy_arr)
 
         min_hz = float(self.s1_config.get("vy_bandpass_min_hz", 1.3))
         max_hz = float(self.s1_config.get("vy_bandpass_max_hz", 3.0))
@@ -161,7 +186,8 @@ class S1ChestMotionDetector:
         kernel = np.ones(win, dtype=float) / float(win)
         energy = np.convolve(filtered**2, kernel, mode="same")
 
-        bump_mask = np.abs(vy_arr_clean) > 30.0
+        bump_thresh = float(self.s1_config.get("bump_threshold_px", 30.0))
+        bump_mask = np.abs(vy_arr_clean) > bump_thresh
         n_frames = len(energy)
         duration_s = float(n_frames / fps)
         conf_val = float(self.s1_config.get("confidence", 0.85))
@@ -258,12 +284,61 @@ class S1ChestMotionDetector:
         conf_val: float,
         start_idx: int = 1,
     ) -> list[CompressionMotionEvent]:
+        # Scale-free frequency-domain discriminator (band power ratio, peak CPR cadence, SNR)
+        # Note: The 3.0-5.0 Hz band carries screen-recording refresh artifacts per F-017;
+        # the band-power ratio normalizes across artifact floors.
+        f = np.fft.rfftfreq(len(filtered_win), d=1.0 / float(fps))
+        P = np.abs(np.fft.rfft(filtered_win)) ** 2
+        total_mask = f >= 0.1
+        total_power = (
+            float(P[total_mask].sum()) if np.any(total_mask) else 0.0
+        )
+
+        min_hz = float(self.s1_config.get("vy_bandpass_min_hz", 1.3))
+        max_hz = float(self.s1_config.get("vy_bandpass_max_hz", 3.0))
+        band_mask = (f >= min_hz) & (f <= max_hz)
+        band_power = float(P[band_mask].sum()) if np.any(band_mask) else 0.0
+        band_ratio = (
+            (band_power / total_power) if total_power > 0.0 else 0.0
+        )
+
+        peak_idx = int(P[band_mask].argmax()) if np.any(band_mask) else 0
+        peak_f = (
+            float(f[band_mask][peak_idx]) if np.any(band_mask) else 0.0
+        )
+        peak_power = (
+            float(P[band_mask][peak_idx]) if np.any(band_mask) else 0.0
+        )
+
+        med_power = (
+            float(np.median(P[total_mask])) if np.any(total_mask) else 1e-9
+        )
+        peak_snr = (
+            (peak_power / med_power) if med_power > 0.0 else 0.0
+        )
+
+        min_ratio = float(
+            self.s1_config.get("min_band_power_ratio", 0.15)
+        )
+        cpr_min_f = float(self.s1_config.get("cpr_peak_min_hz", 1.5))
+        cpr_max_f = float(self.s1_config.get("cpr_peak_max_hz", 2.5))
+        min_snr = float(self.s1_config.get("min_peak_snr", 10.0))
+
+        if (
+            (band_ratio < min_ratio)
+            or not (cpr_min_f <= peak_f <= cpr_max_f)
+            or (peak_snr < min_snr)
+        ):
+            raise NoPeriodicMotion(
+                f"Frequency discriminator failed: ratio={band_ratio:.3f} (min {min_ratio}), peak_f={peak_f:.2f}Hz ({cpr_min_f}-{cpr_max_f}Hz), snr={peak_snr:.1f} (min {min_snr})"
+            )
+
         valid_energy = (
             energy_win[~bump_win] if np.any(~bump_win) else energy_win
         )
         baseline = float(np.percentile(valid_energy, 10))
         active_p = float(np.percentile(valid_energy, 90))
-        min_mod = float(self.s1_config.get("min_modulation", 0.85))
+        min_mod = float(self.s1_config.get("min_modulation", 0.010))
         if (active_p - baseline) < min_mod:
             raise NoPeriodicMotion(
                 f"Energy modulation ({active_p - baseline:.4f}) below floor ({min_mod})"

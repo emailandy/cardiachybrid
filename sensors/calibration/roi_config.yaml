@@ -26,6 +26,13 @@ profiles:
       energy_threshold_ratio: 0.05
       # min_modulation is ROI-area dependent (absolute energy scales with pixel area) and must be re-derived whenever chest_roi changes
       min_modulation: 0.010
+      min_band_power_ratio: 0.15
+      cpr_peak_min_hz: 1.5
+      cpr_peak_max_hz: 2.5
+      min_peak_snr: 10.0
+      impulse_rejection_k: 8.0
+      impulse_rejection_win: 5
+      impulse_min_spike_px: 2.0
       gap_merge_duration_s: 0.5
       min_active_duration_s: 2.0
       min_pause_duration_s: 3.0
@@ -52,6 +59,13 @@ profiles:
       energy_threshold_ratio: 0.05
       # min_modulation is ROI-area dependent (absolute energy scales with pixel area) and must be re-derived whenever chest_roi changes
       min_modulation: 0.010
+      min_band_power_ratio: 0.15
+      cpr_peak_min_hz: 1.5
+      cpr_peak_max_hz: 2.5
+      min_peak_snr: 10.0
+      impulse_rejection_k: 8.0
+      impulse_rejection_win: 5
+      impulse_min_spike_px: 2.0
       gap_merge_duration_s: 0.5
       min_active_duration_s: 2.0
       min_pause_duration_s: 3.0
@@ -78,6 +92,13 @@ profiles:
       energy_threshold_ratio: 0.05
       # min_modulation is ROI-area dependent (absolute energy scales with pixel area) and must be re-derived whenever chest_roi changes
       min_modulation: 0.010
+      min_band_power_ratio: 0.15
+      cpr_peak_min_hz: 1.5
+      cpr_peak_max_hz: 2.5
+      min_peak_snr: 10.0
+      impulse_rejection_k: 8.0
+      impulse_rejection_win: 5
+      impulse_min_spike_px: 2.0
       gap_merge_duration_s: 0.5
       min_active_duration_s: 2.0
       min_pause_duration_s: 3.0
