@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "case_id": "simvideo2.mp4",
   "video_duration_s": 1363.78,
-  "note": "Probe-derived reference for simvideo2.mp4. CCIs carry block_probe_unverified provenance and must never be used for accuracy calibration without human verification (Q-017).",
+  "note": "F-017: simvideo2.mp4 is a SCREEN RECORDING of a UI playing CCTV footage, not direct camera output (nb_read_frames=21821 vs r_frame_rate=16/1). Every S1 and S3 parameter is calibrated against this stack, not against direct capture. Validation on real bay footage is required before any parameter is treated as transferable. CCIs carry block_probe_unverified provenance and must never be used for accuracy calibration without human verification (Q-017).",
   "shocks": [
     {
       "timestamp_s": 167.94,

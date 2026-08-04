@@ -33,7 +33,7 @@ Standalone signal detection without temporal or spatial gating faces severe phys
 1. **Acoustic Speech and Alarm Formants (`F-013`, `F-014`)**:
    * Sensor S3 (`defib_profiles.yaml`) scanning unconstrained across the full 1,363-second audio track produced **73 unconstrained detections (11 shocks, 62 aborted charges)** with ~100% false positives.
    * Clinical alarms, equipment beeps, and vocalizations with rising intonation formants occupy the same `400–1000 Hz` band as defibrillator charge tones.
-   * **Resolution (`S02`/`S03`/`CR-003`)**: Implemented fragmented rise bridging across CPR interruptions (`<= 1.5s` gap) and formalized S3 as a **windowed adjudicator** (`adjudicate(track, candidate_t, window_s=30.0)`). When enforcing the strict discriminator gate (`total_rise >= 200 Hz AND transient_ratio >= 5.0`), all 114 full-track false positives drop to **0 false positives**. However, S3's demonstrated recall on real resuscitation footage is **1/4 (`742.21s` only)**: `385.07s` contains 15 saw-tooth speech formant fragments with no continuous charge tone present in the audio, and `167.94s` / `621.34s` are uncharacterized transient tones. We explicitly state that S3's demonstrated standalone recall on this case is 1/4, not 4/4.
+   * **Resolution (`S02`/`S03`/`CR-003`)**: Implemented fragmented rise bridging across CPR interruptions (`<= 1.5s` gap) and formalized S3 as a **windowed adjudicator** (`adjudicate(track, candidate_t, window_s=30.0)`). When enforcing the strict discriminator gate (`total_rise >= 200 Hz AND transient_ratio >= 5.0`), all 114 full-track false positives drop to **0 false positives**. However, S3's demonstrated recall on real resuscitation footage is **1/4 (`742.21s` only)**: `385.07s` contains 15 saw-tooth speech formant fragments with no continuous charge tone present in the audio, and two of the four shocks (`167.94s`, `621.34s`) were never characterized—nobody has looked for their charge tones. They are **UNTESTED** rather than missed. `1/4` is the confirmed count; the denominator of what S3 could recover is unknown.
 
 2. **Optical Flow Outlier Sensitivity (`F-015` / `F-016`)**:
    * Uncalibrated optical flow (`S1`) scaled thresholding as `0.05 * max(energy)`, where `max` reached `2217` from a camera bump while true CPR compression energy sat around `72`. Zero compressions were detected.
@@ -55,13 +55,14 @@ To operationalize the union-for-recall, sensor-adjudication-for-precision archit
 
 ---
 
-## 5. Empirical Replication & Comparison Table
-SENSOR PERFORMANCE: NOT MEASURED.
-S1 and S3 are non-functional at measured parameters (F-014, F-015). The
-integration wiring is complete and verified — P1 receives all five
-placeholders and renders without unfilled tokens. Sensor ACCURACY is
-unmeasured and the earlier table in this document reported ground-truth
-fixture values, not sensor output. Retracted.
+## 5. Empirical Replication & Screen-Recording Architecture Caveats (`F-017`)
+* **`F-017`**: `simvideo2.mp4` is a SCREEN RECORDING of a UI playing CCTV footage, not direct camera output (`nb_read_frames=21821` vs `r_frame_rate=16/1`). Consequences:
+  * Effective frame rate differs from the container's 16 fps; the UI renders at a different rate than the source, with frame duplication present.
+  * Re-encoding artifacts and frame duplication affect optical flow magnitude and standard deviation (`std ≈ 0.252` px/frame).
+  * The chest occupies a small fraction of the frame (`140x140` of `1920x1080`) because the CCTV view is embedded inside a software interface UI.
+  * Audio passed through an additional encode, which plausibly explains why 3 of 4 charge tones are not recoverable or characterized.
+* Every S1 and S3 parameter is calibrated against this screen-recorded stack, not against direct capture. Validation on real bay footage is required before any parameter is treated as transferable.
+* S1 and S3 are non-functional at measured parameters (`F-014`, `F-015`). The integration wiring is complete and verified—P1 receives all five placeholders and renders without unfilled tokens. Sensor ACCURACY is unmeasured and the earlier table in this document reported ground-truth fixture values, not sensor output. Retracted.
 
 ---
 
