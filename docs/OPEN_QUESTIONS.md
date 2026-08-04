@@ -62,6 +62,17 @@ Q-013 Case-level affirmative human sign-off for video_review_complete="2"
   - status: OPEN
   - blocks: D11 production release (automated complete marking)
 
+Q-017 — Gold set required for sensor accuracy validation. 25 cases, two independent abstractors, third-rater adjudication. Blocks the accuracy gates on S03 (motion), S08 (monitor OCR), and any published accuracy claim. Does NOT block sensor construction — determinism and plausibility are testable today.
+  - owner: clinical lead
+  - status: OPEN
+  - blocks: S03 accuracy gate, S08 accuracy gate, published accuracy claims
+  - timeline: 10-15 days
+
+Q-018 — Calibrated ROI and optical-flow parameters for diverse clinical bay camera layouts. Sensor S1 and S6 thresholds in `roi_config.yaml` are provisional and fitted to simulation bay geometry (`simvideo2.mp4`). Blocks production deployment across heterogeneous emergency department camera installations.
+  - owner: clinical lead / engineering
+  - status: OPEN
+  - blocks: S03 production deployment on uncalibrated bays
+
 ## OPERATIONAL — awaiting human
 Q-007 — Is the artifact-foundry-prod pip index an institutional control?
 Inherited pip config points at

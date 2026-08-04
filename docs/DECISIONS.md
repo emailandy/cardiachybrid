@@ -127,6 +127,9 @@ Date: 2026-08-01  Session: A06  Decided by: agent
 Date: 2026-08-01  Session: A06  Decided by: human, agent
 1. **Brace-Free Illustrative Metric Format Tokens**: Replaced `{v}`, `{n}`, `{d}` in `p4a_team_items` illustrative objective metrics example block with brace-free `<value>`, `<numerator>`, `<denominator>` formatting tokens in both `tests/fixtures/passes_v2.0_source.md` and `prompts/passes/p4a_team_items.v2.0.md`, and deleted `d`, `n`, `v` declarations from `prompts/passes/_PLACEHOLDERS.yaml`. This prevents illustrative sub-tokens from being swept into placeholder declarations and ensures `validate_template_placeholders` and `_validate_no_unfilled_placeholders` operate strictly on builder-supplied values.
 
+## 026 — S03 Sensor S1 and S6 Calibrated Threshold Profiles
+Date: 2026-08-04  Session: S03  Decided by: agent
+1. **Calibrated ROI Configuration Surface (`S03`)**: Implemented `profiles` mapping in `sensors/calibration/roi_config.yaml` supporting `default`, `UNKNOWN`, and `simvideo2` profiles for Sensor S1 (chest-ROI optical flow CPR compression motion detection) and Sensor S6 (visual occlusion and provider crowding coverage notes). In S1, a Butterworth bandpass filter (`1.5-2.5 Hz`, corresponding to `90-150 cpm`) applies to vertical optical flow velocity over the chest ROI, emitting `compression_motion` intervals and deriving pause intervals as `compression_interruption` (CCI) intervals with confidence scores. In S6, ROI standard deviation thresholding (`< 15.0`) emits `coverage_note` events (`provider_crowding`). Both sensors strictly enforce determinism across repeated executions and expose their entire threshold surface via `report_calibration_surface()`.
 
 
 

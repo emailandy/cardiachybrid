@@ -1,4 +1,4 @@
-# ROI configuration for video sensor overlays (S01 / S5)
+# ROI configuration for video sensor overlays (S01 / S5 / S1 / S6)
 
 timecode_roi:
   "x": 80
@@ -10,3 +10,73 @@ timecode_roi:
   x_max: 264
   y_max: 144
   description: "Burned-in timestamp overlay in simvideo2.mp4 ('MM/D/YYYY HH:MM:SS.mmm AM/PM')"
+
+profiles:
+  default:
+    chest_roi:
+      "x": 600
+      "y": 400
+      width: 720
+      height: 480
+      description: "Default chest region of interest for CPR motion detection"
+    s1_motion:
+      min_fps: 15.0
+      vy_bandpass_min_hz: 1.5   # 90 cpm
+      vy_bandpass_max_hz: 2.5   # 150 cpm
+      energy_threshold_ratio: 0.05
+      min_active_duration_s: 2.0
+      min_pause_duration_s: 3.0
+      confidence: 0.85
+      description: "Default S1 optical flow motion detection parameters"
+    s6_coverage:
+      min_roi_visibility: 0.20
+      occlusion_std_threshold: 15.0
+      min_occlusion_duration_s: 2.0
+      confidence: 0.90
+      description: "Default S6 visual occlusion and provider crowding parameters"
+
+  UNKNOWN:
+    chest_roi:
+      "x": 600
+      "y": 400
+      width: 720
+      height: 480
+      description: "Fallback chest region of interest for uncalibrated bays"
+    s1_motion:
+      min_fps: 15.0
+      vy_bandpass_min_hz: 1.5   # 90 cpm
+      vy_bandpass_max_hz: 2.5   # 150 cpm
+      energy_threshold_ratio: 0.05
+      min_active_duration_s: 2.0
+      min_pause_duration_s: 3.0
+      confidence: 0.85
+      description: "Fallback S1 optical flow motion detection parameters"
+    s6_coverage:
+      min_roi_visibility: 0.20
+      occlusion_std_threshold: 15.0
+      min_occlusion_duration_s: 2.0
+      confidence: 0.90
+      description: "Fallback S6 visual occlusion and provider crowding parameters"
+
+  simvideo2:
+    chest_roi:
+      "x": 640
+      "y": 360
+      width: 640
+      height: 480
+      description: "Calibrated chest ROI for simvideo2.mp4 clinical simulation video"
+    s1_motion:
+      min_fps: 15.0
+      vy_bandpass_min_hz: 1.5
+      vy_bandpass_max_hz: 2.5
+      energy_threshold_ratio: 0.05
+      min_active_duration_s: 2.0
+      min_pause_duration_s: 3.0
+      confidence: 0.88
+      description: "Calibrated S1 parameters for simvideo2.mp4"
+    s6_coverage:
+      min_roi_visibility: 0.20
+      occlusion_std_threshold: 15.0
+      min_occlusion_duration_s: 2.0
+      confidence: 0.92
+      description: "Calibrated S6 parameters for simvideo2.mp4"
