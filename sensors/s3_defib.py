@@ -214,10 +214,14 @@ class S3DefibDetector:
             curr = dict(fragments[0])
             for nxt in fragments[1:]:
                 gap = nxt["t_s"] - curr["t_e"]
+                expected_f = curr["f_end"] + curr["slope"] * gap
+                a_dur = curr["t_e"] - curr["t_s"]
+                b_dur = nxt["t_e"] - nxt["t_s"]
                 if (
                     0.0 <= gap <= 1.5
-                    and nxt["f_start"] >= curr["f_end"] - 150.0
-                    and nxt["slope"] >= 30.0
+                    and abs(nxt["f_start"] - expected_f) <= 60.0
+                    and abs(nxt["slope"] - curr["slope"]) <= 40.0
+                    and (a_dur + gap + b_dur) >= min_dur
                 ):
                     curr["e"] = nxt["e"]
                     curr["t_e"] = nxt["t_e"]
@@ -373,7 +377,6 @@ class S3DefibDetector:
             s
             for s in shocks
             if w_start <= s.timestamp_s <= w_end
-            and abs(s.timestamp_s - float(candidate_t)) <= 4.0
         ]
         if matching:
             best = min(

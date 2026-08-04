@@ -21,7 +21,11 @@ def format_scorecard_line(card: ScoreCard) -> str:
     if card.n_items != 1:
         item_label += "s"
 
-    caveat_str = f"⚠ {card.caveat}" if card.is_unverified else card.caveat
+    caveat_str = (
+        f"⚠ {card.caveat}"
+        if card.is_unverified or "SELF-COMPARISON" in card.caveat
+        else card.caveat
+    )
     counts_str = f"n={card.n_cases} {case_label}, {card.n_items} {item_label}"
     return f"{card.metric_name:<20} {card.value:<6.2f} {counts_str:<24} {caveat_str}"
 

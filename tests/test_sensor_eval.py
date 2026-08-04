@@ -249,3 +249,13 @@ def test_scorecard_metric_discrimination() -> None:
     assert r_spur_card.value == 1.0
     assert p_spur_card.value == pytest.approx(0.80, 0.001)
 
+
+def test_self_comparison_guard_f016() -> None:
+    """
+    Verifies F-016: Any metric computed where prediction and ground truth share a
+    source must be labelled SELF-COMPARISON and cannot be reported as performance.
+    """
+    data = [{"timestamp_s": 10.0, "provenance": "probe_verified"}]
+    card = score_event_recall(data, data, allow_unverified=True)
+    assert card.caveat == "⚠ SELF-COMPARISON"
+

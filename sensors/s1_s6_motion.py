@@ -117,15 +117,9 @@ class S1ChestMotionDetector:
         """
         if duration_s >= 60.0:
             frac = float(np.mean(active_mask))
-            if frac < 0.05:
+            if frac < 0.05 or frac > 0.98:
                 raise SensorFailure(
-                    f"S1 active fraction {frac:.4f} < 0.05 on clinical track ({duration_s:.1f}s). "
-                    "Sensor failure: almost zero compressions detected."
-                )
-            if frac > 0.98:
-                raise SensorFailure(
-                    f"S1 active fraction {frac:.4f} > 0.98 on clinical track ({duration_s:.1f}s). "
-                    "Sensor failure: no pauses detected."
+                    f"{frac:.1%} active over {duration_s:.1f}s — threshold is outside the signal"
                 )
 
     def detect_from_vy_signal(
@@ -161,12 +155,17 @@ class S1ChestMotionDetector:
         kernel = np.ones(win, dtype=float) / float(win)
         energy = np.convolve(filtered**2, kernel, mode="same")
 
-        # Outlier-resistant percentile statistics
-        baseline = float(np.percentile(energy, 10))
-        active_p = float(np.percentile(energy, 90))
+        # Outlier-resistant percentile statistics excluding camera bump / global motion
+        bump_mask = np.abs(vy_arr_clean) > 30.0
+        valid_energy = energy[~bump_mask] if np.any(~bump_mask) else energy
+        baseline = float(np.percentile(valid_energy, 10))
+        active_p = float(np.percentile(valid_energy, 90))
+        min_mod = float(self.s1_config.get("min_modulation", 0.85))
+        if (active_p - baseline) < min_mod:
+            return []  # No periodic motion ("energy modulation below floor")
         threshold = baseline + 0.3 * (active_p - baseline)
 
-        active_mask = energy > threshold
+        active_mask = (energy > threshold) & (~bump_mask)
         duration_s = float(n_frames / fps)
         self._validate_track(active_mask, duration_s)
 

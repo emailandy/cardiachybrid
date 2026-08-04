@@ -55,19 +55,12 @@ To operationalize the union-for-recall, sensor-adjudication-for-precision archit
 ---
 
 ## 5. Empirical Replication & Comparison Table
-The table below compares standalone LLM analysis (`k=5` draws), standalone full-track signal scanning, and integrated sensor windowed adjudication on the clinical reference dataset (`simvideo2.mp4` / `vidsim2.mp4`, 22-minute OHCA resuscitation):
-
-| Metric / Evaluation Dimension | Standalone LLM (`k=5` draws) | Standalone Full-Track Signal Scan | Integrated Sensor Adjudication (`S1–S7`) |
-| :--- | :--- | :--- | :--- |
-| **Instantaneous Shock Recall** | 20.0% (1/5 draws, `F-008`) | 100.0% (4/4 shocks present in 73 hits) | **100.0% (4/4 confirmed shocks)** |
-| **Instantaneous Shock Precision** | ~60.0% (unverified FPs in draws) | 15.1% (11 shocks in 73 unconstrained hits) | **100.0% (0 false positives)** |
-| **Defib Negative Control Rejection** | N/A | 100.0% (`861.0s`, `884.5s` rejected) | **100.0% (2/2 controls rejected)** |
-| **Timestamp Drift / Error (MAE)** | 9.0s drift across draws (`F-010`) | <= 0.07s MAE | **<= 0.07s MAE** |
-| **CPR Compression Interval Yield** | Highly variable across draws | 0 (uncalibrated S1) / 54 (calibrated S1) | **54 S1 intervals + 6 S2 audio intervals** |
-| **Visual Occlusion CPR Coverage** | 0.0% (fails during crowding) | 0.0% (S1 optical flow fails) | **100.0% (S2 audio cadence covers window)** |
-| **Speech-to-Text Accuracy (WER)** | 18–35% WER (phonetic errors) | N/A | **0.0 WER against reference (`simvideo2`)** |
-| **Timestamp Invariance (`S7b`)** | 0.0% (LLM rewrites timestamps) | N/A | **100.0% (`ts_source = "stt_acoustic"`)** |
-| **Low-Confidence Abstention** | Guesses or hallucinates vitals | N/A | **100.0% clean abstention (< 0.80 conf)** |
+SENSOR PERFORMANCE: NOT MEASURED.
+S1 and S3 are non-functional at measured parameters (F-014, F-015). The
+integration wiring is complete and verified — P1 receives all five
+placeholders and renders without unfilled tokens. Sensor ACCURACY is
+unmeasured and the earlier table in this document reported ground-truth
+fixture values, not sensor output. Retracted.
 
 ---
 

@@ -33,9 +33,28 @@ class ScoreCard:
     caveat: str
 
 
+def _check_self_comparison(predictions: Any, ground_truth: Any) -> bool:
+    """
+    Guard for F-016: if prediction set and ground-truth set share a source or are identical,
+    refuse to report as performance and label SELF-COMPARISON.
+    """
+    if predictions is ground_truth and predictions is not None:
+        return True
+    if not predictions or not ground_truth:
+        return False
+    if isinstance(predictions, str) and isinstance(ground_truth, str):
+        return predictions == ground_truth and len(predictions) > 0
+    if isinstance(predictions, list) and isinstance(ground_truth, list):
+        if len(predictions) > 0 and len(predictions) == len(ground_truth):
+            if predictions == ground_truth:
+                return True
+    return False
+
+
 def _analyze_provenance(
     items: list[dict[str, Any]],
     allow_unverified: bool = False,
+    self_comparison: bool = False,
 ) -> tuple[dict[str, int], bool, str]:
     """
     Analyzes provenance tags across ground-truth items.
@@ -58,7 +77,9 @@ def _analyze_provenance(
             + str(mix)
         )
 
-    if not mix:
+    if self_comparison:
+        caveat = "⚠ SELF-COMPARISON"
+    elif not mix:
         caveat = "NO_GROUND_TRUTH_ITEMS"
     elif len(mix) == 1 and is_unverified:
         only_tag = next(iter(mix))
@@ -123,7 +144,7 @@ def score_event_recall(
     allow_unverified: bool = False,
 ) -> ScoreCard:
     """Computes recall for discrete event detection within timestamp tolerance."""
-    mix, is_unverified, caveat = _analyze_provenance(ground_truth, allow_unverified=allow_unverified)
+    mix, is_unverified, caveat = _analyze_provenance(ground_truth, allow_unverified=allow_unverified, self_comparison=_check_self_comparison(predictions, ground_truth))
     n_gt = len(ground_truth)
     if n_gt == 0:
         val = 1.0 if not predictions else 0.0
@@ -150,7 +171,7 @@ def score_event_precision(
     allow_unverified: bool = False,
 ) -> ScoreCard:
     """Computes precision for discrete event detection within timestamp tolerance."""
-    mix, is_unverified, caveat = _analyze_provenance(ground_truth, allow_unverified=allow_unverified)
+    mix, is_unverified, caveat = _analyze_provenance(ground_truth, allow_unverified=allow_unverified, self_comparison=_check_self_comparison(predictions, ground_truth))
     n_pred = len(predictions)
     if n_pred == 0:
         val = 1.0 if not ground_truth else 0.0
@@ -177,7 +198,7 @@ def score_event_f1(
     allow_unverified: bool = False,
 ) -> ScoreCard:
     """Computes harmonic mean F1 score for discrete event detection."""
-    mix, is_unverified, caveat = _analyze_provenance(ground_truth, allow_unverified=allow_unverified)
+    mix, is_unverified, caveat = _analyze_provenance(ground_truth, allow_unverified=allow_unverified, self_comparison=_check_self_comparison(predictions, ground_truth))
     matched = _match_events(predictions, ground_truth, tol_s=tol_s)
     n_gt = len(ground_truth)
     n_pred = len(predictions)
@@ -213,7 +234,7 @@ def score_event_timing_mae(
     allow_unverified: bool = False,
 ) -> ScoreCard:
     """Computes Mean Absolute Error (MAE) in seconds for matched point events."""
-    mix, is_unverified, caveat = _analyze_provenance(ground_truth, allow_unverified=allow_unverified)
+    mix, is_unverified, caveat = _analyze_provenance(ground_truth, allow_unverified=allow_unverified, self_comparison=_check_self_comparison(predictions, ground_truth))
     matched = _match_events(predictions, ground_truth, tol_s=tol_s)
 
     if not matched:
@@ -293,7 +314,7 @@ def score_interval_recall(
     allow_unverified: bool = False,
 ) -> ScoreCard:
     """Computes recall for continuous interval detection within boundary tolerance."""
-    mix, is_unverified, caveat = _analyze_provenance(ground_truth, allow_unverified=allow_unverified)
+    mix, is_unverified, caveat = _analyze_provenance(ground_truth, allow_unverified=allow_unverified, self_comparison=_check_self_comparison(predictions, ground_truth))
     n_gt = len(ground_truth)
     if n_gt == 0:
         val = 1.0 if not predictions else 0.0
@@ -320,7 +341,7 @@ def score_interval_precision(
     allow_unverified: bool = False,
 ) -> ScoreCard:
     """Computes precision for continuous interval detection within boundary tolerance."""
-    mix, is_unverified, caveat = _analyze_provenance(ground_truth, allow_unverified=allow_unverified)
+    mix, is_unverified, caveat = _analyze_provenance(ground_truth, allow_unverified=allow_unverified, self_comparison=_check_self_comparison(predictions, ground_truth))
     n_pred = len(predictions)
     if n_pred == 0:
         val = 1.0 if not ground_truth else 0.0
@@ -347,7 +368,7 @@ def score_interval_f1(
     allow_unverified: bool = False,
 ) -> ScoreCard:
     """Computes harmonic mean F1 score for continuous interval detection (e.g., CCIs)."""
-    mix, is_unverified, caveat = _analyze_provenance(ground_truth, allow_unverified=allow_unverified)
+    mix, is_unverified, caveat = _analyze_provenance(ground_truth, allow_unverified=allow_unverified, self_comparison=_check_self_comparison(predictions, ground_truth))
     matched = _match_intervals(predictions, ground_truth, tol_s=tol_s)
     n_gt = len(ground_truth)
     n_pred = len(predictions)
@@ -383,7 +404,7 @@ def score_boundary_mae(
     allow_unverified: bool = False,
 ) -> ScoreCard:
     """Computes Mean Absolute Error (MAE) in seconds across start and end boundaries."""
-    mix, is_unverified, caveat = _analyze_provenance(ground_truth, allow_unverified=allow_unverified)
+    mix, is_unverified, caveat = _analyze_provenance(ground_truth, allow_unverified=allow_unverified, self_comparison=_check_self_comparison(predictions, ground_truth))
     matched = _match_intervals(predictions, ground_truth, tol_s=tol_s)
 
     if not matched:
@@ -413,7 +434,7 @@ def score_ocr_accuracy(
     allow_unverified: bool = False,
 ) -> ScoreCard:
     """Computes exact numeric match accuracy for monitor OCR readings."""
-    mix, is_unverified, caveat = _analyze_provenance(ground_truth, allow_unverified=allow_unverified)
+    mix, is_unverified, caveat = _analyze_provenance(ground_truth, allow_unverified=allow_unverified, self_comparison=_check_self_comparison(predictions, ground_truth))
     if not ground_truth:
         val = 1.0 if not predictions else 0.0
     else:
@@ -447,7 +468,7 @@ def score_wer(
 ) -> ScoreCard:
     """Computes Word Error Rate (WER) using Levenshtein distance on token lists."""
     dummy_item = {"provenance": provenance}
-    mix, is_unverified, caveat = _analyze_provenance([dummy_item], allow_unverified=allow_unverified)
+    mix, is_unverified, caveat = _analyze_provenance([dummy_item], allow_unverified=allow_unverified, self_comparison=_check_self_comparison(hypothesis_tokens, reference_tokens))
 
     if not reference_tokens:
         val = 0.0 if not hypothesis_tokens else 1.0
@@ -488,7 +509,13 @@ def score_der(
     allow_unverified: bool = False,
 ) -> ScoreCard:
     """Computes Diarization Error Rate (DER) for speaker attribution segments."""
-    mix, is_unverified, caveat = _analyze_provenance(reference_diarization, allow_unverified=allow_unverified)
+    mix, is_unverified, caveat = _analyze_provenance(
+        reference_diarization,
+        allow_unverified=allow_unverified,
+        self_comparison=_check_self_comparison(
+            hypothesis_diarization, reference_diarization
+        ),
+    )
     if not reference_diarization:
         val = 0.0 if not hypothesis_diarization else 1.0
     else:
