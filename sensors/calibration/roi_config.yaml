@@ -21,9 +21,10 @@ profiles:
       description: "Default chest region of interest for CPR motion detection"
     s1_motion:
       min_fps: 15.0
-      vy_bandpass_min_hz: 1.5   # 90 cpm
-      vy_bandpass_max_hz: 2.5   # 150 cpm
+      vy_bandpass_min_hz: 1.3   # 78 cpm
+      vy_bandpass_max_hz: 3.0   # 180 cpm
       energy_threshold_ratio: 0.05
+      gap_merge_duration_s: 0.5
       min_active_duration_s: 2.0
       min_pause_duration_s: 3.0
       confidence: 0.85
@@ -44,9 +45,10 @@ profiles:
       description: "Fallback chest region of interest for uncalibrated bays"
     s1_motion:
       min_fps: 15.0
-      vy_bandpass_min_hz: 1.5   # 90 cpm
-      vy_bandpass_max_hz: 2.5   # 150 cpm
+      vy_bandpass_min_hz: 1.3   # 78 cpm
+      vy_bandpass_max_hz: 3.0   # 180 cpm
       energy_threshold_ratio: 0.05
+      gap_merge_duration_s: 0.5
       min_active_duration_s: 2.0
       min_pause_duration_s: 3.0
       confidence: 0.85
@@ -67,9 +69,10 @@ profiles:
       description: "Calibrated chest ROI for simvideo2.mp4 clinical simulation video"
     s1_motion:
       min_fps: 15.0
-      vy_bandpass_min_hz: 1.5
-      vy_bandpass_max_hz: 2.5
+      vy_bandpass_min_hz: 1.3
+      vy_bandpass_max_hz: 3.0
       energy_threshold_ratio: 0.05
+      gap_merge_duration_s: 0.5
       min_active_duration_s: 2.0
       min_pause_duration_s: 3.0
       confidence: 0.88

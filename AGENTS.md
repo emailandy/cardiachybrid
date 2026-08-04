@@ -61,6 +61,7 @@ A fabricated specific is more damaging than an admitted gap, because it
 looks answered. This applies with full force to TODO items and open
 questions, which are read by clinicians who cannot easily tell invention
 from grounding.
+Before reporting any experimental conclusion, state the model, fps, prompt, and window used in each cell, and confirm they match the pipeline configuration under test. An experiment that varies an unintended parameter measures the wrong thing, and a conclusion drawn from it is worse than no conclusion because it will be acted on.
 
 ## ANTI-PATTERNS — you will be tempted by all five
 | Tempting | Why it's wrong | Instead |
@@ -74,3 +75,29 @@ from grounding.
 ## SCOPE DISCIPLINE
 If a task requires changing a file outside its declared scope, STOP and ask.
 Scope creep in this codebase means an untested path into a research database.
+
+## SENSOR LAYER
+
+Sensors are DETERMINISTIC. Same input, same output, every run, bit-identical.
+A sensor that produces different results on repeated runs is broken.
+
+Sensors do not interpret. S1 knows a rectangle stopped oscillating; it has
+no concept of "compression" or "pause reason." Semantic meaning is the
+LLM's job.
+
+Every sensor emits CONFIDENCE and abstains rather than guessing. A sensor
+that always produces a value is not measuring, it is asserting.
+
+Every threshold is CALIBRATED against ground truth, never chosen because it
+looked right. Thresholds live in sensors/calibration/*.yaml, keyed by bay or
+device model, never hardcoded.
+
+A threshold change from a documented measured value requires, in the same
+commit: what failed at the original, what re-verified at the new one, and
+confirmation that known negatives still reject. A threshold relaxed to make
+a detection work is fitting, and it will not survive a second device or a
+second bay.
+
+Sensors are exempt from the 500-line limit and from being registry-driven,
+but NOT from I2 — no REDCap field-name literals. Sensors emit event streams,
+not fields.

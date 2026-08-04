@@ -45,7 +45,7 @@ def test_report_calibration_surface() -> None:
     surf = report_calibration_surface("simvideo2")
     assert surf["profile_name"] == "simvideo2"
     assert "chest_roi" in surf and surf["chest_roi"]["width"] == 640
-    assert "s1_motion" in surf and surf["s1_motion"]["vy_bandpass_min_hz"] == 1.5
+    assert "s1_motion" in surf and surf["s1_motion"]["vy_bandpass_min_hz"] == 1.3
     assert (
         "s6_coverage" in surf
         and surf["s6_coverage"]["occlusion_std_threshold"] == 15.0
@@ -88,7 +88,7 @@ def test_s1_motion_detector_synthetic_vy() -> None:
     ), f"Expected 1 CCI pause interval between epochs, got {len(ccis)}"
     cci = ccis[0]
     assert cci["type"] == "compression_interruption"
-    assert 4.0 <= cci["duration_s"] <= 6.5
+    assert abs(cci["duration_s"] - 6.0) <= 0.3
     assert cci["confidence"] == 0.85
 
 

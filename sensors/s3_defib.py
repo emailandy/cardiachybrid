@@ -51,6 +51,22 @@ class DefibEvent:
     transient_ratio: float
     confidence: float
 
+    @property
+    def kind(self) -> str:
+        return self.event_type
+
+    @property
+    def t(self) -> float:
+        return self.timestamp_s
+
+    @property
+    def charge_slope_hz_s(self) -> float:
+        return self.slope_hz_per_s
+
+    @property
+    def charge_r(self) -> float:
+        return self.r_value
+
 
 def load_defib_profile(profile_name: str = "default") -> dict[str, Any]:
     """
@@ -119,9 +135,13 @@ class S3DefibDetector:
     Per F-013, operates as a windowed adjudicator over LLM candidate regions.
     """
 
-    def __init__(self, profile_name: str = "default") -> None:
-        self.profile_name = profile_name
-        self.profile = load_defib_profile(profile_name)
+    def __init__(
+        self,
+        profile_name: str = "default",
+        profile: str | None = None,
+    ) -> None:
+        self.profile_name = profile or profile_name
+        self.profile = load_defib_profile(self.profile_name)
 
     def detect_tones(self, y: np.ndarray, sr: int) -> list[DefibChargeTone]:
         """Detects rising narrowband charge tones across the spectrogram."""
@@ -250,6 +270,14 @@ class S3DefibDetector:
 
         events.sort(key=lambda e: e.timestamp_s)
         return events
+
+    def detect_from_video(
+        self,
+        audio_or_video_path: str | Path,
+        candidate_windows: Sequence[tuple[float, float]] | None = None,
+    ) -> list[DefibEvent]:
+        """Alias for detect_events for compatibility with verification scripts."""
+        return self.detect_events(audio_or_video_path, candidate_windows)
 
     def inspect_rejection_window(
         self,

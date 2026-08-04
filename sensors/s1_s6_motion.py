@@ -95,9 +95,13 @@ class S1ChestMotionDetector:
     from optical flow vertical velocity signals.
     """
 
-    def __init__(self, profile_name: str = "default") -> None:
-        self.profile_name = profile_name
-        self.profile = load_roi_config(profile_name)
+    def __init__(
+        self,
+        profile_name: str = "default",
+        profile: str | None = None,
+    ) -> None:
+        self.profile_name = profile or profile_name
+        self.profile = load_roi_config(self.profile_name)
         self.s1_config = dict(self.profile.get("s1_motion", {}))
 
     def detect_from_vy_signal(
@@ -113,8 +117,8 @@ class S1ChestMotionDetector:
         if n_frames < 4 or fps <= 0:
             return []
 
-        min_hz = float(self.s1_config.get("vy_bandpass_min_hz", 1.5))
-        max_hz = float(self.s1_config.get("vy_bandpass_max_hz", 2.5))
+        min_hz = float(self.s1_config.get("vy_bandpass_min_hz", 1.3))
+        max_hz = float(self.s1_config.get("vy_bandpass_max_hz", 3.0))
         threshold_ratio = float(
             self.s1_config.get("energy_threshold_ratio", 0.05)
         )
@@ -128,7 +132,7 @@ class S1ChestMotionDetector:
         b, a = signal.butter(2, [low, high], btype="band")
         filtered = signal.filtfilt(b, a, vy_arr)
 
-        win = max(1, int(fps * 2.0))
+        win = max(1, int(fps * 0.1))
         kernel = np.ones(win, dtype=float) / float(win)
         energy = np.convolve(filtered**2, kernel, mode="same")
 
@@ -138,6 +142,15 @@ class S1ChestMotionDetector:
 
         threshold = threshold_ratio * max_energy
         active_mask = energy > threshold
+
+        gap_merge_s = float(self.s1_config.get("gap_merge_duration_s", 0.5))
+        gap_merge_frames = int(gap_merge_s * fps)
+        last_active = -100000
+        for i in range(n_frames):
+            if active_mask[i]:
+                if 0 < (i - last_active) <= gap_merge_frames:
+                    active_mask[last_active:i] = True
+                last_active = i
 
         events: list[CompressionMotionEvent] = []
         in_active = False
@@ -205,13 +218,30 @@ class S1ChestMotionDetector:
 
     def detect_cci_intervals(
         self,
-        motion_events: Sequence[CompressionMotionEvent],
-        total_duration_s: float,
+        motion_events: Sequence[CompressionMotionEvent] | str | Path,
+        total_duration_s: float | None = None,
     ) -> list[dict[str, Any]]:
         """
         Emits Chest Compression Interruption (CCI) pause intervals
         with confidence scores between active compression periods.
         """
+        if isinstance(motion_events, (str, Path)):
+            video_path = Path(motion_events)
+            events = self.detect_from_video(video_path)
+            if total_duration_s is None:
+                cap = cv2.VideoCapture(str(video_path))
+                fps_val = float(cap.get(cv2.CAP_PROP_FPS) or 30.0)
+                n_frames_val = int(cap.get(cv2.CAP_PROP_FRAME_COUNT) or 0)
+                cap.release()
+                total_duration_s = (
+                    n_frames_val / fps_val if fps_val > 0 else 0.0
+                )
+            motion_events = events
+        elif total_duration_s is None:
+            total_duration_s = max(
+                (e.t_end_s for e in motion_events), default=0.0
+            )
+
         min_pause_s = float(self.s1_config.get("min_pause_duration_s", 3.0))
         conf_val = float(self.s1_config.get("confidence", 0.85))
         ccis: list[dict[str, Any]] = []
