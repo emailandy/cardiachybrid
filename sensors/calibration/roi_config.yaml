@@ -1,0 +1,12 @@
+# ROI configuration for video sensor overlays (S01 / S5)
+
+timecode_roi:
+  "x": 80
+  "y": 120
+  width: 184
+  height: 24
+  x_min: 80
+  y_min: 120
+  x_max: 264
+  y_max: 144
+  description: "Burned-in timestamp overlay in simvideo2.mp4 ('MM/D/YYYY HH:MM:SS.mmm AM/PM')"
