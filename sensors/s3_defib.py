@@ -256,6 +256,7 @@ class S3DefibDetector:
         self,
         audio_or_video_path: str | Path,
         candidate_windows: Sequence[tuple[float, float]] | None = None,
+        max_duration_s: float | None = None,
     ) -> list[DefibEvent]:
         """
         Runs streaming detection for charge tones and shocks.
@@ -263,6 +264,10 @@ class S3DefibDetector:
         as a windowed adjudicator confirming or rejecting within candidate regions.
         """
         y, sr = load_audio_mono_16k(audio_or_video_path)
+        if max_duration_s is not None and max_duration_s > 0:
+            max_samples = int(max_duration_s * sr)
+            if len(y) > max_samples:
+                y = y[:max_samples]
         tones = self.detect_tones(y, sr)
 
         w = int(0.05 * sr)
@@ -333,9 +338,14 @@ class S3DefibDetector:
         self,
         audio_or_video_path: str | Path,
         candidate_windows: Sequence[tuple[float, float]] | None = None,
+        max_duration_s: float | None = None,
     ) -> list[DefibEvent]:
         """Alias for detect_events for compatibility with verification scripts."""
-        return self.detect_events(audio_or_video_path, candidate_windows)
+        return self.detect_events(
+            audio_or_video_path,
+            candidate_windows=candidate_windows,
+            max_duration_s=max_duration_s,
+        )
 
     def adjudicate(
         self,
