@@ -1,0 +1,60 @@
+# sensors/calibration/monitor_layouts.yaml
+# Calibrated monitor display ROI layouts and OCR confidence thresholds by device model.
+# Never hardcoded; every sensor profile is calibrated and versioned.
+
+default:
+  device_model: "default"
+  roi: [0, 0, 1920, 1080]
+  min_confidence: 0.80
+  contrast_threshold: 0.25
+  vitals_roi:
+    hr: [100, 100, 200, 80]
+    sbp: [100, 200, 200, 80]
+    dbp: [100, 280, 200, 80]
+    spo2: [100, 360, 200, 80]
+    etco2: [100, 440, 200, 80]
+  vitals_range:
+    hr: [0.0, 300.0]
+    sbp: [0.0, 300.0]
+    dbp: [0.0, 200.0]
+    spo2: [0.0, 100.0]
+    etco2: [0.0, 150.0]
+  warning: "Uncalibrated default monitor display layout. Calibrate ROI per device model before clinical deployment."
+
+zoll_x_series:
+  device_model: "zoll_x_series"
+  roi: [120, 80, 640, 480]
+  min_confidence: 0.80
+  contrast_threshold: 0.25
+  vitals_roi:
+    hr: [140, 100, 150, 60]
+    sbp: [140, 170, 150, 60]
+    dbp: [140, 235, 150, 60]
+    spo2: [140, 300, 150, 60]
+    etco2: [140, 365, 150, 60]
+  vitals_range:
+    hr: [0.0, 300.0]
+    sbp: [0.0, 300.0]
+    dbp: [0.0, 200.0]
+    spo2: [0.0, 100.0]
+    etco2: [0.0, 150.0]
+  warning: "Zoll X Series reference layout profile."
+
+simvideo2_default:
+  device_model: "simvideo2_default"
+  roi: [80, 60, 500, 400]
+  min_confidence: 0.80
+  contrast_threshold: 0.25
+  vitals_roi:
+    hr: [90, 80, 120, 50]
+    sbp: [90, 140, 120, 50]
+    dbp: [90, 195, 120, 50]
+    spo2: [90, 250, 120, 50]
+    etco2: [90, 305, 120, 50]
+  vitals_range:
+    hr: [0.0, 300.0]
+    sbp: [0.0, 300.0]
+    dbp: [0.0, 200.0]
+    spo2: [0.0, 100.0]
+    etco2: [0.0, 150.0]
+  warning: "simvideo2 simulated defibrillator monitor layout profile."
