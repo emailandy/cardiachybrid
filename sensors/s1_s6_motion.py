@@ -268,7 +268,10 @@ class S1ChestMotionDetector:
             raise NoPeriodicMotion(
                 f"Energy modulation ({active_p - baseline:.4f}) below floor ({min_mod})"
             )
-        threshold = baseline + 0.3 * (active_p - baseline)
+        thresh_ratio = float(
+            self.s1_config.get("energy_threshold_ratio", 0.05)
+        )
+        threshold = baseline + thresh_ratio * (active_p - baseline)
 
         active_mask = (energy_win > threshold) & (~bump_win)
         duration_s = float(len(energy_win) / fps)
