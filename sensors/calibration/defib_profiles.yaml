@@ -13,9 +13,9 @@ default:
   freq_max_hz: 1000
   min_slope_hz_s: 40.0
   min_r: 0.70
-  min_duration_s: 0.50
-  transient_search_window_s: 4.0
-  min_transient_ratio: 4.0
+  min_duration_s: 1.1
+  transient_search_window_s: 3.0
+  min_transient_ratio: 5.0
 
 UNKNOWN:
   calibrated_on: "simvideo2.mp4, n=4 positives, n=2 negatives"
@@ -28,6 +28,6 @@ UNKNOWN:
   freq_max_hz: 1000
   min_slope_hz_s: 40.0
   min_r: 0.70
-  min_duration_s: 0.50
-  transient_search_window_s: 4.0
-  min_transient_ratio: 4.0
+  min_duration_s: 1.1
+  transient_search_window_s: 3.0
+  min_transient_ratio: 5.0

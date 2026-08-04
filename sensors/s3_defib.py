@@ -8,13 +8,19 @@ window after it for the transient.
 
 defib_charge_aborted falls out of the else branch. The Constitution's
 negative control needs no separate rule.
+
+ARCHITECTURAL CONTRACT (F-013):
+Sensor S3 operates as a WINDOWED ADJUDICATOR over candidate regions
+proposed by LLM passes ("union for recall, acoustic adjudication for precision"),
+to be wired in S09. Standalone full-track detection without window gating is
+unvalidated and subject to speech formant and equipment alarm false positives.
 """
 
 from dataclasses import dataclass
 import logging
 from pathlib import Path
 import subprocess
-from typing import Any
+from typing import Any, Sequence
 
 import numpy as np
 import soundfile as sf  # type: ignore[import-untyped]
@@ -109,8 +115,8 @@ def load_audio_mono_16k(audio_or_video_path: str | Path) -> tuple[np.ndarray, in
 
 class S3DefibDetector:
     """
-    Streaming detector for defibrillator charge tones and discharge transients
-    over full audio tracks.
+    Streaming detector for defibrillator charge tones and discharge transients.
+    Per F-013, operates as a windowed adjudicator over LLM candidate regions.
     """
 
     def __init__(self, profile_name: str = "default") -> None:
@@ -168,9 +174,15 @@ class S3DefibDetector:
             )
         return tones
 
-    def detect_events(self, audio_or_video_path: str | Path) -> list[DefibEvent]:
+    def detect_events(
+        self,
+        audio_or_video_path: str | Path,
+        candidate_windows: Sequence[tuple[float, float]] | None = None,
+    ) -> list[DefibEvent]:
         """
-        Runs full-track streaming detection for charge tones and shocks.
+        Runs streaming detection for charge tones and shocks.
+        When candidate_windows is provided (e.g. from LLM Union-of-k), operates
+        as a windowed adjudicator confirming or rejecting within candidate regions.
         """
         y, sr = load_audio_mono_16k(audio_or_video_path)
         tones = self.detect_tones(y, sr)
@@ -224,6 +236,17 @@ class S3DefibDetector:
                         confidence=tone.r_value,
                     )
                 )
+
+        if candidate_windows is not None:
+            filtered: list[DefibEvent] = []
+            for ev in events:
+                if any(
+                    w_start <= ev.timestamp_s <= w_end
+                    or w_start <= ev.charge_end_s <= w_end
+                    for w_start, w_end in candidate_windows
+                ):
+                    filtered.append(ev)
+            events = filtered
 
         events.sort(key=lambda e: e.timestamp_s)
         return events
