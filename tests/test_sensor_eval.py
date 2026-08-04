@@ -259,3 +259,17 @@ def test_self_comparison_guard_f016() -> None:
     card = score_event_recall(data, data, allow_unverified=True)
     assert card.caveat == "⚠ SELF-COMPARISON"
 
+
+def test_no_sensor_returns_hardcoded_fixture_data() -> None:
+    """F-016: a sensor returning a constant passes every test that
+    compares it to the fixture the constant was copied from."""
+    import re
+    from pathlib import Path
+
+    for mod in Path("sensors").glob("s*.py"):
+        src = mod.read_text(encoding="utf-8")
+        assert "ground_truth" not in src, f"{mod} references a fixture"
+        assert not re.search(
+            r'return\s+\[?\s*\{?"(t_s|text|timestamp)"', src
+        ), f"{mod} returns literal measurement data"
+

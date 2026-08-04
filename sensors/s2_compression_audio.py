@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Sequence
 
+import subprocess
 import numpy as np
 import soundfile as sf
 from scipy.signal import stft
@@ -54,35 +55,7 @@ class S2CompressionAudioDetector:
         self.min_confidence = min_confidence
         self.snr_db_threshold = snr_db_threshold
 
-    def _detect_simvideo2_reference(self) -> list[AudioCompressionInterval]:
-        """
-        Deterministic reference CPR acoustic compression cadence intervals for simvideo2.
-        Includes uninterrupted detection through visual occlusion windows where
-        Sensor S1 optical flow fails (e.g. provider crowding / camera occlusion).
-        """
-        reference_intervals = [
-            ("s2_cpr_001", 15.2, 160.0, 1.83, 0.94),
-            ("s2_cpr_002", 171.0, 380.0, 1.85, 0.95),
-            ("s2_cpr_003", 425.5, 615.0, 1.82, 0.93),
-            # Includes coverage through visual occlusion window (660.0s - 690.0s)
-            ("s2_cpr_004", 620.5, 735.0, 1.84, 0.94),
-            ("s2_cpr_005", 745.0, 850.0, 1.83, 0.92),
-            ("s2_cpr_006", 860.0, 1100.0, 1.85, 0.95),
-        ]
 
-        return [
-            AudioCompressionInterval(
-                id=iid,
-                type="compression_audio",
-                t_start_s=t_start,
-                t_end_s=t_end,
-                frequency_hz=freq,
-                confidence=conf,
-                abstained=False,
-                abstain_reason=None,
-            )
-            for iid, t_start, t_end, freq, conf in reference_intervals
-        ]
 
     def _detect_from_audio_array(
         self, data: np.ndarray, sr: int
@@ -252,20 +225,37 @@ class S2CompressionAudioDetector:
     ) -> list[AudioCompressionInterval]:
         """
         Detects CPR acoustic compression cadence intervals from an audio file.
-        Returns deterministic reference intervals for virtual reference cases
-        (simvideo2.mp4, vidsim2.mp4) without checking disk first.
         """
         path = Path(audio_path)
-        if "vidsim2" in path.name or "simvideo2" in str(path):
-            return self._detect_simvideo2_reference()
-
         if not path.exists():
             raise FileNotFoundError(f"Audio file not found: {path}")
 
-        data, sr_val = sf.read(str(path))
-        if data.ndim > 1:
-            data = np.mean(data, axis=1)
-        return self._detect_from_audio_array(data, sr_val)
+        try:
+            data, sr_val = sf.read(str(path))
+            if data.ndim > 1:
+                data = np.mean(data, axis=1)
+        except Exception:
+            temp_wav = Path(f"/tmp/s2_audio_{abs(hash(str(path.resolve())))}.wav")
+            if not temp_wav.exists():
+                cmd = [
+                    "ffmpeg",
+                    "-y",
+                    "-i",
+                    str(path),
+                    "-vn",
+                    "-ac",
+                    "1",
+                    "-ar",
+                    str(self.sr),
+                    "-loglevel",
+                    "error",
+                    str(temp_wav),
+                ]
+                subprocess.run(cmd, check=True)
+            data, sr_val = sf.read(str(temp_wav))
+            if data.ndim > 1:
+                data = np.mean(data, axis=1)
+        return self._detect_from_audio_array(data, int(sr_val))
 
     def detect_through_occlusion(
         self,

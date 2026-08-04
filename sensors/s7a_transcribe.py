@@ -174,140 +174,6 @@ class S7aTranscriber:
 
         return adapted
 
-    def _transcribe_simvideo2_reference(self) -> list[TranscribedUtterance]:
-        """
-        Deterministic reference transcript for simvideo2 clinical resuscitation.
-        Every word token is emitted with word-level timestamps and confidence.
-        """
-        raw_utterances = [
-            (
-                "utt_001",
-                12.0,
-                15.2,
-                [
-                    ("Stop", 12.0, 12.5, 0.95),
-                    ("CPR,", 12.6, 13.2, 0.96),
-                    ("rhythm", 13.5, 14.2, 0.94),
-                    ("check.", 14.3, 15.2, 0.95),
-                ],
-            ),
-            (
-                "utt_002",
-                160.0,
-                166.5,
-                [
-                    ("v-fib,", 160.0, 161.0, 0.91),
-                    ("charge", 161.2, 162.1, 0.94),
-                    ("to", 162.2, 162.6, 0.95),
-                    ("200", 162.7, 163.5, 0.93),
-                    ("joules,", 163.6, 164.5, 0.94),
-                    ("clear!", 165.2, 166.5, 0.97),
-                ],
-            ),
-            (
-                "utt_003",
-                168.1,
-                171.0,
-                [
-                    ("Shock", 168.1, 168.9, 0.96),
-                    ("delivered,", 169.0, 170.0, 0.95),
-                    ("resume", 170.1, 170.5, 0.94),
-                    ("compressions.", 170.6, 171.0, 0.95),
-                ],
-            ),
-            (
-                "utt_004",
-                380.0,
-                384.5,
-                [
-                    ("v", 380.0, 380.3, 0.89),
-                    ("fib", 380.4, 381.1, 0.90),
-                    ("again,", 381.2, 381.8, 0.92),
-                    ("charging,", 382.0, 383.0, 0.94),
-                    ("clear!", 383.5, 384.5, 0.96),
-                ],
-            ),
-            (
-                "utt_005",
-                420.0,
-                425.5,
-                [
-                    ("Give", 420.0, 420.7, 0.94),
-                    ("1", 420.8, 421.2, 0.96),
-                    ("milligram", 421.3, 422.2, 0.93),
-                    ("epi", 422.5, 423.4, 0.88),
-                    ("iv", 423.8, 424.5, 0.89),
-                    ("now.", 424.7, 425.5, 0.95),
-                ],
-            ),
-            (
-                "utt_006",
-                615.0,
-                620.5,
-                [
-                    ("Persistent", 615.0, 616.0, 0.92),
-                    ("v-tach,", 616.1, 617.2, 0.89),
-                    ("charging", 617.5, 618.5, 0.94),
-                    ("200,", 618.6, 619.4, 0.93),
-                    ("clear!", 619.6, 620.5, 0.96),
-                ],
-            ),
-            (
-                "utt_007",
-                735.0,
-                741.5,
-                [
-                    ("Still", 735.0, 735.8, 0.93),
-                    ("in", 735.9, 736.2, 0.95),
-                    ("v", 736.3, 736.6, 0.90),
-                    ("fib,", 736.7, 737.5, 0.91),
-                    ("charging", 738.0, 739.2, 0.94),
-                    ("defibrillator,", 739.3, 740.5, 0.92),
-                    ("clear!", 740.6, 741.5, 0.96),
-                ],
-            ),
-            (
-                "utt_008",
-                850.0,
-                855.0,
-                [
-                    ("Prepare", 850.0, 850.8, 0.93),
-                    ("300", 850.9, 851.6, 0.94),
-                    ("milligrams", 851.7, 852.6, 0.93),
-                    ("amio", 852.8, 853.8, 0.88),
-                    ("iv.", 854.0, 855.0, 0.91),
-                ],
-            ),
-        ]
-
-        utterances: list[TranscribedUtterance] = []
-        for uid, t_start, t_end, word_tuples in raw_utterances:
-            tokens = [
-                TokenTimestamp(
-                    word=wt[0], t_start_s=wt[1], t_end_s=wt[2], confidence=wt[3]
-                )
-                for wt in word_tuples
-            ]
-            adapted_tokens = self.apply_phrase_adaptation(tokens)
-            mean_conf = (
-                float(np.mean([t.confidence for t in adapted_tokens]))
-                if adapted_tokens
-                else 0.0
-            )
-            full_text = " ".join(t.word for t in adapted_tokens)
-            utterances.append(
-                TranscribedUtterance(
-                    utterance_id=uid,
-                    t_start_s=t_start,
-                    t_end_s=t_end,
-                    text=full_text,
-                    tokens=adapted_tokens,
-                    confidence=round(mean_conf, 4),
-                    abstained=False,
-                    abstain_reason=None,
-                )
-            )
-        return utterances
 
     def transcribe(
         self,
@@ -320,10 +186,6 @@ class S7aTranscriber:
         Abstains with explicit confidence=0.0 and abstain_reason on unusable audio.
         """
         path = Path(audio_path)
-        # If file is simvideo2.mp4 or known test video, return deterministic clinical speech
-        if "vidsim2" in path.name or "simvideo2" in str(path):
-            return self._transcribe_simvideo2_reference()
-
         if not path.exists():
             raise FileNotFoundError(f"Audio file not found: {path}")
 
@@ -395,19 +257,7 @@ class S7aTranscriber:
                 )
             ]
 
-        # For general audio tracks without external ASR weights loaded, emit clean fallback
-        return [
-            TranscribedUtterance(
-                utterance_id="utt_unsupported",
-                t_start_s=0.0,
-                t_end_s=0.0,
-                text="",
-                tokens=[],
-                confidence=0.0,
-                abstained=True,
-                abstain_reason="External ASR weights not loaded; use simvideo2 reference or provide ASR model",
-            )
-        ]
+        raise NotImplementedError("S7a requires Speech-to-Text v2 — see S05")
 
     def evaluate_wer(
         self,

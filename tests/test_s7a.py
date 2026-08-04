@@ -97,43 +97,21 @@ def test_evaluate_wer_against_hand_transcript() -> None:
     assert wer_100 == 1.0
 
 
-def test_transcribe_and_evaluate_simvideo2_reference() -> None:
+def test_transcribe_and_evaluate_simvideo2_reference(tmp_path: Path) -> None:
     """
-    Verifies transcribe_and_evaluate on simvideo2 reference utterances,
-    confirming word-level timestamps on every token and WER calculation.
+    Verifies that S7aTranscriber raises NotImplementedError when STT v2 is
+    required rather than returning hardcoded reference fixture data (F-016).
     """
+    speech_path = tmp_path / "speech.wav"
+    sr = 16000
+    data = np.zeros(sr, dtype=np.float32)
+    data[:8000] = 0.8
+    data[8000:] = 0.001
+    sf.write(str(speech_path), data, sr)
+
     transcriber = S7aTranscriber()
-
-    # Reference hand transcript for simvideo2 CPR/defibrillation narrative
-    hand_transcript = (
-        "stop cpr rhythm check vf charge to 200 joules clear "
-        "shock delivered resume compressions vf again charging clear "
-        "give 1 milligram epinephrine iv now persistent vt charging 200 clear "
-        "still in vf charging defibrillator clear prepare 300 milligrams amiodarone iv"
-    )
-
-    utterances, wer = transcriber.transcribe_and_evaluate(
-        "simvideo2.mp4",
-        reference_transcript=hand_transcript,
-        provenance="human",
-    )
-
-    assert len(utterances) == 8
-    assert wer == 0.0  # Perfect agreement after adaptation
-
-    # Every token must have valid word-level timestamps and confidence
-    total_tokens = 0
-    for utt in utterances:
-        assert not utt.abstained
-        assert utt.t_start_s <= utt.t_end_s
-        assert utt.confidence > 0.0
-        for t in utt.tokens:
-            total_tokens += 1
-            assert t.word
-            assert t.t_start_s <= t.t_end_s
-            assert 0.0 <= t.confidence <= 1.0
-
-    assert total_tokens >= 30
+    with pytest.raises(NotImplementedError, match="Speech-to-Text v2"):
+        transcriber.transcribe(speech_path)
 
 
 def test_transcribe_abstains_on_silent_audio(tmp_path: Path) -> None:
@@ -158,29 +136,13 @@ def test_transcribe_abstains_on_silent_audio(tmp_path: Path) -> None:
 @pytest.mark.integration
 def test_s7a_integration_vidsim2() -> None:
     """
-    Integration test: runs S7aTranscriber on tests/video/vidsim2.mp4.
-    Verifies word-level timestamps on every token, phrase adaptation list
-    application, and WER measurement against hand transcript.
+    Integration test: verifies S7aTranscriber raises NotImplementedError
+    on tests/video/vidsim2.mp4 without hardcoded fixture fallback.
     """
     vp = Path("tests/video/vidsim2.mp4")
     if not vp.exists():
         pytest.skip("Integration video tests/video/vidsim2.mp4 not found")
 
     transcriber = S7aTranscriber()
-    hand_transcript = (
-        "stop cpr rhythm check vf charge to 200 joules clear "
-        "shock delivered resume compressions vf again charging clear "
-        "give 1 milligram epinephrine iv now persistent vt charging 200 clear "
-        "still in vf charging defibrillator clear prepare 300 milligrams amiodarone iv"
-    )
-    utterances, wer = transcriber.transcribe_and_evaluate(
-        vp, reference_transcript=hand_transcript, provenance="human"
-    )
-    assert wer == 0.0
-    assert len(utterances) == 8
-    for utt in utterances:
-        assert utt.tokens
-        for t in utt.tokens:
-            assert t.word
-            assert t.t_start_s <= t.t_end_s
-            assert 0.0 <= t.confidence <= 1.0
+    with pytest.raises(NotImplementedError, match="Speech-to-Text v2"):
+        transcriber.transcribe(vp)

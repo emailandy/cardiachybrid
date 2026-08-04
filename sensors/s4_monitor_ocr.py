@@ -230,80 +230,16 @@ class S4MonitorOCRDetector:
             device_model=self.device_model,
         )
 
-    def _extract_simvideo2_reference(self) -> list[MonitorOCRReading]:
-        """
-        Deterministic reference monitor OCR vital signs series for simvideo2.
-        Includes unobstructed confident readings (confidence >= 0.80) and
-        an explicit abstention window where confidence falls below 0.80 due to
-        monitor occlusion / low confidence reading.
-        """
-        reference_data = [
-            # iid, t_start, conf, sbp, dbp, hr, spo2, etco2
-            ("s4_ocr_001", 10.0, 0.98, 122.0, 80.0, 112.0, 99.0, 36.0),
-            ("s4_ocr_002", 120.0, 0.96, 118.0, 78.0, 108.0, 98.0, 35.0),
-            ("s4_ocr_003", 300.0, 0.95, 120.0, 80.0, 110.0, 98.0, 38.0),
-            ("s4_ocr_004", 600.0, 0.94, 116.0, 76.0, 115.0, 97.0, 34.0),
-            # Occluded / low-confidence period where S4 must abstain (< 0.80)
-            ("s4_ocr_005_lowconf", 862.0, 0.45, 110.0, 70.0, 120.0, 95.0, 30.0),
-            ("s4_ocr_006", 900.0, 0.92, 115.0, 75.0, 105.0, 98.0, 38.0),
-            ("s4_ocr_007", 1200.0, 0.95, 120.0, 80.0, 108.0, 99.0, 37.0),
-        ]
-
-        readings: list[MonitorOCRReading] = []
-        for iid, t_start, conf, sbp, dbp, hr, spo2, etco2 in reference_data:
-            if conf < self.min_confidence:
-                readings.append(
-                    MonitorOCRReading(
-                        id=iid,
-                        type="monitor_ocr",
-                        t_start_s=t_start,
-                        t_end_s=round(t_start + 1.0, 2),
-                        confidence=0.0,
-                        sbp_mmHg=None,
-                        dbp_mmHg=None,
-                        heart_rate_bpm=None,
-                        spo2_pct=None,
-                        etco2_mmHg=None,
-                        abstained=True,
-                        abstain_reason=f"Monitor OCR confidence ({conf:.2f}) below calibrated threshold ({self.min_confidence:.2f})",
-                        device_model=self.device_model,
-                    )
-                )
-            else:
-                readings.append(
-                    MonitorOCRReading(
-                        id=iid,
-                        type="monitor_ocr",
-                        t_start_s=t_start,
-                        t_end_s=round(t_start + 1.0, 2),
-                        confidence=conf,
-                        sbp_mmHg=sbp,
-                        dbp_mmHg=dbp,
-                        heart_rate_bpm=hr,
-                        spo2_pct=spo2,
-                        etco2_mmHg=etco2,
-                        abstained=False,
-                        abstain_reason=None,
-                        device_model=self.device_model,
-                    )
-                )
-        return readings
-
     def extract_vitals_series(
         self, video_path: str | Path
     ) -> list[MonitorOCRReading]:
         """
         Extracts a time series of vital sign telemetry readings from a video file.
-        Returns deterministic reference readings for simvideo2.mp4 / vidsim2.mp4.
         """
         path = Path(video_path)
-        if "vidsim2" in path.name or "simvideo2" in str(path):
-            return self._extract_simvideo2_reference()
-
         if not path.exists():
             raise FileNotFoundError(f"Video file not found: {path}")
 
-        # Default single sample at t=0.0 for generic video file inputs
         return [
             self.extract_vitals_from_frame_roi(
                 frame_roi=np.ones((100, 100), dtype=np.float32),

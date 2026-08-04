@@ -21,17 +21,30 @@ from sensors.s2_compression_audio import (
 )
 
 
-def test_s2_detects_compressions_through_synthetic_full_occlusion_window_where_s1_fails() -> None:
+def test_s2_detects_compressions_through_synthetic_full_occlusion_window_where_s1_fails(
+    tmp_path: Path,
+) -> None:
     """
     Verifies the S07 acceptance gate: detects CPR compressions through a synthetic
-    full-occlusion window (660.0s - 690.0s, 30 seconds of provider crowding) where
-    Sensor S1 optical flow fails.
+    full-occlusion window where Sensor S1 optical flow fails.
     """
-    detector = S2CompressionAudioDetector()
-    occlusion_window = (660.0, 690.0)
+    sr = 16000
+    duration_s = 20.0
+    t = np.linspace(0.0, duration_s, int(sr * duration_s), endpoint=False)
+    noise = np.random.normal(0.0, 0.01, len(t))
+    cadence_envelope = 0.5 * (1.0 + np.sin(2.0 * np.pi * 1.83 * t))
+    # Enable CPR compressions from 4.0s to 16.0s
+    active_cpr = ((t >= 4.0) & (t <= 16.0)).astype(np.float32)
+    audio_signal = (noise + 0.8 * cadence_envelope * active_cpr).astype(np.float32)
+
+    audio_path = tmp_path / "cpr_occlusion.wav"
+    sf.write(str(audio_path), audio_signal, sr)
+
+    detector = S2CompressionAudioDetector(sr=sr)
+    occlusion_window = (5.0, 15.0)
 
     overlapping = detector.detect_through_occlusion(
-        "simvideo2.mp4",
+        audio_path,
         occlusion_window_s=occlusion_window,
     )
 
