@@ -517,19 +517,25 @@ def get_overflow_stream() -> EventStream:
 
 
 def get_sparse_stream() -> EventStream:
-    """Returns a sparse synthetic EventStream with exactly one event and everything else absent."""
+    """Returns a sparse synthetic EventStream with minimal events and an unconfirmed vascular_access event."""
     event = Event(
         type="patient_enters_room",
         timestamp_s=1.0,
         attributes={"arrival": True},
         evidence=_make_evidence(1.0, "Patient arrived in bay"),
     )
+    unconfirmed_access = Event(
+        type="vascular_access",
+        timestamp_s=15.0,
+        attributes={"access_types": ["iv"]},
+        evidence=_make_evidence(15.0, "IV line attempted without confirmation timestamp"),
+    )
     case_fields = CaseFields(
         recording_started_late=False,
     )
     return EventStream(
         case_id="synthetic_sparse_001",
-        events=[event],
+        events=[event, unconfirmed_access],
         intervals=[],
         coverage=[],
         fields=case_fields,

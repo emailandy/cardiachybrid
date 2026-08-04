@@ -243,6 +243,91 @@ def write_rows(
     return len(rows)
 
 
+def validate_contract_obligations(stream: Any) -> list[Any]:
+    """
+    Post-validation of contract attribute obligations before events reach the reducer.
+    Emits Flag(None, "contract_violation", message, [item_id]) when:
+      - required (ungated) attributes for the item's type are missing from attributes
+      - a gated attribute is emitted when its gate is unsatisfied
+    """
+    from codegen.yamlio import load_yaml
+    from pathlib import Path
+    from reducer.engine import Flag
+
+    reg = load_yaml(Path("mapping/registry.yaml"))
+    req_by_type: dict[str, set[str]] = {}
+    gate_by_type_attr: dict[tuple[str, str], str] = {}
+
+    interval_map = {"cci": "compression_interruption", "vent_delay": "ventilation_delay"}
+    for sec in reg.get("sections", []):
+        sec_type = sec.get("event_type") or sec.get("interval_type")
+        for f in sec.get("fields", []):
+            et = f.get("event_type") or f.get("interval_type") or sec_type
+            emit = f.get("emit")
+            if not et or not emit:
+                continue
+            et = interval_map.get(str(et), str(et))
+            gate = f.get("gate")
+            if gate:
+                gate_by_type_attr[(et, emit)] = str(gate)
+            else:
+                req_by_type.setdefault(et, set()).add(emit)
+
+    for grp in reg.get("groups", []):
+        grp_type = grp.get("event_type") or grp.get("interval_type")
+        for f in grp.get("fields", []):
+            et = f.get("event_type") or f.get("interval_type") or grp_type
+            emit = f.get("emit")
+            if not et or not emit:
+                continue
+            et = interval_map.get(str(et), str(et))
+            gate = f.get("gate")
+            if gate:
+                gate_by_type_attr[(et, emit)] = str(gate)
+            else:
+                req_by_type.setdefault(et, set()).add(emit)
+
+    flags: list[Any] = []
+    for x in list(stream.events) + list(stream.intervals):
+        item_id = f"{x.type}@{getattr(x, 't_start_s', getattr(x, 'timestamp_s', 0.0))}"
+        attrs = getattr(x, "attributes", {})
+        req = req_by_type.get(x.type, set())
+        missing = req - set(attrs.keys())
+        if missing:
+            flags.append(Flag(None, "contract_violation", f"missing required: {sorted(missing)}", [item_id]))
+
+        for attr in attrs.keys():
+            gate_str = gate_by_type_attr.get((x.type, attr))
+            if gate_str:
+                satisfied = False
+                if " contains " in gate_str:
+                    target_field, val = gate_str.split(" contains ")
+                    val = val.strip()
+                    container = attrs.get(target_field.strip())
+                    if isinstance(container, list) and val in container:
+                        satisfied = True
+                elif " == " in gate_str:
+                    target_field, val = gate_str.split(" == ")
+                    val = val.strip()
+                    actual = attrs.get(target_field.strip())
+                    if val == "true" and actual is True:
+                        satisfied = True
+                    elif val == "false" and actual is False:
+                        satisfied = True
+                    elif str(actual) == val:
+                        satisfied = True
+                elif " != " in gate_str:
+                    target_field, val = gate_str.split(" != ")
+                    val = val.strip()
+                    actual = attrs.get(target_field.strip())
+                    if str(actual) != val:
+                        satisfied = True
+                if not satisfied:
+                    flags.append(Flag(None, "contract_violation", f"gated attribute emitted: {attr} (gate unsatisfied: {gate_str})", [item_id]))
+
+    return flags
+
+
 def main() -> None:
     raise NotImplementedError(
         "ingest.loader is a library module. Import build_rows and write_rows."

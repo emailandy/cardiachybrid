@@ -61,6 +61,8 @@ def verify_wide_view_checksum(sql_path: Path = Path("generated/v_redcap_wide.sql
 
 def resolve_datasets(dataset_arg: str) -> tuple[str, str]:
     """Resolve raw and curated dataset names and forbid deploying to scratch."""
+    if dataset_arg == "resus_demo":
+        return "resus_demo", "resus_demo"
     raw = dataset_arg if dataset_arg.endswith("_raw") else f"{dataset_arg}_raw"
     if dataset_arg == "resus_raw":
         raw = "resus_raw"

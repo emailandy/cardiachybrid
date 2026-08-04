@@ -9,8 +9,8 @@ defining_instants:
   start: "The exact timestamp where a rising defibrillator charge tone stops or disarms WITHOUT a subsequent discharge click, myoclonic jerk, or shock delivery."
 
 audio_device:
-  - "AUDIO-PRIMARY: Rising defibrillator charge tone terminates prematurely or disarm chime sounds without discharge click."
-  - "# CLINICAL_REVIEW: CR-003 (defibrillator make/model/audio signature) and CR-005 (microphone configuration)"
+  - "AUDIO-PRIMARY: Rising narrowband defibrillator charge tone (515–796 Hz over ~3 seconds) terminates prematurely or disarm chime sounds without subsequent discharge transient click (RMS peak/median ratio > 5.0)."
+  - "# CLINICAL_REVIEW: CR-003 (defibrillator make/model; note: Zoll and LIFEPAK charge tones differ; measured 515->796 Hz on simvideo2.mp4) and CR-005 (microphone configuration)"
 
 speech:
   precursor:

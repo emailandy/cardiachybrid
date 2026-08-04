@@ -74,10 +74,10 @@ def test_wide_view_checksum() -> None:
 
 
 def test_audit_views_count() -> None:
-    """Assert exactly 7 CREATE VIEW statements in audit_views.sql."""
+    """Assert exactly 9 CREATE VIEW statements in audit_views.sql."""
     sql = generate_audit_views()
     create_views = re.findall(r"CREATE OR REPLACE VIEW `\{curated_dataset\}\.[a-z0-9_]+`", sql)
-    assert len(create_views) == 7, f"Expected 7 views in audit_views.sql, found: {len(create_views)} ({create_views})"
+    assert len(create_views) == 9, f"Expected 9 views in audit_views.sql, found: {len(create_views)} ({create_views})"
 
 
 def test_field_seed_jsonl_count_and_content() -> None:

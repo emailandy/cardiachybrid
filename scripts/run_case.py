@@ -208,8 +208,8 @@ def call_model_with_retry(vc: VertexClient, model: str, contents: list[Any], **k
     raise RuntimeError("Max retries exceeded for Vertex API call.")
 
 
-def call_model_cached(vc: VertexClient, model: str, contents: list[Any], pass_name: str, use_cache: bool = False, **kwargs: Any) -> str:
-    cache_dir = Path("generated/cache")
+def call_model_cached(vc: VertexClient, model: str, contents: list[Any], pass_name: str, use_cache: bool = False, cache_dir: Path | None = None, **kwargs: Any) -> str:
+    cache_dir = cache_dir or Path("generated/cache")
     cache_dir.mkdir(parents=True, exist_ok=True)
     cache_file = cache_dir / f"{pass_name}.txt"
     if use_cache and cache_file.exists():
@@ -258,9 +258,18 @@ def apply_t0_to_datetimes(fvs: list[FieldValue], t0_str: str) -> None:
                     pass
 
 
+def get_model_for_pass(pass_name: str) -> str:
+    import yaml
+    versions = yaml.safe_load(Path("prompts/VERSIONS.yaml").read_text(encoding="utf-8"))
+    return versions["model_binding"].get(pass_name, {}).get("model", "gemini-3.6-flash")
+
+
 def run_live(args: argparse.Namespace, duration_s: float) -> None:
     """Executes live DEMO-1 pipeline against Vertex AI."""
-    print(f"=== DEMO-1 LIVE RUN (case_id: {args.case_id}, t0: {args.t0}) ===")
+    run_id_val = getattr(args, "run_id", None) or "run_01"
+    cache_dir = Path(f"generated/cache_{run_id_val}") if run_id_val != "run_01" else Path("generated/cache")
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    print(f"=== DEMO-1 LIVE RUN (case_id: {args.case_id}, t0: {args.t0}, run_id: {run_id_val}) ===")
     print("[VITALS ABSTENTION PREDICTION (STATED BEFORE LIVE RUN)]")
     print("  - Prediction: ~100 ROSC vital columns (hr/sbp/dbp/spo2/etco2 x 20) and ~60 a-line columns (aline_sbp/dbp x 30 CCIs)")
     print("    will come back unpopulated/UTD with an OCR-related abstain reason because monitor vital signs are illegible.")
@@ -271,6 +280,7 @@ def run_live(args: argparse.Namespace, duration_s: float) -> None:
     surviving_events: list[Event] = []
     surviving_intervals: list[Interval] = []
     surviving_notes: list[CoverageNote] = []
+    window_streams: list[tuple[Any, float, float]] = []
 
     t_start_wall = time.time()
     for idx, w_start, w_end, p_end, ov_lead, w_start_prim in WINDOWS:
@@ -294,18 +304,20 @@ def run_live(args: argparse.Namespace, duration_s: float) -> None:
             file_data=types.FileData(file_uri=args.video, mime_type="video/mp4"),
             video_metadata=meta,
         )
-        print(f"  Calling P1 Window {idx} [{w_start}s -> {w_end}s]...")
+        p1_model_val = getattr(args, "p1_model", None) or get_model_for_pass("pass_1")
+        print(f"  Calling P1 Window {idx} [{w_start}s -> {w_end}s] (model: {p1_model_val})...")
         res_text = call_model_cached(
             vc,
-            model="gemini-3.6-flash",
+            model=p1_model_val,
             contents=[video_part, p1.system + "\n---\n" + p1.user],
             pass_name=f"p1_win_{idx}",
             use_cache=args.use_cache,
+            cache_dir=cache_dir,
             media_resolution_str=args.media_resolution,
             response_schema=p1.response_schema,
             response_mime_type="application/json",
             case_id=args.case_id,
-            run_id="run_01",
+            run_id=run_id_val,
         )
         raw_json = clean_json_response(res_text)
         try:
@@ -320,13 +332,15 @@ def run_live(args: argparse.Namespace, duration_s: float) -> None:
                 fields=CaseFields(),
             )
 
-        is_last = (idx == len(WINDOWS) - 1)
-        w_events = [ev for ev in stream.events if (w_start_prim <= ev.timestamp_s <= p_end if is_last else w_start_prim <= ev.timestamp_s < p_end)]
-        w_invs = [inv for inv in stream.intervals if (w_start_prim <= inv.t_start_s <= p_end if is_last else w_start_prim <= inv.t_start_s < p_end)]
-        surviving_events.extend(w_events)
-        surviving_intervals.extend(w_invs)
-        surviving_notes.extend(stream.coverage)
-        print(f"    Window {idx} kept {len(w_events)} events, {len(w_invs)} intervals in primary zone [{w_start_prim}s -> {p_end}s]")
+        window_streams.append((stream, w_start_prim, p_end))
+        print(f"    Window {idx} parsed {len(stream.events)} events, {len(stream.intervals)} intervals")
+
+    from ingest.ensemble import deduplicate_window_streams, pair_boundary_events
+    merged_stream = pair_boundary_events(deduplicate_window_streams(window_streams))
+    surviving_events = merged_stream.events
+    surviving_intervals = merged_stream.intervals
+    surviving_notes = merged_stream.coverage
+    print(f"  Merged {len(window_streams)} windows: kept {len(surviving_events)} events, {len(surviving_intervals)} intervals across case (F-005 deduplication)")
 
     print("\n[Window 3 Tail Inspection — 1320.0s to 1363.78s]")
     tail_evs = [ev for ev in surviving_events if 1320.0 <= ev.timestamp_s <= 1363.78]
@@ -338,36 +352,39 @@ def run_live(args: argparse.Namespace, duration_s: float) -> None:
     p3 = build_p3()
     res_p3_txt = call_model_cached(
         vc,
-        model="gemini-3.1-pro-preview",
+        model=get_model_for_pass("pass_3"),
         contents=[p3.system + "\n---\n" + p3.user],
         pass_name="p3_adjudicate",
         use_cache=args.use_cache,
+        cache_dir=cache_dir,
         case_id=args.case_id,
-        run_id="run_01",
+        run_id=run_id_val,
     )
 
     print("Executing P4a (Team Items 1-11)...")
     p4a = build_p4a()
     res_p4a_txt = call_model_cached(
         vc,
-        model="gemini-3.1-pro-preview",
+        model=get_model_for_pass("pass_4a"),
         contents=[p4a.system + "\n---\n" + p4a.user],
         pass_name="p4a_team",
         use_cache=args.use_cache,
+        cache_dir=cache_dir,
         case_id=args.case_id,
-        run_id="run_01",
+        run_id=run_id_val,
     )
 
     print("Executing P4b (Team Global)...")
     p4b = build_p4b()
     res_p4b_txt = call_model_cached(
         vc,
-        model="gemini-3.1-pro-preview",
+        model=get_model_for_pass("pass_4b"),
         contents=[p4b.system + "\n---\n" + p4b.user],
         pass_name="p4b_team",
         use_cache=args.use_cache,
+        cache_dir=cache_dir,
         case_id=args.case_id,
-        run_id="run_01",
+        run_id=run_id_val,
     )
 
     print("Executing P5 (7 Section Notes)...")
@@ -377,12 +394,13 @@ def run_live(args: argparse.Namespace, duration_s: float) -> None:
         p5 = build_p5(section_name=sec_name, target_field=tgt_field)
         res_p5_txt = call_model_cached(
             vc,
-            model="gemini-3.1-pro-preview",
+            model=get_model_for_pass("pass_5"),
             contents=[p5.system + "\n---\n" + p5.user],
             pass_name=f"p5_{tgt_field}",
             use_cache=args.use_cache,
+            cache_dir=cache_dir,
             case_id=args.case_id,
-            run_id="run_01",
+            run_id=run_id_val,
         )
         p5_notes_dict[tgt_field] = res_p5_txt.strip()
 
@@ -428,30 +446,32 @@ def run_live(args: argparse.Namespace, duration_s: float) -> None:
     n_rosc = sum(1 for ev in surviving_events if ev.type == "rosc_detected")
     print(f"  n_CCIs={n_ccis} | n_shocks={n_shocks} | n_airway_attempts={n_airway} | n_ROSC={n_rosc}")
 
-    # Precision histogram
-    p_bins = {"<2.0s": 0, "==2.0s": 0, ">2.0s": 0}
+    # Precision histogram (top-level t_precision_s without default fallback)
+    p_bins = {"0.5s": 0, "1.0s": 0, "2.0s": 0, ">2.0s": 0, "None": 0}
     for ev in surviving_events:
-        prec = float(ev.attributes.get("t_precision_s", ev.attributes.get("precision_s", 2.0)))
-        if prec < 2.0:
-            p_bins["<2.0s"] += 1
-        elif abs(prec - 2.0) < 1e-6:
-            p_bins["==2.0s"] += 1
+        prec = getattr(ev, "t_precision_s", None)
+        if prec is None:
+            p_bins["None"] += 1
+        elif prec <= 0.5:
+            p_bins["0.5s"] += 1
+        elif prec <= 1.0:
+            p_bins["1.0s"] += 1
+        elif prec <= 2.0:
+            p_bins["2.0s"] += 1
         else:
             p_bins[">2.0s"] += 1
     print(f"  t_precision_s histogram: {p_bins}")
 
-    # Field states
-    states = {"auto_accepted": 0, "routed": 0, "utd": 0, "not_applicable": 0}
-    for fv in fvs:
-        if not getattr(fv, "branching_satisfied", True):
-            states["not_applicable"] += 1
-        elif getattr(fv, "is_null", True):
-            states["utd"] += 1
-        elif getattr(fv, "source_class", "") in ("AI_DIRECT", "AI_DERIVED", "AI_NARRATIVE"):
-            states["auto_accepted"] += 1
-        else:
-            states["routed"] += 1
-    print(f"  n_fields by state: {states}")
+    # Routing policy evaluation (D09)
+    from router.policy import evaluate_stream_routing
+    routing_stats = evaluate_stream_routing(fvs)
+    print("  Routing policy evaluation (D09):")
+    for k, v in routing_stats.items():
+        print(f"    {k}: {v}")
+    failed_fvs = [fv for fv in fvs if not getattr(fv, "validation_passed", True)]
+    print(f"  [Validation Failed Fields ({len(failed_fvs)})]:")
+    for f in failed_fvs:
+        print(f"    {f.field_name}: val={f.value!r} err={getattr(f, 'validation_error', None)}")
 
     # Vitals abstention prediction check
     rosc_vitals = [fv for fv in fvs if any(fv.field_name.startswith(p) for p in ["rosc_hr_", "rosc_sbp_", "rosc_dbp_", "rosc_spo2_", "rosc_etco2_"])]
@@ -485,14 +505,22 @@ def run_live(args: argparse.Namespace, duration_s: float) -> None:
             "n_airway_attempts": n_airway,
             "n_ROSC": n_rosc,
             "t_precision_histogram": p_bins,
-            "field_states": states,
+            "field_states": routing_stats,
             "vitals_abstention_status": pred_status,
         },
     }
-    out_dir = Path("generated")
-    out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / "case.json").write_text(json.dumps(case_meta, indent=2), encoding="utf-8")
-    print("\nWritten metadata to generated/case.json")
+
+    if not getattr(args, "no_bq", False):
+        print("\n[BigQuery Write Path]")
+        from pipeline.bq_writer import write_run
+        run_id_to_write = getattr(args, "run_id", None) or f"run_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+        write_run(case_id=args.case_id, run_id=run_id_to_write, stream=combined_stream, field_values=fvs, raw_dataset="resus_raw")
+        print(f"✓ Successfully loaded run {run_id_to_write} to nodepeel.resus_raw in BigQuery.")
+
+    out_path = Path(args.out) if getattr(args, "out", None) else (Path("generated") / "case.json")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(case_meta, indent=2), encoding="utf-8")
+    print(f"\nWritten metadata to {out_path}")
 
 
 def main() -> None:
@@ -500,12 +528,16 @@ def main() -> None:
     parser.add_argument("--case-id", default="DEMO-1", help="Case ID to run")
     parser.add_argument("--video", default="gs://videval/cardiac/simvideo2.mp4", help="GCS URI of video")
     parser.add_argument("--dry-run", action="store_true", help="Assemble prompts, snapshot, zero API calls")
+    parser.add_argument("--no-bq", action="store_true", help="Disable writing results to BigQuery")
     parser.add_argument("--k", type=int, default=1, help="Ensemble k per pass (default 1)")
     parser.add_argument("--with-p2", action="store_true", help="Include P2 single-event verification (default off)")
     parser.add_argument("--t0", default="2023-11-07T07:55:57", help="Wall-clock T0 anchor datetime")
     parser.add_argument("--t0-source", default="burned_in_timecode", help="Source of T0 anchor")
     parser.add_argument("--media-resolution", default="low", help="Media resolution for video passes (low/medium/high)")
     parser.add_argument("--use-cache", action="store_true", help="Use cached responses from generated/cache if available")
+    parser.add_argument("--run-id", default=None, help="Run ID for caching and output identification")
+    parser.add_argument("--out", default=None, help="Path to write output case metadata json")
+    parser.add_argument("--p1-model", default=None, help="Override model for Pass 1 (e.g. gemini-3.1-pro-preview)")
 
     args = parser.parse_args()
     duration_s = 1363.78

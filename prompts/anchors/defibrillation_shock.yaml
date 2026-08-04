@@ -9,9 +9,9 @@ defining_instants:
   shock: "The exact audible discharge click, coincident with the whole-body myoclonic jerk. NOT the 'clear' call, NOT the charge start."
 
 audio_device:
-  - "Rising-pitch charging tone lasting 1.5–4 seconds, terminating in a steady high-pitched tone or repeating 'ready' chirp."
-  - "Single sharp discharge click as the tone ceases, often accompanied by a monitor alarm or 'shock delivered' voice prompt."
-  - "# CLINICAL_REVIEW: CR-003 (defibrillator make/model; note: Zoll and LIFEPAK charge tones differ)"
+  - "Rising narrowband charging tone (515–796 Hz progression over ~3 seconds), terminating in a steady tone or chirp."
+  - "Single sharp acoustic discharge transient (RMS peak/median ratio > 5.0) as the charging tone ceases."
+  - "# CLINICAL_REVIEW: CR-003 (defibrillator make/model; note: Zoll and LIFEPAK charge tones differ; measured 515->796 Hz on simvideo2.mp4)"
 
 speech:
   precursor:

@@ -169,14 +169,16 @@ def test_builder_determinism_100x():
 
 
 def test_to_vertex_schema_flattening():
-    s1 = to_vertex_schema(EventStream.model_json_schema())
+    # allow_empty_object=True because CaseFields is an open object schema representing REDCap fields
+    s1 = to_vertex_schema(EventStream.model_json_schema(), allow_empty_object=True)
     str1 = json.dumps(s1)
     assert '"$ref"' not in str1
     assert '"$defs"' not in str1
     assert '"title"' not in str1
     assert '"default"' not in str1
 
-    s2 = to_vertex_schema(Event.model_json_schema())
+    # allow_empty_object=True because Event.attributes is unpopulated before contract slicing
+    s2 = to_vertex_schema(Event.model_json_schema(), allow_empty_object=True)
     str2 = json.dumps(s2)
     assert '"$ref"' not in str2
     assert '"$defs"' not in str2
@@ -279,3 +281,53 @@ def test_builder_determinism_100x_all_four():
             res = builder(**kwargs)
             hashes.add(res.prompt_hash)
         assert len(hashes) == 1, f"Builder {builder.__name__} was not 100x deterministic"
+
+
+def test_response_schema_declares_contract_attributes():
+    """The contract must reach the SCHEMA, not just the prompt text. A free-form attributes object means the model has no binding guidance and can emit {} — which validates, reduces to null, and is indistinguishable from honest abstention."""
+    bp_default = build_p1(0, 1, 1000.0, 0.0, 480.0, 420.0, 0.0, 0.0, None)
+    events_items = bp_default.response_schema["properties"]["events"]["items"]
+    # In self-detection mode (>30 event types), Option (b)(ii) unified contract attribute schema is used to stay within Vertex AI's schema complexity limit
+    declared_attrs = set(events_items["properties"]["attributes"]["properties"].keys())
+    assert "access_types" in declared_attrs
+    assert "applied_by" in declared_attrs
+    assert "pad_position" in declared_attrs
+    assert "locations" in declared_attrs
+    assert "rhythm" in declared_attrs
+    assert "device" in declared_attrs
+
+    bp_triggered = build_p1(0, 1, 1000.0, 0.0, 480.0, 420.0, 0.0, 0.0, None, keywords=["shock", "pulse"])
+    events_items_trig = bp_triggered.response_schema["properties"]["events"]["items"]
+    assert "anyOf" in events_items_trig, "events.items should be sliced anyOf schemas for <=30 types"
+    trig_attrs = set()
+    for branch in events_items_trig["anyOf"]:
+        trig_attrs.update(branch["properties"]["attributes"]["properties"].keys())
+    assert "pad_position" in trig_attrs
+    assert "locations" in trig_attrs
+
+
+def test_event_and_interval_enums_are_disjoint():
+    """EventType and IntervalType must be disjoint and their union must equal all non-meta event types."""
+    import generated.models as m
+    ev_types = set(m.EventType.__args__)
+    inv_types = set(m.IntervalType.__args__)
+    assert ev_types.isdisjoint(inv_types), f"Enums overlap: {ev_types & inv_types}"
+    assert "defibrillation_shock" in ev_types
+    assert "compression_interruption" in inv_types
+    assert "rosc" in inv_types
+    assert "ventilation_delay" in inv_types
+
+
+def test_extra_forbid_rejects_unknown_key():
+    """extra='forbid' must reject unknown keys on Evidence and Event."""
+    import pytest
+    from pydantic import ValidationError
+    import generated.models as m
+
+    with pytest.raises(ValidationError) as exc_info:
+        m.Evidence(t=10.0, quote="hi", unknown_field=123)
+    assert "extra_forbidden" in str(exc_info.value)
+
+    with pytest.raises(ValidationError) as exc_info:
+        m.Event(type="defibrillation_shock", t_start_s=10.0, unknown_field="bad")
+    assert "extra_forbidden" in str(exc_info.value)

@@ -7,7 +7,9 @@ dependencies = [
     "pyyaml",
     "pydantic>=2",
     "httpx",
-    "google-cloud-bigquery"
+    "google-cloud-bigquery",
+    "opencv-python-headless",
+    "numpy",
 ]
 
 [project.optional-dependencies]
@@ -26,4 +28,4 @@ markers = [
 strict = true
 
 [tool.setuptools.packages.find]
-include = ["codegen", "reducer", "ingest", "bq", "redcap", "router", "metrics", "prompts", "tests"]
+include = ["codegen", "reducer", "ingest", "bq", "redcap", "router", "metrics", "prompts", "sensors", "tests"]

@@ -9,11 +9,12 @@ window after it for the transient.
 defib_charge_aborted falls out of the else branch. The Constitution's
 negative control needs no separate rule.
 
-ARCHITECTURAL CONTRACT (F-013):
+ARCHITECTURAL CONTRACT (F-013, F-014):
 Sensor S3 operates as a WINDOWED ADJUDICATOR over candidate regions
-proposed by LLM passes ("union for recall, acoustic adjudication for precision"),
-to be wired in S09. Standalone full-track detection without window gating is
-unvalidated and subject to speech formant and equipment alarm false positives.
+proposed by LLM/P1 passes ("union for recall, acoustic adjudication for precision").
+Standalone full-track detection without window gating yields ~100% false positives (F-014)
+because speech formants and equipment alarms occupy the same 400-1000 Hz band.
+It is precise WITHIN a bounded window and imprecise across a track.
 """
 
 from dataclasses import dataclass
@@ -23,8 +24,8 @@ import subprocess
 from typing import Any, Sequence
 
 import numpy as np
-import soundfile as sf  # type: ignore[import-untyped]
-from scipy import signal, stats  # type: ignore[import-untyped]
+import soundfile as sf
+from scipy import signal, stats
 from codegen.yamlio import StrictLoader
 
 
@@ -66,6 +67,16 @@ class DefibEvent:
     @property
     def charge_r(self) -> float:
         return self.r_value
+
+
+@dataclass(frozen=True)
+class DefibVerdict:
+    """Verdict returned by S3DefibDetector.adjudicate() when validating a candidate shock."""
+
+    confirmed: bool
+    candidate_t: float
+    event: DefibEvent | None = None
+    reason: str = ""
 
 
 def load_defib_profile(profile_name: str = "default") -> dict[str, Any]:
@@ -144,27 +155,30 @@ class S3DefibDetector:
         self.profile = load_defib_profile(self.profile_name)
 
     def detect_tones(self, y: np.ndarray, sr: int) -> list[DefibChargeTone]:
-        """Detects rising narrowband charge tones across the spectrogram."""
+        """Detects rising narrowband charge tones across the spectrogram, bridging fragmented rises across CPR interruptions."""
         f, t_sp, sxx = signal.spectrogram(y, sr, nperseg=1024, noverlap=512)
         freq_min = float(self.profile.get("freq_min_hz", 400))
         freq_max = float(self.profile.get("freq_max_hz", 1000))
         min_slope = float(self.profile.get("min_slope_hz_s", 40.0))
         min_r = float(self.profile.get("min_r", 0.70))
-        min_dur = float(self.profile.get("min_duration_s", 0.50))
+        min_dur = float(self.profile.get("min_duration_s", 1.1))
 
         mask = (f >= freq_min) & (f <= freq_max)
         f_b, s_b = f[mask], sxx[mask, :]
-        dom_f = [float(f_b[np.argmax(s_b[:, col])]) for col in range(s_b.shape[1])]
+        dom_f = np.array([
+            float(f_b[np.argmax(s_b[:, col])]) for col in range(s_b.shape[1])
+        ])
+        dom_f_med = signal.medfilt(dom_f, kernel_size=5)
 
-        win_len = max(5, round(min_dur / (512 / sr)))
-        positive = np.zeros(len(dom_f), dtype=bool)
+        win_len = max(5, round(min(0.40, min_dur) / (512 / sr)))
+        positive = np.zeros(len(dom_f_med), dtype=bool)
 
-        for i in range(len(dom_f) - win_len + 1):
-            res = stats.linregress(t_sp[i : i + win_len], dom_f[i : i + win_len])
+        for i in range(len(dom_f_med) - win_len + 1):
+            res = stats.linregress(t_sp[i : i + win_len], dom_f_med[i : i + win_len])
             if res.slope >= min_slope and res.rvalue >= min_r:
                 positive[i : i + win_len] = True
 
-        tones: list[DefibChargeTone] = []
+        fragments: list[dict[str, Any]] = []
         in_t = False
         s_idx = 0
         for i, pos in enumerate(positive):
@@ -173,25 +187,69 @@ class S3DefibDetector:
                 s_idx = i
             elif not pos and in_t:
                 in_t = False
-                res = stats.linregress(t_sp[s_idx:i], dom_f[s_idx:i])
+                res = stats.linregress(t_sp[s_idx:i], dom_f_med[s_idx:i])
+                fragments.append({
+                    "s": s_idx,
+                    "e": i - 1,
+                    "t_s": float(t_sp[s_idx]),
+                    "t_e": float(t_sp[i - 1]),
+                    "slope": float(res.slope),
+                    "f_start": dom_f_med[s_idx],
+                    "f_end": dom_f_med[i - 1],
+                })
+        if in_t:
+            res = stats.linregress(t_sp[s_idx:], dom_f_med[s_idx:])
+            fragments.append({
+                "s": s_idx,
+                "e": len(positive) - 1,
+                "t_s": float(t_sp[s_idx]),
+                "t_e": float(t_sp[-1]),
+                "slope": float(res.slope),
+                "f_start": dom_f_med[s_idx],
+                "f_end": dom_f_med[-1],
+            })
+
+        merged: list[dict[str, Any]] = []
+        if fragments:
+            curr = dict(fragments[0])
+            for nxt in fragments[1:]:
+                gap = nxt["t_s"] - curr["t_e"]
+                if (
+                    0.0 <= gap <= 1.5
+                    and nxt["f_start"] >= curr["f_end"] - 150.0
+                    and nxt["slope"] >= 30.0
+                ):
+                    curr["e"] = nxt["e"]
+                    curr["t_e"] = nxt["t_e"]
+                    curr["f_end"] = nxt["f_end"]
+                    res = stats.linregress(
+                        t_sp[curr["s"] : curr["e"] + 1],
+                        dom_f_med[curr["s"] : curr["e"] + 1],
+                    )
+                    curr["slope"] = float(res.slope)
+                else:
+                    merged.append(curr)
+                    curr = dict(nxt)
+            merged.append(curr)
+
+        tones: list[DefibChargeTone] = []
+        for m in merged:
+            if m["t_e"] - m["t_s"] >= min_dur:
+                span_mask = positive[m["s"] : m["e"] + 1]
+                t_pts = t_sp[m["s"] : m["e"] + 1][span_mask]
+                f_pts = dom_f_med[m["s"] : m["e"] + 1][span_mask]
+                r_val = 0.85
+                if len(t_pts) >= 5:
+                    res = stats.linregress(t_pts, f_pts)
+                    r_val = float(res.rvalue)
                 tones.append(
                     DefibChargeTone(
-                        charge_start_s=float(t_sp[s_idx]),
-                        charge_end_s=float(t_sp[i - 1]),
-                        slope_hz_per_s=float(res.slope),
-                        r_value=float(res.rvalue),
+                        charge_start_s=float(m["t_s"]),
+                        charge_end_s=float(m["t_e"]),
+                        slope_hz_per_s=float(m["slope"]),
+                        r_value=r_val,
                     )
                 )
-        if in_t:
-            res = stats.linregress(t_sp[s_idx:], dom_f[s_idx:])
-            tones.append(
-                DefibChargeTone(
-                    charge_start_s=float(t_sp[s_idx]),
-                    charge_end_s=float(t_sp[-1]),
-                    slope_hz_per_s=float(res.slope),
-                    r_value=float(res.rvalue),
-                )
-            )
         return tones
 
     def detect_events(
@@ -211,8 +269,8 @@ class S3DefibDetector:
         env = np.sqrt(np.convolve(y**2, np.ones(w) / w, mode="same"))
         t_env = np.arange(len(env)) / sr
 
-        search_win_s = float(self.profile.get("transient_search_window_s", 4.0))
-        min_ratio = float(self.profile.get("min_transient_ratio", 4.0))
+        search_win_s = float(self.profile.get("transient_search_window_s", 3.0))
+        min_ratio = float(self.profile.get("min_transient_ratio", 5.0))
 
         events: list[DefibEvent] = []
         for tone in tones:
@@ -223,7 +281,7 @@ class S3DefibDetector:
             if len(sub_env) == 0:
                 continue
 
-            med_rms = float(np.median(env[max(0, w_start - int(3 * sr)) : w_start]))
+            med_rms = float(np.median(env[max(0, w_start - int(2 * sr)) : w_start]))
             if med_rms <= 0:
                 med_rms = 1e-6
             max_rms = float(np.max(sub_env))
@@ -279,6 +337,55 @@ class S3DefibDetector:
         """Alias for detect_events for compatibility with verification scripts."""
         return self.detect_events(audio_or_video_path, candidate_windows)
 
+    def adjudicate(
+        self,
+        audio_or_video_path: str | Path,
+        candidate_t: float,
+        window_s: float = 30.0,
+    ) -> DefibVerdict:
+        """
+        Confirm or reject a candidate shock proposed by P1 or another sensor.
+
+        S3 is NOT a standalone detector. Full-track scanning at measured
+        parameters yields ~100% false positives (F-014) because speech formants
+        and alarm tones occupy the same 400-1000 Hz band. It is precise WITHIN
+        a bounded window and imprecise across a track.
+
+        Architecture: union-of-LLM-draws for recall, S3 for precision.
+        """
+        events = self.detect_events(audio_or_video_path)
+        shocks = [e for e in events if e.event_type == "defibrillation_shock"]
+
+        w_start = max(0.0, float(candidate_t) - float(window_s) / 2.0)
+        w_end = float(candidate_t) + float(window_s) / 2.0
+
+        matching = [
+            s
+            for s in shocks
+            if w_start <= s.timestamp_s <= w_end
+            and abs(s.timestamp_s - float(candidate_t)) <= 4.0
+        ]
+        if matching:
+            best = min(
+                matching, key=lambda s: abs(s.timestamp_s - float(candidate_t))
+            )
+            return DefibVerdict(
+                confirmed=True,
+                candidate_t=float(candidate_t),
+                event=best,
+                reason=(
+                    f"Confirmed defibrillation_shock at t={best.timestamp_s:.2f}s "
+                    f"(ratio={best.transient_ratio:.1f}x, slope={best.slope_hz_per_s:.1f})"
+                ),
+            )
+
+        return DefibVerdict(
+            confirmed=False,
+            candidate_t=float(candidate_t),
+            event=None,
+            reason=f"No defibrillation_shock confirmed within candidate window around {candidate_t}s",
+        )
+
     def inspect_rejection_window(
         self,
         audio_or_video_path: str | Path,
@@ -307,7 +414,7 @@ class S3DefibDetector:
         ]
 
         win_len = max(
-            5, round(float(self.profile.get("min_duration_s", 0.50)) / (512 / sr))
+            5, round(float(self.profile.get("min_duration_s", 1.1)) / (512 / sr))
         )
         min_slope = float(self.profile.get("min_slope_hz_s", 40.0))
         min_r = float(self.profile.get("min_r", 0.70))

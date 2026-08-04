@@ -324,3 +324,61 @@ def test_contradictory_flags():
     assert "inverted_interval" in flag_types
     assert "shock_outside_cci" in flag_types
     assert "med_inside_rosc" in flag_types
+
+
+def test_abstain_reasons_in_declared_vocabulary():
+    declared_reasons = {
+        "no evidence observed",
+        "case-level determination not made by adjudication pass",
+        "no airway confirmation observed",
+        "channel coverage degraded",
+        "end of recording timestamp not available",
+        "requires P5 (A06)",
+    }
+    reasons = set()
+    for name, stream in get_all_synthetic_streams().items():
+        values, _, _ = reduce_stream(stream)
+        for fv in values:
+            if fv.abstained and fv.abstain_reason:
+                reasons.add(fv.abstain_reason)
+
+    for r in reasons:
+        assert (
+            r in declared_reasons
+            or "coverage degraded:" in r
+            or "model omitted required attribute" in r
+            or "not applicable:" in r
+            or "only " in r and "confirmation method" in r
+        ), f"Undeclared or non-clinical abstain_reason: {r!r}"
+
+
+def test_unconfirmed_access_emits_clean_null_at_confidence_1():
+    """When vascular_access is present but lacks confirmed:true, first_of emits a clean null with confidence=1.0."""
+    stream = get_all_synthetic_streams()["sparse"]
+    values, _, _ = reduce_stream(stream)
+    fv = next(f for f in values if f.export_column == "access_confirmed_time" or f.field_name == "access_confirmed_time")
+    assert fv.is_null is True, f"Expected access_confirmed_time to be null, got {fv.value!r}"
+    assert fv.abstained is False, f"Expected abstained=False on clean null, got {fv.abstained}"
+    assert fv.confidence == 1.0, f"Expected confidence 1.0 for clean null, got {fv.confidence}"
+
+
+def test_synthetic_cci_reasons_in_declared_vocabulary():
+    """Every cci reason string and emitted reason_cci_{i}_v2 checkbox code must belong to declared cci_reason vocabulary."""
+    from codegen.yamlio import load_yaml
+    from pathlib import Path
+    vocab = load_yaml(Path("mapping/registry.yaml"))["vocabularies"]["cci_reason"]
+    valid_reason_strings = set(vocab.keys())
+    valid_reason_codes = {str(val) for val in vocab.values()}
+
+    for name, stream in get_all_synthetic_streams().items():
+        for interval in stream.intervals:
+            if interval.type == "compression_interruption":
+                for r in interval.attributes.get("reasons", []):
+                    assert r in valid_reason_strings, f"Undeclared reason string '{r}' in synthetic stream '{name}'"
+
+        values, _, _ = reduce_stream(stream)
+        for fv in values:
+            if fv.field_name.startswith("reason_cci_") and "___" in fv.field_name:
+                code_str = fv.field_name.split("___")[-1]
+                assert code_str in valid_reason_codes, f"Invalid cci_reason checkbox code '{code_str}' in stream '{name}'"
+

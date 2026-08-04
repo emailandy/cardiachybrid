@@ -453,10 +453,11 @@ def build_event_stream() -> EventStream:
             evidence=_make_evidence(580.0, "MCCD removed"),
         )
     )
-    events.append(
-        Event(
+    intervals.append(
+        Interval(
             type="compression_interruption",
-            timestamp_s=55.0,
+            t_start_s=55.0,
+            t_end_s=58.0,
             attributes={"reason": "pulse_check"},
             evidence=_make_evidence(55.0, "Compression interruption"),
         )

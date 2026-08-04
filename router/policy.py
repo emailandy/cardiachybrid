@@ -132,6 +132,7 @@ def evaluate_stream_routing(
         case_utd_rate_by_field = {}
 
     total = len(field_values)
+    not_applicable = 0
     auto_accepted = 0
     c_team = 0
     c_val = 0
@@ -153,7 +154,10 @@ def evaluate_stream_routing(
             ensemble_spread_s=ensemble_spread_s,
         )
         if not route:
-            auto_accepted += 1
+            if reason == "branching_not_satisfied":
+                not_applicable += 1
+            else:
+                auto_accepted += 1
         elif reason == "TEAM (Q-006)":
             c_team += 1
         elif reason == "validation failed":
@@ -169,10 +173,12 @@ def evaluate_stream_routing(
         elif reason == "low confidence":
             c_low_conf += 1
 
-    pct = round(auto_accepted / total * 100.0, 1) if total else 0.0
+    active_total = total - not_applicable
+    pct = round(auto_accepted / active_total * 100.0, 1) if active_total else 0.0
 
     return {
         "total_fields_evaluated": total,
+        "not_applicable": not_applicable,
         "auto_accepted": auto_accepted,
         "auto_accepted_pct": pct,
         "routed_team_q006": c_team,

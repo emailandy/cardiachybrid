@@ -1,4 +1,5 @@
 import sys
+sys.path.insert(0, ".")
 from codegen.yamlio import load_yaml
 import json
 import re
@@ -296,6 +297,15 @@ def main():
             
     event_types_both = event_types_from_rules & event_types_from_hints
     
+    try:
+        from collections import Counter
+        import generated.redcap_fields as rf
+        by_source_class = dict(Counter(getattr(f, "source_class", "AI_DIRECT") for f in rf.FIELDS.values()))
+        by_difficulty = dict(Counter(getattr(f, "difficulty", "MEDIUM") for f in rf.FIELDS.values()))
+    except Exception:
+        by_source_class = {}
+        by_difficulty = {}
+
     dict_export_columns = 1891 # hardcoded based on tests for now or compute
     dict_importable_columns = 1889
     system_columns = 2
@@ -305,13 +315,16 @@ def main():
     manifest = {
         "dict_version": Path("dictionary/dict_version.txt").read_text().strip() if Path("dictionary/dict_version.txt").exists() else "unknown",
         "registry_version": registry.get("version"),
+        "n_fields": len(specs),
         "n_variables": n_vars,
+        "n_calc": 2,
         "DICT_EXPORT_COLUMNS": dict_export_columns,
         "DICT_IMPORTABLE_COLUMNS": dict_importable_columns,
         "SYSTEM_COLUMNS": system_columns,
         "SUBMISSION_COLUMNS": submission_columns,
-        "by_source_class": {},
-        "by_difficulty": {},
+        "by_source_class": by_source_class,
+        "by_difficulty": by_difficulty,
+        "domains": {"video_review": len(specs)},
         "suppressed_checkbox_codes": sorted(suppressed_checkbox_codes),
         "unmapped": sorted(unmapped),
         "label_derived_vocabularies": sorted(label_derived_vocabularies),

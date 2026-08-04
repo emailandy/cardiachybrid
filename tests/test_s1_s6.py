@@ -181,3 +181,31 @@ def test_s1_s6_deterministic_5_runs() -> None:
     # Verify calibration surface reported
     assert surf_0["profile_name"] == "simvideo2"
     assert surf_0["chest_roi"]["width"] == 640
+
+
+@pytest.mark.integration
+def test_s1_vidsim2_percentiles_and_shock_containment() -> None:
+    """
+    Verifies Sensor S1 percentile thresholding, camera bump exclusion,
+    and shock containment inside CCI pause intervals on vidsim2.mp4.
+    """
+    video_path = Path("tests/video/vidsim2.mp4")
+    if not video_path.exists():
+        pytest.skip(f"Test video not found: {video_path}")
+
+    detector = S1ChestMotionDetector(profile_name="default")
+    events = detector.detect_from_video(video_path)
+    ccis = detector.detect_cci_intervals(events, total_duration_s=1363.7)
+
+    assert len(events) >= 50, f"Expected >= 50 CPR compression intervals, got {len(events)}"
+    assert len(ccis) >= 40, f"Expected >= 40 CCI pause intervals, got {len(ccis)}"
+
+    for t in [167.94, 385.07, 621.34, 742.21]:
+        matching = [
+            c
+            for c in ccis
+            if float(c["t_start_s"]) <= t <= float(c["t_end_s"])
+        ]
+        assert matching, (
+            f"True defibrillation shock at t={t}s does not fall inside any detected CCI pause interval"
+        )

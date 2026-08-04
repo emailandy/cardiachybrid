@@ -14,7 +14,7 @@ from typing import Any, Sequence
 
 import cv2
 import numpy as np
-from scipy import signal  # type: ignore[import-untyped]
+from scipy import signal
 from codegen.yamlio import StrictLoader
 
 
@@ -89,6 +89,12 @@ def report_calibration_surface(profile_name: str = "default") -> dict[str, Any]:
     }
 
 
+class SensorFailure(RuntimeError):
+    """Raised when a sensor track fails physiological sanity bounds."""
+
+    pass
+
+
 class S1ChestMotionDetector:
     """
     Sensor S1: Detects CPR chest compression motion intervals and pause CCIs
@@ -104,6 +110,24 @@ class S1ChestMotionDetector:
         self.profile = load_roi_config(self.profile_name)
         self.s1_config = dict(self.profile.get("s1_motion", {}))
 
+    def _validate_track(self, active_mask: np.ndarray, duration_s: float) -> None:
+        """
+        Sanity check that raises SensorFailure if track fraction is < 0.05 or > 0.98.
+        Only enforced on clinical resuscitation tracks (duration_s >= 60.0s).
+        """
+        if duration_s >= 60.0:
+            frac = float(np.mean(active_mask))
+            if frac < 0.05:
+                raise SensorFailure(
+                    f"S1 active fraction {frac:.4f} < 0.05 on clinical track ({duration_s:.1f}s). "
+                    "Sensor failure: almost zero compressions detected."
+                )
+            if frac > 0.98:
+                raise SensorFailure(
+                    f"S1 active fraction {frac:.4f} > 0.98 on clinical track ({duration_s:.1f}s). "
+                    "Sensor failure: no pauses detected."
+                )
+
     def detect_from_vy_signal(
         self,
         vy_signal: np.ndarray | Sequence[float],
@@ -117,11 +141,12 @@ class S1ChestMotionDetector:
         if n_frames < 4 or fps <= 0:
             return []
 
+        # Camera bump exclusion: vy > 30 px/frame is global motion / camera bump, not compression
+        bump_mask = np.abs(vy_arr) > 30.0
+        vy_arr_clean = np.where(bump_mask, 0.0, vy_arr)
+
         min_hz = float(self.s1_config.get("vy_bandpass_min_hz", 1.3))
         max_hz = float(self.s1_config.get("vy_bandpass_max_hz", 3.0))
-        threshold_ratio = float(
-            self.s1_config.get("energy_threshold_ratio", 0.05)
-        )
         min_active_s = float(self.s1_config.get("min_active_duration_s", 2.0))
         conf_val = float(self.s1_config.get("confidence", 0.85))
 
@@ -130,18 +155,20 @@ class S1ChestMotionDetector:
         high = max(low + 0.01, min(0.99, max_hz / nyq))
 
         b, a = signal.butter(2, [low, high], btype="band")
-        filtered = signal.filtfilt(b, a, vy_arr)
+        filtered = signal.filtfilt(b, a, vy_arr_clean)
 
         win = max(1, int(fps * 0.1))
         kernel = np.ones(win, dtype=float) / float(win)
         energy = np.convolve(filtered**2, kernel, mode="same")
 
-        max_energy = float(np.max(energy))
-        if max_energy <= 1e-12:
-            return []
+        # Outlier-resistant percentile statistics
+        baseline = float(np.percentile(energy, 10))
+        active_p = float(np.percentile(energy, 90))
+        threshold = baseline + 0.3 * (active_p - baseline)
 
-        threshold = threshold_ratio * max_energy
         active_mask = energy > threshold
+        duration_s = float(n_frames / fps)
+        self._validate_track(active_mask, duration_s)
 
         gap_merge_s = float(self.s1_config.get("gap_merge_duration_s", 0.5))
         gap_merge_frames = int(gap_merge_s * fps)

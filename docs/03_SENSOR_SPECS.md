@@ -163,11 +163,11 @@ def detect_defib_shocks(audio_16k: list[float], sr: int = 16000) -> list[dict]:
 
 ### 3.4 Calibration, Failure Modes, Degraded Behavior & Validation
 * **Calibration**: Requires per-manufacturer defibrillator charge tone frequency profile (`CR-003`).
-* **Windowed Adjudicator Contract (`F-013`)**: Sensor S3 operates as a windowed adjudicator over candidate regions proposed by LLM passes ("union for recall, acoustic adjudication for precision"), to be wired in `S09`. Standalone full-track detection without window gating is unvalidated and subject to speech formant and equipment alarm false positives.
+* **Windowed Adjudicator Contract (`F-013`, `F-014`)**: Sensor S3 operates as a windowed adjudicator (`adjudicate(audio_or_video_path, candidate_t, window_s=30.0) -> DefibVerdict`) over candidate regions proposed by LLM/P1 passes ("union for recall, acoustic adjudication for precision"), to be wired in `S09`. Standalone full-track detection without window gating yields ~100% false positives (`F-014`) due to speech formants and equipment alarms in the 400-1000 Hz band.
 * **Failure Modes**: Siren noise masking tones; non-standard defibrillator manufacturer tones.
 * **Degraded Behavior**: When acoustic SNR `< 5.0`, defers shock adjudication to LLM Union-of-k draws (`F-008`).
 * **Validation Target**: `0` false positives on calibration set; timing accuracy `<= 0.2s`.
-* **Built Status**: Offline probe validated (`F-009`); streaming pipeline **NOT BUILT** in Phase 1 ([D00](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D00.md)).
+* **Built Status**: Offline probe and windowed adjudicator validated (`F-009`, `F-013`); streaming pipeline **NOT BUILT** in Phase 1 ([D00](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D00.md)).
 
 ---
 

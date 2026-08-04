@@ -286,6 +286,64 @@ def test_path_coverage_and_stochastic_experiments() -> None:
     assert "1_3_pct_mean" in stoch
 
 
+def test_deduplicate_window_streams_keeps_overlap_orphans() -> None:
+    """Dedup should remove duplicates, never orphans (F-005)."""
+    from generated.models import EventStream, Event, CaseFields
+    from ingest.ensemble import deduplicate_window_streams
+
+    ev1 = Event(type="pulse_check", t_start_s=841.0, attributes={}, evidence=[])
+    ev_prim = Event(type="pulse_check", t_start_s=500.0, attributes={}, evidence=[])
+    win1 = EventStream(case_id="test", events=[ev_prim, ev1], intervals=[], coverage=[], fields=CaseFields())
+    win2 = EventStream(case_id="test", events=[], intervals=[], coverage=[], fields=CaseFields())
+
+    dedup = deduplicate_window_streams([(win1, 420.0, 840.0), (win2, 840.0, 1260.0)])
+    assert len(dedup.events) == 2, "Orphan overlap-tail event at 841s must be kept when win2 has no counterpart"
+
+    ev2_dup = Event(type="pulse_check", t_start_s=841.5, attributes={}, evidence=[])
+    win2_with_dup = EventStream(case_id="test", events=[ev2_dup], intervals=[], coverage=[], fields=CaseFields())
+    dedup_dup = deduplicate_window_streams([(win1, 420.0, 840.0), (win2_with_dup, 840.0, 1260.0)])
+    assert len(dedup_dup.events) == 2, "Duplicate overlap-tail event should be removed, leaving prim + win2 copy"
+    assert dedup_dup.events[1].timestamp_s == 841.5
+
+
+def test_pair_boundary_events_creates_rosc_interval() -> None:
+    """rosc_detected and rosc_lost point events should pair into a rosc Interval."""
+    from generated.models import EventStream, Event, CaseFields
+    from ingest.ensemble import pair_boundary_events
+
+    ev1 = Event(type="rosc_detected", t_start_s=500.0, attributes={"pulse_palpable": True}, evidence=[])
+    ev2 = Event(type="rosc_lost", t_start_s=600.0, attributes={}, evidence=[])
+    stream = EventStream(case_id="test", events=[ev1, ev2], intervals=[], coverage=[], fields=CaseFields())
+
+    paired = pair_boundary_events(stream)
+    assert len(paired.intervals) == 1
+    inv = paired.intervals[0]
+    assert inv.type == "rosc"
+    assert inv.t_start_s == 500.0
+    assert inv.t_end_s == 600.0
+    assert inv.attributes == {"pulse_palpable": True}
+
+
+def test_validate_contract_obligations_catches_missing_and_gated_violations() -> None:
+    """validate_contract_obligations must emit contract_violation flags for missing ungated attrs and unsatisfied gated attrs."""
+    from generated.models import EventStream, Interval, CaseFields
+    from ingest.loader import validate_contract_obligations
+
+    inv = Interval(
+        type="compression_interruption",
+        t_start_s=100.0,
+        t_end_s=110.0,
+        attributes={"reasons": ["pulse_check"], "mccd_adjust_reasons": ["other"]},
+        evidence=[],
+    )
+    stream = EventStream(case_id="test", events=[], intervals=[inv], coverage=[], fields=CaseFields())
+    flags = validate_contract_obligations(stream)
+    assert len(flags) >= 2
+    msgs = [f.message for f in flags]
+    assert any("missing required" in m and "aline_present" in m for m in msgs)
+    assert any("gated attribute emitted: mccd_adjust_reasons" in m for m in msgs)
+
+
 @pytest.mark.integration
 def test_write_rows_integration_dry_run() -> None:
     """Integration mark test for write_rows."""

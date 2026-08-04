@@ -98,3 +98,14 @@ No new implementation work should be started in this repository until these exte
 1. **Gold Set (`25 cases`)**: Complete dual-annotated abstraction and third-rater adjudication across 25 historical resuscitation cases (10–15 days of human clinical work). This is the critical long pole that gates every accuracy claim and calibration task.
 2. **Sensors S1 + S2 + S5 (`Chest Motion, Compression Audio, Clock Anchor`)**: Build and integrate the three foundational hardware/signal processing sensors. Together, S1, S2, and S5 produce an authoritative Chest Compression Fraction (CCF) and peri-shock pause report **with no LLM in the loop**, representing the immediate high-value clinical shipping milestone.
 3. **Clinical Review of the 39 Anchor Cards (`CR-001..CR-005`, `Q-009`)**: Perform rigorous clinical audit and sign-off on all 39 anchor cards in `prompts/anchors/` to ensure event definitions, negative examples, and boundary conditions reflect real-world emergency department resuscitation reality.
+
+---
+
+## 7. DEMO — Live Verification & Methodological Results (DEMO-1 & DEMO-2)
+Live end-to-end execution of the pipeline against clinical simulation video `simvideo2.mp4` (`1363.78s`) is documented in detail in [`docs/DEMO_FINDINGS.md`](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/DEMO_FINDINGS.md). Key takeaways include:
+* **End-to-End Functional Verification**: Successfully processed raw video through 14 model calls (`gemini-3.6-flash`, `gemini-3.1-pro-preview`, SHA `7eefcd6e9698d28e`) into 1,879 REDCap fields and BigQuery curated views with zero audit hard gate violations.
+* **Abstention Fidelity**: 100% of ~100 ROSC vital columns and ~60 A-line columns returned cleanly unpopulated/UTD without hallucinating numerical values from illegible monitors.
+* **Methodological Discovery (VLM Observation Boundary)**: Forced-choice 5-second block-by-block questioning is **100% stable and reproducible for sustained visual states** (chest compression interruptions), but **exhibits severe instability and false-positive flooding for instantaneous audio/visual events** (defibrillation shocks).
+* **Stochastic LLM Recall & Sensor Necessity**: A 5-call replication test on a 20s window (`730–750s`) yielded a **20% replication rate (1/5)** for a known shock (`741.2s`). Single LLM passes cannot serve as authoritative event counters, establishing that **Sensor S3 (defibrillator audio detector)** is a mandatory requirement.
+* **S3 Acoustic Buildability**: An acoustic signal processing probe on `simvideo2.mp4` (16 kHz mono) measured an RMS peak/median ratio of **`5.7`** (`> 5.0`) with a sharp discharge spike at `742.21s` and an unambiguous rising charge tone progression (`515 Hz -> 796 Hz`), confirming S3 is buildable and robust on clinical simulation footage.
+

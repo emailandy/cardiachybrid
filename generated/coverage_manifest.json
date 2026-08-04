@@ -1,13 +1,31 @@
 {
   "dict_version": "e7c08437adcef4a5",
   "registry_version": 1,
+  "n_fields": 909,
   "n_variables": 911,
+  "n_calc": 2,
   "DICT_EXPORT_COLUMNS": 1891,
   "DICT_IMPORTABLE_COLUMNS": 1889,
   "SYSTEM_COLUMNS": 2,
   "SUBMISSION_COLUMNS": 1891,
-  "by_source_class": {},
-  "by_difficulty": {},
+  "by_source_class": {
+    "AI_DIRECT": 806,
+    "AI_DERIVED": 49,
+    "REDCAP_CALC": 2,
+    "AI_NARRATIVE": 7,
+    "CONDITIONAL": 35,
+    "ROSTER_JOIN": 8,
+    "HUMAN_ONLY": 2
+  },
+  "by_difficulty": {
+    "HIGH": 345,
+    "LOW": 136,
+    "MEDIUM": 418,
+    "NOT_EXTRACTABLE": 10
+  },
+  "domains": {
+    "video_review": 909
+  },
   "suppressed_checkbox_codes": [
     "mccd_obstacles___1",
     "mccd_obstacles___2"

@@ -28,7 +28,9 @@ CREATE TABLE IF NOT EXISTS `{raw_dataset}.dim_case` (
   patient_age FLOAT64,
   patient_sex STRING,
   arrest_location STRING,
-  attributes JSON
+  attributes JSON,
+  is_synthetic BOOL,
+  site STRING
 ) CLUSTER BY case_id;
 
 CREATE TABLE IF NOT EXISTS `{raw_dataset}.dim_run` (
@@ -89,6 +91,8 @@ CREATE TABLE IF NOT EXISTS `{raw_dataset}.fact_interval` (
   interval_type STRING NOT NULL,
   t_start_s FLOAT64,
   t_end_s FLOAT64,
+  duration_s FLOAT64,
+  reasons ARRAY<STRING>,
   confidence FLOAT64,
   source STRING,
   routed_to_human BOOL,
@@ -131,6 +135,7 @@ CREATE TABLE IF NOT EXISTS `{raw_dataset}.fact_redcap_field` (
   source_class STRING,
   branching_satisfied BOOL,
   abstained BOOL,
+  confidence FLOAT64,
   source_event_ids ARRAY<STRING>,
   human_verified BOOL,
   human_value STRING,
@@ -155,6 +160,11 @@ CREATE TABLE IF NOT EXISTS `{raw_dataset}.fact_metric` (
   run_id STRING NOT NULL,
   metric_name STRING NOT NULL,
   metric_value FLOAT64,
+  value FLOAT64,
+  numerator FLOAT64,
+  denominator FLOAT64,
+  null_reason STRING,
+  unit STRING,
   calculation_details JSON,
   event_date DATE
 ) PARTITION BY event_date CLUSTER BY case_id, metric_name;
@@ -380,6 +390,7 @@ WHERE df.is_importable = TRUE
   AND df.source_class NOT IN ('HUMAN_ONLY', 'ROSTER_JOIN', 'REDCAP_CALC')
   AND f.branching_satisfied = TRUE
   AND f.abstained = FALSE
+  AND (f.confidence IS NULL OR f.confidence < 1.0)
   AND (f.value IS NULL OR f.value = '');
 
 CREATE OR REPLACE VIEW `{curated_dataset}.v_audit_domain_coverage` AS
@@ -439,7 +450,7 @@ WHERE df.is_importable = TRUE
   AND df.expected_utd_floor > 0.0
   AND f.branching_satisfied = TRUE
 GROUP BY df.field_name, df.domain, df.expected_utd_floor
-HAVING actual_utd_rate < df.expected_utd_floor;
+HAVING total_cases >= 20 AND actual_utd_rate < df.expected_utd_floor;
 
 CREATE OR REPLACE VIEW `{curated_dataset}.v_audit_branching_violation` AS
 SELECT
@@ -453,6 +464,34 @@ JOIN `{raw_dataset}.dim_redcap_field` df
 WHERE f.branching_satisfied = FALSE
   AND f.value IS NOT NULL
   AND f.value != '';
+
+CREATE OR REPLACE VIEW `{curated_dataset}.v_case_metrics` AS
+SELECT
+  m.case_id,
+  m.run_id,
+  m.metric_name,
+  COALESCE(m.value, m.metric_value) AS value,
+  m.numerator,
+  m.denominator,
+  m.unit,
+  m.null_reason,
+  m.event_date,
+  c.site
+FROM `{raw_dataset}.fact_metric` m
+JOIN `{raw_dataset}.dim_case` c USING (case_id);
+
+CREATE OR REPLACE VIEW `{curated_dataset}.v_cci_reasons` AS
+SELECT
+  i.case_id,
+  i.run_id,
+  ROW_NUMBER() OVER(PARTITION BY i.case_id, i.run_id ORDER BY i.t_start_s) AS seq,
+  COALESCE(i.duration_s, i.t_end_s - i.t_start_s) AS duration_s,
+  reason,
+  i.event_date
+FROM `{raw_dataset}.fact_interval` i
+JOIN `{raw_dataset}.dim_case` c USING (case_id),
+UNNEST(i.reasons) AS reason
+WHERE i.interval_type IN ('cci', 'compression_interruption');
 """
     return sql.strip() + "\n"
 

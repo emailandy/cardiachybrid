@@ -68,15 +68,15 @@ def match_item_clusters(
     for i in range(n):
         r1, i1, item1 = all_items[i]
         t1 = get_ts(item1)
-        end1 = float(item1.get("t_end_s", t1))
-        p1 = float(item1.get("t_precision_s", 1.0))
+        end1 = float(item1.get("t_end_s") if item1.get("t_end_s") is not None else t1)
+        p1 = float(item1.get("t_precision_s") if item1.get("t_precision_s") is not None else 1.0)
         for j in range(i + 1, n):
             r2, i2, item2 = all_items[j]
             if r1 == r2:
                 continue
             t2 = get_ts(item2)
-            end2 = float(item2.get("t_end_s", t2))
-            p2 = float(item2.get("t_precision_s", 1.0))
+            end2 = float(item2.get("t_end_s") if item2.get("t_end_s") is not None else t2)
+            p2 = float(item2.get("t_precision_s") if item2.get("t_precision_s") is not None else 1.0)
             dt = abs(t1 - t2)
             if is_interval:
                 dt_end = abs(end1 - end2)
@@ -228,7 +228,7 @@ def merge_cluster(
         if votes_accept < k:
             merged_attrs["ensemble_flag"] = "2/3_majority"
 
-        conf_vals = [float(x.get("confidence", 1.0)) for x in cluster]
+        conf_vals = [float(x.get("confidence") if x.get("confidence") is not None else 1.0) for x in cluster]
         med_conf = round(statistics.median(conf_vals), 4)
 
         base_item = cluster[0].copy()
@@ -553,6 +553,131 @@ def run_stochastic_ensemble_experiment(n_seeds: int = 20) -> dict[str, Any]:
         "ties_1_1_1_mean": round(statistics.mean(ties_list), 1),
         "ties_1_1_1_range": f"{min(ties_list)}–{max(ties_list)}",
     }
+
+
+def deduplicate_window_streams(
+    windows: list[tuple[Any, float, float]],
+    overlap_tol_s: float = 5.0,
+) -> Any:
+    """
+    Deduplicates a sequence of overlapping window EventStream objects across a case.
+    Rule: Dedup should remove duplicates, never orphans (F-005).
+    Each entry in `windows` is a tuple of (stream, win_start_primary, primary_end).
+    - Items in [win_start_primary, primary_end) are kept.
+    - Items in the overlap tail (>= primary_end) are kept IF AND ONLY IF no
+      subsequent window contains a matching item of the same type within overlap_tol_s.
+    """
+    if not windows:
+        raise ValueError("windows list must not be empty")
+
+    from generated.models import EventStream
+
+    kept_events = []
+    kept_intervals = []
+    kept_coverage = []
+    final_fields = windows[-1][0].fields
+    case_id = windows[0][0].case_id
+
+    n = len(windows)
+    for i, (stream, start_prim, end_prim) in enumerate(windows):
+        is_last = (i == n - 1)
+        # Check events
+        for ev in stream.events:
+            ts = getattr(ev, "timestamp_s", getattr(ev, "t_start_s", 0.0))
+            if ts < start_prim:
+                continue
+            if is_last or ts < end_prim:
+                kept_events.append(ev)
+            else:
+                # Overlap tail: check if any subsequent window has a matching event
+                has_match = False
+                for j in range(i + 1, n):
+                    next_stream, _, _ = windows[j]
+                    for next_ev in next_stream.events:
+                        next_ts = getattr(next_ev, "timestamp_s", getattr(next_ev, "t_start_s", 0.0))
+                        if ev.type == next_ev.type and abs(ts - next_ts) <= overlap_tol_s:
+                            has_match = True
+                            break
+                    if has_match:
+                        break
+                if not has_match:
+                    kept_events.append(ev)
+
+        # Check intervals
+        for inv in stream.intervals:
+            ts = getattr(inv, "t_start_s", 0.0)
+            if ts < start_prim:
+                continue
+            if is_last or ts < end_prim:
+                kept_intervals.append(inv)
+            else:
+                # Overlap tail: check if any subsequent window has a matching interval
+                has_match = False
+                for j in range(i + 1, n):
+                    next_stream, _, _ = windows[j]
+                    for next_inv in next_stream.intervals:
+                        next_ts = getattr(next_inv, "t_start_s", 0.0)
+                        if inv.type == next_inv.type and abs(ts - next_ts) <= overlap_tol_s:
+                            has_match = True
+                            break
+                    if has_match:
+                        break
+                if not has_match:
+                    kept_intervals.append(inv)
+
+        kept_coverage.extend(stream.coverage)
+
+    return EventStream(
+        case_id=case_id,
+        events=kept_events,
+        intervals=kept_intervals,
+        coverage=kept_coverage,
+        fields=final_fields,
+    )
+
+
+def pair_boundary_events(stream: Any) -> Any:
+    """
+    Deterministically pairs start/end boundary events into Interval objects.
+    Specifically pairs 'rosc_detected' and 'rosc_lost' point events into 'rosc' Interval objects.
+    """
+    from generated.models import EventStream, Interval
+    rosc_starts = sorted([e for e in stream.events if e.type == "rosc_detected"], key=lambda x: getattr(x, "t_start_s", 0.0))
+    rosc_ends = sorted([e for e in stream.events if e.type == "rosc_lost"], key=lambda x: getattr(x, "t_start_s", 0.0))
+
+    new_intervals = list(stream.intervals)
+    used_ends = set()
+
+    for start_ev in rosc_starts:
+        t0 = getattr(start_ev, "t_start_s", 0.0)
+        # Find earliest rosc_lost after t0
+        t1 = None
+        for i, end_ev in enumerate(rosc_ends):
+            if i in used_ends:
+                continue
+            te = getattr(end_ev, "t_start_s", 0.0)
+            if te >= t0:
+                t1 = te
+                used_ends.add(i)
+                break
+
+        inv = Interval(
+            type="rosc",
+            t_start_s=t0,
+            t_end_s=t1,
+            t_precision_s=getattr(start_ev, "t_precision_s", None),
+            attributes=getattr(start_ev, "attributes", {}),
+            evidence=getattr(start_ev, "evidence", []),
+        )
+        new_intervals.append(inv)
+
+    return EventStream(
+        case_id=stream.case_id,
+        events=stream.events,
+        intervals=new_intervals,
+        coverage=stream.coverage,
+        fields=stream.fields,
+    )
 
 
 def main() -> None:

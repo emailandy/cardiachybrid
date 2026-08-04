@@ -44,6 +44,26 @@ class Repair:
     reason: str
 
 
+def _derive_abstain_reason(f_spec: Any, emit_key: str, item: Any = None, stream: Any = None, cause: str | None = None, found_count: int = 0, required_count: int = 1) -> str:
+    if cause == 'case_field': return 'case-level determination not made by adjudication pass'
+    if cause == 'requires_p5': return 'requires P5 (A06)'
+    if cause == 'end_of_video': return 'end of recording timestamp not available'
+    if cause == 'coverage_degraded': return 'channel coverage degraded'
+    if cause == 'nth_distinct':
+        if found_count == 0: return 'no airway confirmation observed'
+        return f'only one confirmation method observed; this field requires {required_count}' if found_count == 1 else f'only {found_count} confirmation methods observed; this field requires {required_count}'
+    if item and (r := getattr(item, 'attributes', {}).get('abstain_reason')): return str(r)
+    if stream and getattr(stream, 'coverage', None) and item:
+        t = getattr(item, 'timestamp_s', getattr(item, 't_start_s', 0.0))
+        for cn in stream.coverage:
+            if any(getattr(cn, 'type', '') in issues for issues in _CHANNEL_ISSUES.values()):
+                t0, t1 = getattr(cn, 't0', getattr(cn, 't_start_s', 0.0)), getattr(cn, 't1', getattr(cn, 't_end_s', 0.0))
+                if t0 <= t <= t1 or (t0 == 0.0 and t1 == 0.0):
+                    chan = getattr(cn, 'channel', 'channel'); return f'{chan} coverage degraded: {cn.type} ({t0:.0f}-{t1:.0f}s)'
+    if getattr(f_spec, 'required', False): return f'model omitted required attribute {emit_key!r} — contract violation'
+    return 'no evidence observed'
+
+
 @dataclass(slots=True, frozen=True)
 class Flag:
     field_name: str | None
@@ -61,8 +81,7 @@ _INTERVAL_TYPE_MAP: dict[str, str] = {'cci': 'compression_interruption', 'rosc':
 
 
 def _get_item_id(item: Event | Interval) -> str:
-    ts = getattr(item, 'timestamp_s', getattr(item, 't_start_s', 0.0))
-    return f'{item.type}@{ts}'
+    ts = getattr(item, 'timestamp_s', getattr(item, 't_start_s', 0.0)); return f'{item.type}@{ts}'
 
 
 def _enrich_item_attributes(item: Event | Interval) -> None:
@@ -127,11 +146,8 @@ def _filter_items(stream: EventStream, et: str | None, where: dict[str, Any] | N
 
 
 def _check_coverage_degraded(stream: EventStream, channels: list[str]) -> bool:
-    if not channels or not stream.coverage:
-        return False
-    target_issues: set[str] = set()
-    for ch in channels:
-        target_issues.update(_CHANNEL_ISSUES.get(ch, set()))
+    if not channels or not stream.coverage: return False
+    target_issues = {issue for ch in channels for issue in _CHANNEL_ISSUES.get(ch, set())}
     return any(note.type in target_issues for note in stream.coverage)
 
 
@@ -163,8 +179,7 @@ def _validate_field_value(fv: FieldValue, f_spec: rf.FieldSpec) -> None:
         fv.validation_passed = False
         fv.validation_error = f'Value {val_str!r} does not match regex'
 
-
-_SYN = {'ohca': '1', 'in_ed_cardiac_arrest': '2', 'anterior_lateral': '1', 'anterolateral': '1', 'vf': '1', 'pulseless_vt': '2', 'pea': '3', 'asystole': '4', 'lucas': '1', 'defibtech': '2', 'autopulse': '3', 'ems': '1', 'ems_mccd_continued': '1', 'success': '1', 'ett': '1', 'endotracheal_dl': '1'}
+_SYN = {'ohca': '1', 'in_ed_cardiac_arrest': '2', 'anterior_lateral': '1', 'anterolateral': '1', 'vf': '1', 'pulseless_vt': '2', 'pea': '3', 'asystole': '4', 'lucas': '1', 'defibtech': '2', 'autopulse': '3', 'ems': '1', 'ems_mccd_continued': '1', 'success': '1', 'ett': '1', 'endotracheal_dl': '1', 'ems_pads_switched_to_ed': '1', 'ems_pads_used_for_rhythm': '2', 'ed_pads_used_no_ems': '3', 'unable_to_determine': '4'}
 
 
 def _map_vocab(val: Any, f_spec: rf.FieldSpec | None) -> Any:
@@ -173,8 +188,11 @@ def _map_vocab(val: Any, f_spec: rf.FieldSpec | None) -> Any:
     s = str(val).strip().lower()
     if s in f_spec.choices or (s in _SYN and _SYN[s] in f_spec.choices):
         return _SYN.get(s, str(val))
+    is_bool = (isinstance(val, bool) or s in ('false', 'true', 'yes', 'no'))
+    target = 'no' if s in ('false', 'no') else ('yes' if s in ('true', 'yes') else s)
     for k, v in f_spec.choices.items():
-        if s == str(v).strip().lower():
+        v_low = str(v).strip().lower()
+        if v_low == target and (not is_bool or v_low in ('yes', 'no', 'true', 'false')):
             return str(k)
     return val
 
@@ -210,6 +228,7 @@ def _execute_rule(
     items: list[Event | Interval] | None = None,
     item_idx: int = 0,
     routed: bool = False,
+    duration_s: float | None = None,
 ) -> list[FieldValue]:
     rule_type = rule.get('rule') or rule.get('kind') or 'attr'
     f_name = rule.get('field') or rule.get('pattern')
@@ -234,7 +253,7 @@ def _execute_rule(
                 val = (yes_codes[0] if yes_codes else '1') if raw_val else (no_codes[0] if no_codes else '0')
             else:
                 val = '1' if raw_val else '0'
-        return [_emit_fv(f_name, val, label, 'AI_DIRECT', ['case_fields'], fields_spec, is_null=is_null, routed=routed, abstained=is_null, abstain_reason="Case field unpopulated" if is_null else None)]
+        return [_emit_fv(f_name, val, label, 'AI_DIRECT', ['case_fields'], fields_spec, is_null=is_null, routed=routed, abstained=is_null, abstain_reason=_derive_abstain_reason(f_spec, '', cause='case_field') if is_null else None)]
 
     if rule_type == 'const_null':
         return [_emit_fv(f_name, None, '', 'REDUCER_DERIVED', [], fields_spec, is_null=True, routed=routed)]
@@ -245,11 +264,13 @@ def _execute_rule(
     if rule_type in ('first_of', 'last_of'):
         target_item = items[0] if (rule_type == 'first_of' and items) else items[-1] if items else None
         if not target_item:
-            chans = rule.get('coverage_channels', [])
-            if _check_coverage_degraded(stream, chans):
-                return [_emit_fv(f_name, None, 'Unable to determine', 'REDUCER_DERIVED', ['stream_coverage'], fields_spec, is_null=True, routed=True, abstained=True, abstain_reason="Channel coverage degraded")]
-            fv = _emit_fv(f_name, None, '', 'REDUCER_DERIVED', [], fields_spec, is_null=True, routed=routed)
-            fv.confidence = 1.0  # Clean null: event did not occur, coverage adequate
+            if _check_coverage_degraded(stream, rule.get('coverage_channels', [])):
+                return [_emit_fv(f_name, None, 'Unable to determine', 'REDUCER_DERIVED', ['stream_coverage'], fields_spec, is_null=True, routed=True, abstained=True, abstain_reason=_derive_abstain_reason(fields_spec.get(f_name), '', cause='coverage_degraded'))]
+            if rule.get('fallback') == 'end_of_video':
+                if duration_s is None:
+                    return [_emit_fv(f_name, None, 'Unable to determine', 'REDUCER_DERIVED', ['fallback_end_of_video'], fields_spec, is_null=True, routed=False, abstained=True, abstain_reason=_derive_abstain_reason(fields_spec.get(f_name), '', cause='end_of_video'))]
+                return [_emit_fv(f_name, duration_s, str(duration_s), 'REDUCER_DERIVED', ['fallback_end_of_video'], fields_spec, is_null=False, routed=routed)]
+            fv = _emit_fv(f_name, None, '', 'REDUCER_DERIVED', [], fields_spec, is_null=True, routed=routed); fv.confidence = 1.0
             return [fv]
         emit_key = rule.get('emit')
         ids = [_get_item_id(target_item)]
@@ -258,7 +279,7 @@ def _execute_rule(
             return [_emit_fv(f_name, ts, str(ts), 'REDUCER_DERIVED', ids, fields_spec, routed=routed)]
         val = target_item.attributes.get(emit_key)
         if val is None:
-            return [_emit_fv(f_name, None, '', 'REDUCER_DERIVED', ids, fields_spec, is_null=True, abstained=True, abstain_reason=f"Missing attribute {emit_key!r} on observed event", routed=routed)]
+            return [_emit_fv(f_name, None, '', 'REDUCER_DERIVED', ids, fields_spec, is_null=True, abstained=True, abstain_reason=_derive_abstain_reason(fields_spec.get(f_name), str(emit_key or ''), target_item, stream=stream), routed=routed)]
         return [_emit_fv(f_name, val, str(val), 'REDUCER_DERIVED', ids, fields_spec, is_null=False, routed=routed)]
 
     if rule_type == 'nth_distinct_attribute':
@@ -273,16 +294,15 @@ def _execute_rule(
         if len(distinct_vals) >= n:
             v, i_id = distinct_vals[n - 1]
             return [_emit_fv(f_name, v, str(v), 'REDUCER_DERIVED', [i_id], fields_spec, routed=routed)]
-        return [_emit_fv(f_name, None, '', 'REDUCER_DERIVED', [], fields_spec, is_null=True, abstained=True, abstain_reason=f"Fewer than {n} distinct values for {emit_key!r}", routed=routed)]
+        return [_emit_fv(f_name, None, '', 'REDUCER_DERIVED', [], fields_spec, is_null=True, abstained=True, abstain_reason=_derive_abstain_reason(fields_spec.get(f_name), str(emit_key or ''), cause='nth_distinct', found_count=len(distinct_vals), required_count=n), routed=routed)]
 
     if rule_type == 'gate_3way':
         if items:
             ids = [_get_item_id(it) for it in items]
             return [_emit_fv(f_name, '1', 'Yes', 'REDUCER_DERIVED', ids, fields_spec, routed=routed)]
-        chans = rule.get('coverage_channels', [])
-        if _check_coverage_degraded(stream, chans):
+        if _check_coverage_degraded(stream, rule.get('coverage_channels', [])):
             val = None if rule.get('no_utd_code') == 'abstain' else '3'
-            return [_emit_fv(f_name, val, 'Unable to determine', 'REDUCER_DERIVED', ['stream_coverage'], fields_spec, is_null=(val is None), routed=True if val is None else routed, abstained=True, abstain_reason="Channel coverage degraded")]
+            return [_emit_fv(f_name, val, 'Unable to determine', 'REDUCER_DERIVED', ['stream_coverage'], fields_spec, is_null=(val is None), routed=True if val is None else routed, abstained=True, abstain_reason=_derive_abstain_reason(fields_spec.get(f_name), '', cause='coverage_degraded'))]
         return [_emit_fv(f_name, '2', 'No', 'REDUCER_DERIVED', ['stream_absence'], fields_spec, routed=routed)]
 
     if rule_type == 'gate_yesno':
@@ -302,15 +322,11 @@ def _execute_rule(
     if rule_type == 'attr':
         target_item = items[item_idx] if item_idx < len(items) else (items[0] if items else None)
         if not target_item:
-            return [_emit_fv(f_name, None, '', 'REDUCER_DERIVED', [], fields_spec, is_null=True, routed=routed)]
-        emit_key = rule.get('emit', '')
-        ids = [_get_item_id(target_item)]
-        if emit_key in ('t_start_s', 't_end_s', 'timestamp_s', 'timestamp'):
-            ts = getattr(target_item, emit_key, getattr(target_item, 'timestamp_s', getattr(target_item, 't_start_s', None)))
-            return [_emit_fv(f_name, ts, str(ts), 'REDUCER_DERIVED', ids, fields_spec, is_null=(ts is None), routed=routed)]
-        val = target_item.attributes.get(emit_key)
+            fv = _emit_fv(f_name, None, '', 'REDUCER_DERIVED', [], fields_spec, is_null=True, routed=routed); fv.confidence = 1.0; return [fv]
+        emit_key, ids = rule.get('emit', ''), [_get_item_id(target_item)]
+        val = getattr(target_item, emit_key, getattr(target_item, 'timestamp_s', getattr(target_item, 't_start_s', None))) if emit_key in ('t_start_s', 't_end_s', 'timestamp_s', 'timestamp') else target_item.attributes.get(emit_key)
         if val is None:
-            return [_emit_fv(f_name, None, '', 'REDUCER_DERIVED', ids, fields_spec, is_null=True, abstained=True, abstain_reason=f"Missing attribute {emit_key!r} on observed event", routed=routed)]
+            return [_emit_fv(f_name, None, '', 'REDUCER_DERIVED', ids, fields_spec, is_null=True, abstained=True, abstain_reason=_derive_abstain_reason(fields_spec.get(f_name), str(emit_key or ''), target_item, stream=stream), routed=routed)]
         return [_emit_fv(f_name, val, str(val), 'REDUCER_DERIVED', ids, fields_spec, is_null=False, routed=routed)]
 
     if rule_type == 'checkbox':
@@ -343,7 +359,7 @@ def _execute_rule(
 
     if rule_type == 'notes':
         # Q-004 INTERIM DEFAULT: MCCD adjustment window with multiple adjustments defaults to envelope. A one-line registry change flips it.
-        return [_emit_fv(f_name, None, '', 'REDUCER_DERIVED', [], fields_spec, is_null=True, abstained=True, abstain_reason="requires P5 (A06)", routed=routed)]
+        return [_emit_fv(f_name, None, '', 'REDUCER_DERIVED', [], fields_spec, is_null=True, abstained=True, abstain_reason=_derive_abstain_reason(fields_spec.get(f_name), '', cause='requires_p5'), routed=routed)]
 
     if rule_type == 'team_score':
         # Q-006 INTERIM DEFAULT: TEAM autonomy threshold defaults to standard routing. A one-line registry change flips it.
@@ -404,7 +420,7 @@ def _process_repeating_group(
             ov_val = f'Overflow: true count was {true_count}'
             res.append(_emit_fv(ov_field, ov_val, str(ov_val), 'REDUCER_DERIVED', [], fields_spec, is_null=False, routed=True))
         else:
-            res.append(_emit_fv(ov_field, None, '', 'REDUCER_DERIVED', [], fields_spec, is_null=True, abstained=True, abstain_reason="requires P5 (A06)", routed=is_overflow))
+            res.append(_emit_fv(ov_field, None, '', 'REDUCER_DERIVED', [], fields_spec, is_null=True, abstained=True, abstain_reason=_derive_abstain_reason(fields_spec.get(ov_field), '', cause='requires_p5'), routed=is_overflow))
 
     for idx in range(1, max_count + 1):
         target_items = [items[idx - 1]] if idx <= len(items) else []
@@ -418,6 +434,7 @@ def reduce_stream(
     stream: EventStream,
     registry: dict[str, Any] | None = None,
     fields_spec: dict[str, rf.FieldSpec] | None = None,
+    duration_s: float | None = None,
 ) -> tuple[list[FieldValue], list[Repair], list[Flag]]:
     """Reduces an EventStream into field values, repair records, and flags."""
     if registry is None:
@@ -442,7 +459,7 @@ def reduce_stream(
             if rule.get('field') in group_managed:
                 continue
             if rule.get('rule') and not rule.get('repeat_group'):
-                values.extend(_execute_rule(rule, stream, fields_spec))
+                values.extend(_execute_rule(rule, stream, fields_spec, duration_s=duration_s))
 
     for group in registry.get('groups', []):
         values.extend(_process_repeating_group(group, stream, fields_spec))
@@ -457,43 +474,21 @@ def reduce_stream(
         record[fv.field_name] = val
 
     for fv in values:
-        pred = (
-            bc.PREDICATES.get(fv.field_name)
-            or bc.PREDICATES.get(fv.export_column)
-            or bc.PREDICATES.get(fv.field_name.split('___')[0])
-            or bc.PREDICATES.get(fv.export_column.split('___')[0])
-        )
+        pred = bc.PREDICATES.get(fv.field_name) or bc.PREDICATES.get(fv.export_column) or bc.PREDICATES.get(fv.field_name.split('___')[0]) or bc.PREDICATES.get(fv.export_column.split('___')[0])
         if pred and not pred(record):
             fv.branching_satisfied = False
             if not fv.is_null and fv.value is not None:
                 repairs.append(Repair(field_name=fv.field_name, old_value=fv.value, reason='branching_predicate_false'))
-                fv.is_null = True
-                fv.value = None
-                fv.value_label = ''
+                fv.is_null, fv.value, fv.value_label = True, None, ''
 
     for interval in stream.intervals:
         if interval.t_end_s is not None and interval.t_end_s < interval.t_start_s:
             flags.append(Flag(None, 'inverted_interval', f'Interval start {interval.t_start_s} > end {interval.t_end_s}', [_get_item_id(interval)]))
-
     cci_intervals = [i for i in stream.intervals if i.type == 'compression_interruption']
-    for e in stream.events:
-        if e.type == 'defibrillation_shock':
-            in_cci = any(i.t_start_s <= e.timestamp_s <= (i.t_end_s or i.t_start_s) for i in cci_intervals)
-            if not in_cci:
-                flags.append(Flag(None, 'shock_outside_cci', f'Shock at {e.timestamp_s}s outside any CCI', [_get_item_id(e)]))
-
     rosc_intervals = [i for i in stream.intervals if i.type == 'rosc']
     for e in stream.events:
-        if e.type == 'medication_administration':
-            in_rosc = any(i.t_start_s <= e.timestamp_s <= (i.t_end_s or i.t_start_s) for i in rosc_intervals)
-            if in_rosc:
-                flags.append(Flag(None, 'med_inside_rosc', f'Medication at {e.timestamp_s}s during ROSC window', [_get_item_id(e)]))
+        if e.type == 'defibrillation_shock' and not any(i.t_start_s <= e.timestamp_s <= (i.t_end_s or i.t_start_s) for i in cci_intervals):
+            flags.append(Flag(None, 'shock_outside_cci', f'Shock at {e.timestamp_s}s outside any CCI', [_get_item_id(e)]))
+        elif e.type == 'medication_administration' and any(i.t_start_s <= e.timestamp_s <= (i.t_end_s or i.t_start_s) for i in rosc_intervals):
+            flags.append(Flag(None, 'med_inside_rosc', f'Medication at {e.timestamp_s}s during ROSC window', [_get_item_id(e)]))
     return values, repairs, flags
-
-
-def main() -> None:
-    raise NotImplementedError('reducer.engine is a library module. See docs/tasks/D05.md')
-
-
-if __name__ == '__main__':
-    main()

@@ -30,6 +30,7 @@ import json
 import logging
 import re
 import copy
+import functools
 
 from codegen.yamlio import load_yaml
 from prompts.registry import (
@@ -124,7 +125,7 @@ def select_anchors(
             reasons[t] = "always_include: high frequency default"
 
         # 2. Compressions track trigger
-        comps = sensor_data.get("compressions_active")
+        comps = sensor_data.get("compressions_active") if sensor_data else None
         if isinstance(comps, list) and len(comps) > 0:
             for t in [
                 "compression_interruption",
@@ -137,7 +138,7 @@ def select_anchors(
                     reasons[t] = "sensor_trigger: compressions_active"
 
         # 3. Device audio trigger
-        audio = sensor_data.get("device_audio")
+        audio = sensor_data.get("device_audio") if sensor_data else None
         if isinstance(audio, list) and len(audio) > 0:
             for t in ["defibrillation_shock", "defib_charge_aborted"]:
                 if t not in selected_set:
@@ -173,13 +174,195 @@ def select_anchors(
         return all_types, dict(sorted(reasons.items()))
 
 
-def to_vertex_schema(schema: dict[str, Any]) -> dict[str, Any]:
+class UnrepresentableSchema(ValueError):
+    """Raised when to_vertex_schema encounters a JSON Schema construct that Vertex AI cannot represent without losing constraints."""
+    pass
+
+
+def _get_attribute_schema(attr_spec: dict[str, Any]) -> dict[str, Any]:
+    kind = attr_spec.get("kind", "string")
+    vals = attr_spec.get("values", [])
+    if kind == "enum" and vals:
+        return {"anyOf": [{"type": "string", "enum": vals}, {"type": "null"}]}
+    elif kind == "multi_enum":
+        items_s = {"type": "string", "enum": vals} if vals else {"type": "string"}
+        return {"type": "array", "items": items_s}
+    elif kind == "int":
+        return {"anyOf": [{"type": "number"}, {"type": "null"}]}
+    elif kind == "bool":
+        return {"anyOf": [{"type": "boolean"}, {"type": "null"}]}
+    elif kind == "timestamp":
+        return {"anyOf": [{"type": "number"}, {"type": "string"}, {"type": "null"}]}
+    else:
+        return {"anyOf": [{"type": "string"}, {"type": "null"}]}
+
+
+@functools.lru_cache(maxsize=1)
+def _get_required_attributes_map() -> dict[str, list[str]]:
+    from codegen.yamlio import load_yaml
+    reg = load_yaml(Path("mapping/registry.yaml"))
+    req_by_type: dict[str, set[str]] = {}
+    interval_map = {"cci": "compression_interruption", "vent_delay": "ventilation_delay"}
+    for sec in reg.get("sections", []):
+        sec_type = sec.get("event_type") or sec.get("interval_type")
+        for f in sec.get("fields", []):
+            et = f.get("event_type") or f.get("interval_type") or sec_type
+            emit = f.get("emit")
+            if not et or not emit or f.get("gate"):
+                continue
+            et = interval_map.get(str(et), str(et))
+            req_by_type.setdefault(et, set()).add(str(emit))
+    for grp in reg.get("groups", []):
+        grp_type = grp.get("event_type") or grp.get("interval_type")
+        for f in grp.get("fields", []):
+            et = f.get("event_type") or f.get("interval_type") or grp_type
+            emit = f.get("emit")
+            if not et or not emit or f.get("gate"):
+                continue
+            et = interval_map.get(str(et), str(et))
+            req_by_type.setdefault(et, set()).add(str(emit))
+    return {k: sorted(v) for k, v in req_by_type.items()}
+
+
+def _build_p1_response_schema(selected_anchors: list[str]) -> dict[str, Any]:
+    # allow_empty_object=True because CaseFields is an open object schema representing dynamic REDCap fields
+    base_schema = to_vertex_schema(EventStream.model_json_schema(), allow_empty_object=True)
+    contract_path = Path("generated/extraction_contract.json")
+    if not contract_path.exists():
+        return base_schema
+    contract_data = json.loads(contract_path.read_text())
+    ev_types_contract = contract_data.get("event_types", {})
+
+    ev_list_schema = base_schema["properties"]["events"]["items"]["properties"]["evidence"]
+
+    event_anyof = []
+    interval_names = {"compression_interruption", "rosc", "ventilation_delay"}
+    event_types = sorted(set(selected_anchors) - interval_names)
+    for et in event_types:
+        attrs = ev_types_contract.get(et, {}).get("attributes", {})
+        attr_props = {name: _get_attribute_schema(spec) for name, spec in attrs.items()}
+        if not attr_props:
+            attr_props = {"notes": {"anyOf": [{"type": "string"}, {"type": "null"}]}}
+        req_attrs = [k for k in _get_required_attributes_map().get(et, []) if k in attr_props]
+        attrs_schema: dict[str, Any] = {"type": "object", "properties": attr_props}
+        if req_attrs:
+            attrs_schema["required"] = req_attrs
+        et_item = {
+            "type": "object",
+            "properties": {
+                "type": {"type": "string", "enum": [et]},
+                "t_start_s": {"type": "number"},
+                "t_end_s": {"anyOf": [{"type": "number"}, {"type": "null"}]},
+                "t_precision_s": {"anyOf": [{"type": "number"}, {"type": "null"}]},
+                "t_anchor_desc": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                "attributes": attrs_schema,
+                "confidence": {"anyOf": [{"type": "number"}, {"type": "null"}]},
+                "abstain": {"anyOf": [{"type": "boolean"}, {"type": "null"}]},
+                "abstain_reason": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                "in_overlap_zone": {"anyOf": [{"type": "boolean"}, {"type": "null"}]},
+                "contradicting_evidence": {"anyOf": [ev_list_schema, {"type": "null"}]},
+                "evidence": ev_list_schema,
+            },
+            "required": ["type", "t_start_s", "attributes", "evidence"],
+        }
+        event_anyof.append(et_item)
+
+    if event_anyof:
+        if len(event_anyof) <= 30:
+            base_schema["properties"]["events"]["items"] = {"anyOf": event_anyof}
+        else:
+            unified_attrs = {}
+            for et in event_types:
+                attrs = ev_types_contract.get(et, {}).get("attributes", {})
+                for name, spec in attrs.items():
+                    if name not in unified_attrs:
+                        unified_attrs[name] = _get_attribute_schema(spec)
+            if not unified_attrs:
+                unified_attrs = {"notes": {"anyOf": [{"type": "string"}, {"type": "null"}]}}
+            base_schema["properties"]["events"]["items"] = {
+                "type": "object",
+                "properties": {
+                    "type": {"type": "string", "enum": event_types},
+                    "t_start_s": {"type": "number"},
+                    "t_end_s": {"anyOf": [{"type": "number"}, {"type": "null"}]},
+                    "t_precision_s": {"anyOf": [{"type": "number"}, {"type": "null"}]},
+                    "t_anchor_desc": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                    "attributes": {"type": "object", "properties": unified_attrs},
+                    "confidence": {"anyOf": [{"type": "number"}, {"type": "null"}]},
+                    "abstain": {"anyOf": [{"type": "boolean"}, {"type": "null"}]},
+                    "abstain_reason": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                    "in_overlap_zone": {"anyOf": [{"type": "boolean"}, {"type": "null"}]},
+                    "contradicting_evidence": {"anyOf": [ev_list_schema, {"type": "null"}]},
+                    "evidence": ev_list_schema,
+                },
+                "required": ["type", "t_start_s", "attributes", "evidence"],
+            }
+
+    interval_anyof = []
+    for it in sorted(interval_names):
+        contract_key = "rosc_detected" if it == "rosc" else (
+            "ventilation_delay" if it == "vent_delay" else it
+        )
+        attrs = ev_types_contract.get(contract_key, {}).get("attributes", {})
+        attr_props = {name: _get_attribute_schema(spec) for name, spec in attrs.items()}
+        if not attr_props:
+            attr_props = {"notes": {"anyOf": [{"type": "string"}, {"type": "null"}]}}
+        req_attrs = [k for k in _get_required_attributes_map().get(it, []) if k in attr_props]
+        attrs_schema = {"type": "object", "properties": attr_props}
+        if req_attrs:
+            attrs_schema["required"] = req_attrs
+        it_item = {
+            "type": "object",
+            "properties": {
+                "type": {"type": "string", "enum": [it]},
+                "t_start_s": {"type": "number"},
+                "t_end_s": {"anyOf": [{"type": "number"}, {"type": "null"}]},
+                "t_precision_s": {"anyOf": [{"type": "number"}, {"type": "null"}]},
+                "attributes": attrs_schema,
+                "confidence": {"anyOf": [{"type": "number"}, {"type": "null"}]},
+                "abstain": {"anyOf": [{"type": "boolean"}, {"type": "null"}]},
+                "abstain_reason": {"anyOf": [{"type": "string"}, {"type": "null"}]},
+                "in_overlap_zone": {"anyOf": [{"type": "boolean"}, {"type": "null"}]},
+                "evidence": ev_list_schema,
+            },
+            "required": ["type", "t_start_s", "attributes", "evidence"],
+        }
+        interval_anyof.append(it_item)
+
+    if interval_anyof:
+        base_schema["properties"]["intervals"]["items"] = {"anyOf": interval_anyof}
+
+    return base_schema
+
+
+def _build_p2_response_schema(event_type: str) -> dict[str, Any]:
+    # allow_empty_object=True because base Event.attributes is unpopulated before we inject contract-typed attributes
+    base_schema = to_vertex_schema(Event.model_json_schema(), allow_empty_object=True)
+    contract_path = Path("generated/extraction_contract.json")
+    if not contract_path.exists():
+        return base_schema
+    contract_data = json.loads(contract_path.read_text())
+    ev_types_contract = contract_data.get("event_types", {})
+    attrs = ev_types_contract.get(event_type, {}).get("attributes", {})
+    attr_props = {name: _get_attribute_schema(spec) for name, spec in attrs.items()}
+    if not attr_props:
+        attr_props = {"notes": {"anyOf": [{"type": "string"}, {"type": "null"}]}}
+    req_attrs = [k for k in _get_required_attributes_map().get(event_type, []) if k in attr_props]
+    attrs_schema: dict[str, Any] = {"type": "object", "properties": attr_props}
+    if req_attrs:
+        attrs_schema["required"] = req_attrs
+    base_schema["properties"]["attributes"] = attrs_schema
+    return base_schema
+
+
+def to_vertex_schema(schema: dict[str, Any], allow_empty_object: bool = False) -> dict[str, Any]:
     """
     Dereferences $defs and $ref inline and strips unsupported keywords
     from a JSON Schema so it is accepted by Vertex AI structured outputs.
     
     Raises:
         ValueError: if recursive references are encountered or if any $ref / $defs remain.
+        UnrepresentableSchema: if an object schema has no properties and allow_empty_object is False.
     """
     schema_copy = copy.deepcopy(schema)
     defs = schema_copy.pop("$defs", {})
@@ -202,6 +385,10 @@ def to_vertex_schema(schema: dict[str, Any]) -> dict[str, Any]:
                 for k, v in obj.items():
                     if k not in ("$ref", "title", "default", "additionalProperties"):
                         resolved[k] = dereference(v, stack)
+                if resolved.get("type") == "object" and not allow_empty_object and not resolved.get("properties"):
+                    raise UnrepresentableSchema(
+                        f"Object schema with no properties is not permitted in Vertex AI structured output: {obj}"
+                    )
                 return resolved
             else:
                 new_dict = {}
@@ -216,6 +403,10 @@ def to_vertex_schema(schema: dict[str, Any]) -> dict[str, Any]:
                     ):
                         continue
                     new_dict[k] = dereference(v, stack)
+                if new_dict.get("type") == "object" and not allow_empty_object and not new_dict.get("properties"):
+                    raise UnrepresentableSchema(
+                        f"Object schema with no properties is not permitted in Vertex AI structured output: {obj}"
+                    )
                 return new_dict
         elif isinstance(obj, list):
             return [dereference(item, stack) for item in obj]
@@ -410,7 +601,7 @@ def build_p1(
     prompt_hash = compute_prompt_hash(system, user)
     write_prompt_snapshot(prompt_hash, system, user)
 
-    response_schema = to_vertex_schema(EventStream.model_json_schema())
+    response_schema = _build_p1_response_schema(selected_anchors)
     estimated_text_input_tokens = (len(system) + len(user)) // 4
 
     return BuiltPrompt(
@@ -492,7 +683,7 @@ def build_p2(
     prompt_hash = compute_prompt_hash(system, user)
     write_prompt_snapshot(prompt_hash, system, user)
 
-    response_schema = to_vertex_schema(Event.model_json_schema())
+    response_schema = _build_p2_response_schema(event_type)
     estimated_text_input_tokens = (len(system) + len(user)) // 4
 
     return BuiltPrompt(

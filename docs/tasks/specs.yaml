@@ -326,3 +326,144 @@ DEMO-0:
   creates: [docs/DEPLOY_LOG.md]
   depends: [D07, D07a]
   gate: "13 tables + 7 views exist in nodepeel; all 5 audit views execute against empty tables; IAM negative proof re-passes"
+S00:
+  title: "calibration harness + eval metrics"
+  creates:
+  - sensors/eval/metrics.py
+  - sensors/eval/calibrate.py
+  - sensors/eval/report.py
+  - sensors/eval/ground_truth/README.md
+  depends: []
+  gate: "metrics.py scores a hand-built fixture against known truth; every metric in the targets table implemented"
+  modify: []
+  reads:
+  - AGENTS.md
+  - docs/STATUS.md
+S01:
+  title: "S5 clock anchor"
+  creates:
+  - sensors/s5_timecode.py
+  - tests/test_s5.py
+  depends:
+  - S00
+  gate: "derives T0 from simvideo2.mp4 within 2s of 2023-11-07T07:55:57; raises ClockDrift on inconsistent samples"
+  modify: []
+  reads:
+  - sensors/eval/metrics.py
+  - sensors/eval/calibrate.py
+S02:
+  title: "S3 defibrillator audio"
+  creates:
+  - sensors/s3_defib.py
+  - sensors/calibration/defib_profiles.yaml
+  - tests/test_s3.py
+  depends:
+  - S00
+  gate: "operates as a windowed adjudicator (adjudicate) confirming 4/4 true shocks on simvideo2.mp4 and rejecting known negative controls (861.0, 884.5) and full-track speech/alarm false positives (F-013, F-014)"
+  modify: []
+  reads:
+  - sensors/eval/metrics.py
+  - sensors/eval/calibrate.py
+S03:
+  title: "S1 + S6 motion and coverage"
+  creates:
+  - sensors/s1_s6_motion.py
+  - sensors/calibration/roi_config.yaml
+  - tests/test_s1_s6.py
+  depends:
+  - S00
+  gate: "deterministic across 5 runs; CCI intervals emitted with confidence; calibration surface reported"
+  gate_note: "ACCURACY GATE DEFERRED. CCI F1 >= 0.85 and boundary MAE <= 1.5s require human-abstracted ground truth. Until the gold set lands, S03 is validated for DETERMINISM and PLAUSIBILITY only. Thresholds are provisional. Blocked on Q-017."
+  modify: []
+  reads:
+  - sensors/eval/metrics.py
+  - sensors/eval/calibrate.py
+S04:
+  title: "CCF report — the intermediate ship"
+  creates:
+  - sensors/ccf_report.py
+  - demo/ccf_viewer.html
+  - tests/test_ccf.py
+  depends:
+  - S01
+  - S02
+  - S03
+  gate: "produces a CCF report from video with zero LLM calls in under 10 minutes"
+  modify: []
+  reads:
+  - sensors/s1_s6_motion.py
+  - sensors/s3_defib.py
+  - sensors/s5_timecode.py
+S05:
+  title: "S7a Speech-to-Text v2"
+  creates:
+  - sensors/s7a_transcribe.py
+  - tests/test_s7a.py
+  depends:
+  - S00
+  gate: "word-level timestamps present on every token; phrase adaptation list applied; WER measured against a hand transcript"
+  modify: []
+  reads:
+  - sensors/eval/metrics.py
+  - sensors/eval/calibrate.py
+S06:
+  title: "S7b Gemini annotation"
+  creates:
+  - sensors/s7b_annotate.py
+  - prompts/passes/s7b_annotate.v1.0.md
+  - tests/test_s7b.py
+  depends:
+  - S05
+  gate: "ts_source is stt_acoustic on 100% of rows; a fixture where the model rewrites a timestamp is REJECTED by the parser"
+  modify: []
+  reads:
+  - sensors/s7a_transcribe.py
+S07:
+  title: "S2 compression audio"
+  creates:
+  - sensors/s2_compression_audio.py
+  - tests/test_s2.py
+  depends:
+  - S03
+  gate: "detects compressions through a synthetic full-occlusion window where S1 alone fails"
+  modify: []
+  reads:
+  - sensors/s1_s6_motion.py
+S08:
+  title: "S4 monitor OCR"
+  creates:
+  - sensors/s4_monitor_ocr.py
+  - sensors/calibration/monitor_layouts.yaml
+  - tests/test_s4.py
+  depends:
+  - S00
+  gate: "abstains below 0.80 confidence; deterministic; per-monitor layout config"
+  gate_note: "False-read rate < 0.5% requires human-verified vitals. Deferred to the gold set."
+  modify: []
+  reads:
+  - sensors/eval/metrics.py
+  - sensors/eval/calibrate.py
+S09:
+  title: "pipeline integration + re-measurement"
+  creates:
+  - pipeline/sensor_runner.py
+  - docs/SENSOR_FINDINGS.md
+  depends:
+  - S01
+  - S02
+  - S03
+  - S04
+  - S05
+  - S06
+  - S07
+  - S08
+  gate: "P1 receives all five sensor placeholders; replication experiment re-run and reported"
+  modify: []
+  reads:
+  - sensors/s1_s6_motion.py
+  - sensors/s2_compression_audio.py
+  - sensors/s3_defib.py
+  - sensors/s4_monitor_ocr.py
+  - sensors/s5_timecode.py
+  - sensors/s7a_transcribe.py
+  - sensors/s7b_annotate.py
