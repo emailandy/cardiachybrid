@@ -240,3 +240,17 @@ p5_notes:
     type: markdown_block
     source: reducer
     description: "Report of dropped repeating group items exceeding capacity."
+
+s7b_annotate:
+  contract_version:
+    type: string
+    source: registry
+    description: "Extraction contract version string."
+  audio_duration_s:
+    type: number
+    source: s7a_transcribe
+    description: "Total audio track duration in seconds."
+  stt_acoustic_transcript:
+    type: markdown_block
+    source: s7a_transcribe
+    description: "Authoritative acoustic speech-to-text transcript from Sensor S7a."
