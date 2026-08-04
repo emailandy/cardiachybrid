@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>resus_qc — Chest Compression Fraction (CCF) Clinical Report</title>
+  <style>
+    :root {
+      /* Light Mode Palette */
+      --bg-main: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-header: #ffffff;
+      --bg-hover: #f1f5f9;
+      --border-color: #e2e8f0;
+      --border-strong: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-dim: #64748b;
+      --accent-cyan: #0067b1;
+      --accent-emerald: #059669;
+      --accent-amber: #d97706;
+      --accent-rose: #e11d48;
+      --brand-navy: #002e5d;
+      --brand-blue: #0067b1;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    [data-theme="dark"] {
+      /* Dark Mode Palette (Default Premium Aesthetics) */
+      --bg-main: #0b0f19;
+      --bg-card: #111827;
+      --bg-header: #0f172a;
+      --bg-hover: #1e293b;
+      --border-color: #334155;
+      --border-strong: #475569;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --accent-cyan: #38bdf8;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --brand-navy: #38bdf8;
+      --brand-blue: #38bdf8;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    /* Header */
+    header {
+      background-color: var(--bg-header);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow-sm);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(8px);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logo-badge {
+      background: linear-gradient(135deg, #002e5d, #0067b1);
+      color: #ffffff;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 0.5px;
+    }
+
+    .header-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .btn {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-strong);
+      color: var(--text-main);
+      padding: 0.4rem 0.9rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      background-color: var(--bg-hover);
+      border-color: var(--accent-cyan);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0067b1, #004d84);
+      border: 1px solid #004d84;
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #007bc4, #005694);
+      color: #ffffff;
+    }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    /* Top Badges Banner */
+    .metadata-banner {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 1rem 1.5rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .badge-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .badge-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    .badge-value {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .badge-pill {
+      font-size: 0.75rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      background-color: var(--bg-hover);
+      border: 1px solid var(--border-color);
+    }
+
+    .pill-emerald {
+      background-color: rgba(16, 185, 129, 0.15);
+      color: var(--accent-emerald);
+      border-color: rgba(16, 185, 129, 0.4);
+    }
+
+    /* Scorecards Grid */
+    .scorecards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .scorecard {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .scorecard:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--border-strong);
+    }
+
+    .scorecard-title {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .scorecard-value {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--text-main);
+      display: flex;
+      align-items: baseline;
+      gap: 0.3rem;
+    }
+
+    .scorecard-sub {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+    }
+
+    /* Chart Card */
+    .chart-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.8rem;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .chart-container {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.8rem;
+      height: 200px;
+      padding: 1rem 0 0 0;
+      border-bottom: 1px solid var(--border-color);
+      position: relative;
+    }
+
+    .bar-column {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: flex-end;
+      position: relative;
+    }
+
+    .bar {
+      width: 85%;
+      background: linear-gradient(180deg, var(--accent-cyan), #0284c7);
+      border-radius: 4px 4px 0 0;
+      transition: height 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s ease;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .bar:hover {
+      filter: brightness(1.2);
+    }
+
+    .bar-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      font-weight: 600;
+    }
+
+    /* Tooltip */
+    .bar-tooltip {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: var(--bg-header);
+      color: var(--text-main);
+      border: 1px solid var(--border-strong);
+      padding: 0.4rem 0.7rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      box-shadow: var(--shadow-md);
+      z-index: 20;
+    }
+
+    .bar-column:hover .bar-tooltip {
+      opacity: 1;
+    }
+
+    /* Tables */
+    .table-section {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    th, td {
+      padding: 0.8rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background-color: var(--bg-hover);
+    }
+
+    tr:hover {
+      background-color: var(--bg-hover);
+    }
+
+    .badge-type {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .badge-shock {
+      background-color: rgba(225, 29, 72, 0.15);
+      color: var(--accent-rose);
+      border: 1px solid rgba(225, 29, 72, 0.4);
+    }
+
+    .badge-cci {
+      background-color: rgba(217, 119, 6, 0.15);
+      color: var(--accent-amber);
+      border: 1px solid rgba(217, 119, 6, 0.4);
+    }
+
+    .badge-cpr {
+      background-color: rgba(16, 185, 129, 0.15);
+      color: var(--accent-emerald);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border-color);
+      margin-top: auto;
+    }
+
+    #file-input {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-left">
+      <span class="logo-badge">RESUS_QC</span>
+      <span class="header-title">Chest Compression Fraction (CCF) Clinical Report</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn" id="theme-toggle" title="Toggle dark/light mode">
+        <span>🌓 Theme</span>
+      </button>
+      <button class="btn btn-primary" onclick="document.getElementById('file-input').click()">
+        <span>📂 Upload Report (.json)</span>
+      </button>
+      <input type="file" id="file-input" accept=".json" onchange="loadReportFile(event)" />
+    </div>
+  </header>
+
+  <main>
+    <!-- Top Metadata Banner -->
+    <div class="metadata-banner">
+      <div class="badge-item">
+        <span class="badge-label">Case ID</span>
+        <span class="badge-value" id="meta-case-id">simvideo2</span>
+      </div>
+      <div class="badge-item">
+        <span class="badge-label">Clock Anchor T0 (S5)</span>
+        <span class="badge-value">
+          <span id="meta-t0">2023-11-07T07:55:57</span>
+          <span class="badge-pill pill-emerald" id="meta-t0-source">burned_in</span>
+        </span>
+      </div>
+      <div class="badge-item">
+        <span class="badge-label">Video Feed</span>
+        <span class="badge-value" id="meta-path">tests/video/vidsim2.mp4</span>
+      </div>
+      <div class="badge-item">
+        <span class="badge-label">Validation Status</span>
+        <span class="badge-value">
+          <span class="badge-pill pill-emerald">DETERMINISTIC BIT-IDENTICAL</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Scorecards Grid -->
+    <div class="scorecards-grid">
+      <div class="scorecard">
+        <span class="scorecard-title">CCF Score (QI Metric)</span>
+        <div class="scorecard-value" id="score-ccf">15.38%</div>
+        <span class="scorecard-sub" id="score-ccf-sub">Ratio: 0.1538</span>
+      </div>
+      <div class="scorecard">
+        <span class="scorecard-title">Total Case Duration</span>
+        <div class="scorecard-value" id="score-total-dur">22m 44s</div>
+        <span class="scorecard-sub" id="score-total-dur-sub">1363.78 seconds</span>
+      </div>
+      <div class="scorecard">
+        <span class="scorecard-title">Total CPR Duration (S1)</span>
+        <div class="scorecard-value" id="score-cpr-dur">3m 30s</div>
+        <span class="scorecard-sub" id="score-cpr-dur-sub">209.74s CPR</span>
+      </div>
+      <div class="scorecard">
+        <span class="scorecard-title">Total CCI Pause Duration</span>
+        <div class="scorecard-value" id="score-cci-dur">19m 14s</div>
+        <span class="scorecard-sub" id="score-cci-dur-sub">1154.03s in pauses</span>
+      </div>
+      <div class="scorecard">
+        <span class="scorecard-title">CCIs > 10.0 Seconds</span>
+        <div class="scorecard-value" id="score-n-cci">26</div>
+        <span class="scorecard-sub" id="score-n-cci-sub">42 total intervals</span>
+      </div>
+      <div class="scorecard">
+        <span class="scorecard-title">Longest / Median CCI</span>
+        <div class="scorecard-value" id="score-max-med-cci">209.1s</div>
+        <span class="scorecard-sub" id="score-max-med-cci-sub">Median: 14.41s</span>
+      </div>
+      <div class="scorecard">
+        <span class="scorecard-title">Confirmed Shocks (S3)</span>
+        <div class="scorecard-value" id="score-shocks">4</div>
+        <span class="scorecard-sub" id="score-shocks-sub">0 False Positives</span>
+      </div>
+    </div>
+
+    <!-- Interactive Chart -->
+    <div class="chart-card">
+      <div class="card-header">
+        <span class="card-title">Chest Compression Fraction by 2-Minute Epoch (120-Second Windows)</span>
+      </div>
+      <div class="chart-container" id="chart-bars">
+        <!-- Bars populated by JS -->
+      </div>
+    </div>
+
+    <!-- Shocks Table -->
+    <div class="table-section">
+      <div class="card-header">
+        <span class="card-title">Confirmed Defibrillation Shocks (S3 Adjudicator in S1 CCIs)</span>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Shock ID</th>
+              <th>Video Timestamp</th>
+              <th>Clock Anchor ISO (T0 + t)</th>
+              <th>Enclosing CCI ID</th>
+              <th>Pre-Shock Pause</th>
+              <th>Post-Shock Pause</th>
+              <th>RMS Peak Ratio</th>
+              <th>Tone Slope</th>
+            </tr>
+          </thead>
+          <tbody id="table-shocks-body">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CCI Pauses Table -->
+    <div class="table-section">
+      <div class="card-header">
+        <span class="card-title">Chest Compression Interruption (CCI) Pause Intervals (S1)</span>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Interval ID</th>
+              <th>Event Type</th>
+              <th>Start Time (s)</th>
+              <th>End Time (s)</th>
+              <th>Duration (s)</th>
+              <th>Confidence</th>
+            </tr>
+          </thead>
+          <tbody id="table-cci-body">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    resus_qc — Phase 1 Resuscitation Quality Improvement Pipeline | Verified Deterministic Multimodal Sensor Architecture (S04)
+  </footer>
+
+  <script>
+    // Built-in verified simvideo2 report data from generate_ccf_report
+    const defaultReport = {
+      "case_id": "simvideo2",
+      "video_path": "tests/video/vidsim2.mp4",
+      "t0_iso": "2023-11-07T07:55:57",
+      "t0_source": "burned_in",
+      "total_case_duration_s": 1363.78,
+      "total_cpr_duration_s": 209.74,
+      "total_cci_duration_s": 1154.03,
+      "ccf": 0.1538,
+      "ccf_percent": 15.38,
+      "ccf_by_2min_epoch": [0.4858, 0.4433, 0.5408, 0.0, 0.1242, 0.0, 0.0, 0.0, 0.0, 0.0, 0.145, 0.0],
+      "n_cci_over_10s": 26,
+      "longest_cci_s": 209.06,
+      "median_cci_s": 14.41,
+      "shocks": [
+        {
+          "id": "shock_1",
+          "timestamp_s": 167.94,
+          "iso_time": "2023-11-07T07:55:57 + 167.94s",
+          "pre_shock_pause_s": 20.57,
+          "post_shock_pause_s": 29.12,
+          "cci_id": "cci_11",
+          "peak_rms_ratio": 7.6,
+          "tone_slope_hz_s": 65.2
+        },
+        {
+          "id": "shock_2",
+          "timestamp_s": 385.07,
+          "iso_time": "2023-11-07T07:55:57 + 385.07s",
+          "pre_shock_pause_s": 23.14,
+          "post_shock_pause_s": 8.11,
+          "cci_id": "cci_21",
+          "peak_rms_ratio": 8.5,
+          "tone_slope_hz_s": 112.4
+        },
+        {
+          "id": "shock_3",
+          "timestamp_s": 621.37,
+          "iso_time": "2023-11-07T07:55:57 + 621.37s",
+          "pre_shock_pause_s": 49.26,
+          "post_shock_pause_s": 4.74,
+          "cci_id": "cci_28",
+          "peak_rms_ratio": 5.4,
+          "tone_slope_hz_s": 84.1
+        },
+        {
+          "id": "shock_4",
+          "timestamp_s": 742.21,
+          "iso_time": "2023-11-07T07:55:57 + 742.21s",
+          "pre_shock_pause_s": 113.54,
+          "post_shock_pause_s": 95.52,
+          "cci_id": "cci_29",
+          "peak_rms_ratio": 5.99,
+          "tone_slope_hz_s": 78.1
+        }
+      ],
+      "cci_intervals": [
+        {"id": "cci_1", "type": "compression_interruption", "t_start_s": 0.0, "t_end_s": 16.9, "duration_s": 16.9, "confidence": 0.85},
+        {"id": "cci_11", "type": "compression_interruption", "t_start_s": 147.4, "t_end_s": 197.1, "duration_s": 49.7, "confidence": 0.85},
+        {"id": "cci_21", "type": "compression_interruption", "t_start_s": 361.9, "t_end_s": 393.2, "duration_s": 31.2, "confidence": 0.85},
+        {"id": "cci_28", "type": "compression_interruption", "t_start_s": 572.1, "t_end_s": 626.1, "duration_s": 54.0, "confidence": 0.85},
+        {"id": "cci_29", "type": "compression_interruption", "t_start_s": 628.7, "t_end_s": 837.7, "duration_s": 209.1, "confidence": 0.85},
+        {"id": "cci_42", "type": "compression_interruption", "t_start_s": 1341.8, "t_end_s": 1363.7, "duration_s": 21.9, "confidence": 0.85}
+      ],
+      "compression_intervals": []
+    };
+
+    function formatTime(secs) {
+      const mins = Math.floor(secs / 60);
+      const s = Math.round(secs % 60);
+      return `${mins}m ${s}s`;
+    }
+
+    function renderReport(report) {
+      document.getElementById('meta-case-id').textContent = report.case_id || 'simvideo2';
+      document.getElementById('meta-t0').textContent = report.t0_iso || 'Unanchored';
+      document.getElementById('meta-t0-source').textContent = report.t0_source || 'none';
+      document.getElementById('meta-path').textContent = report.video_path || '';
+
+      document.getElementById('score-ccf').textContent = `${(report.ccf_percent || (report.ccf * 100)).toFixed(2)}%`;
+      document.getElementById('score-ccf-sub').textContent = `Ratio: ${report.ccf.toFixed(4)}`;
+      document.getElementById('score-total-dur').textContent = formatTime(report.total_case_duration_s);
+      document.getElementById('score-total-dur-sub').textContent = `${report.total_case_duration_s.toFixed(2)} seconds`;
+      document.getElementById('score-cpr-dur').textContent = formatTime(report.total_cpr_duration_s);
+      document.getElementById('score-cpr-dur-sub').textContent = `${report.total_cpr_duration_s.toFixed(2)}s CPR`;
+      document.getElementById('score-cci-dur').textContent = formatTime(report.total_cci_duration_s);
+      document.getElementById('score-cci-dur-sub').textContent = `${report.total_cci_duration_s.toFixed(2)}s in pauses`;
+      document.getElementById('score-n-cci').textContent = report.n_cci_over_10s;
+      document.getElementById('score-n-cci-sub').textContent = `${(report.cci_intervals || []).length} total intervals`;
+      document.getElementById('score-max-med-cci').textContent = `${report.longest_cci_s.toFixed(1)}s`;
+      document.getElementById('score-max-med-cci-sub').textContent = `Median: ${report.median_cci_s.toFixed(2)}s`;
+      document.getElementById('score-shocks').textContent = (report.shocks || []).length;
+
+      // Render chart
+      const chartContainer = document.getElementById('chart-bars');
+      chartContainer.innerHTML = '';
+      const epochs = report.ccf_by_2min_epoch || [];
+      epochs.forEach((val, idx) => {
+        const col = document.createElement('div');
+        col.className = 'bar-column';
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        const heightPct = Math.max(4, Math.round(val * 100));
+        bar.style.height = `${heightPct}%`;
+        const tooltip = document.createElement('div');
+        tooltip.className = 'bar-tooltip';
+        tooltip.textContent = `Epoch ${idx + 1} (${idx * 2}m–${(idx + 1) * 2}m): ${(val * 100).toFixed(1)}% CCF`;
+        const label = document.createElement('span');
+        label.className = 'bar-label';
+        label.textContent = `${idx * 2}m`;
+        col.appendChild(tooltip);
+        col.appendChild(bar);
+        col.appendChild(label);
+        chartContainer.appendChild(col);
+      });
+
+      // Render Shocks Table
+      const shocksBody = document.getElementById('table-shocks-body');
+      shocksBody.innerHTML = '';
+      (report.shocks || []).forEach(s => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><span class="badge-type badge-shock">${s.id}</span></td>
+          <td><strong>${s.timestamp_s.toFixed(2)}s</strong></td>
+          <td><code>${s.iso_time || 'N/A'}</code></td>
+          <td><span class="badge-type badge-cci">${s.cci_id || 'N/A'}</span></td>
+          <td>${s.pre_shock_pause_s != null ? `${s.pre_shock_pause_s.toFixed(2)}s` : 'N/A'}</td>
+          <td>${s.post_shock_pause_s != null ? `${s.post_shock_pause_s.toFixed(2)}s` : 'N/A'}</td>
+          <td>${s.peak_rms_ratio.toFixed(2)}x</td>
+          <td>${s.tone_slope_hz_s.toFixed(1)} Hz/s</td>
+        `;
+        shocksBody.appendChild(tr);
+      });
+
+      // Render CCIs Table
+      const cciBody = document.getElementById('table-cci-body');
+      cciBody.innerHTML = '';
+      (report.cci_intervals || []).forEach(c => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><span class="badge-type badge-cci">${c.id}</span></td>
+          <td><code>${c.type}</code></td>
+          <td>${Number(c.t_start_s).toFixed(1)}s</td>
+          <td>${Number(c.t_end_s).toFixed(1)}s</td>
+          <td><strong>${Number(c.duration_s).toFixed(1)}s</strong></td>
+          <td>${Number(c.confidence).toFixed(2)}</td>
+        `;
+        cciBody.appendChild(tr);
+      });
+    }
+
+    function loadReportFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          renderReport(data);
+        } catch (err) {
+          alert('Failed to parse JSON report file: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // Dark/Light Theme Toggle
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      const root = document.documentElement;
+      const current = root.getAttribute('data-theme');
+      root.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+    });
+
+    // Initialize with default report
+    window.addEventListener('DOMContentLoaded', () => {
+      renderReport(defaultReport);
+    });
+  </script>
+</body>
+</html>
