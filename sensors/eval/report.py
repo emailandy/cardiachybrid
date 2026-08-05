@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, Sequence
 from sensors.eval.metrics import (
     ScoreCard,
+    _match_intervals,
     score_interval_f1,
     score_interval_precision,
     score_interval_recall,
