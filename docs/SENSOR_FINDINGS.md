@@ -63,6 +63,7 @@ To operationalize the union-for-recall, sensor-adjudication-for-precision archit
   * Audio passed through an additional encode, which plausibly explains why 3 of 4 charge tones are not recoverable or characterized.
 * Every S1 and S3 parameter is calibrated against this screen-recorded stack, not against direct capture. Validation on real bay footage is required before any parameter is treated as transferable.
 * S1 and S3 are non-functional at measured parameters (`F-014`, `F-015`). The integration wiring is complete and verified—P1 receives all five placeholders and renders without unfilled tokens. Sensor ACCURACY is unmeasured and the earlier table in this document reported ground-truth fixture values, not sensor output. Retracted.
+* **`F-018`**: `bump_threshold_px` zeroed outlier frames (`vy[abs(vy) > 30] = 0`), which converted a single-frame impulse into a step discontinuity that rang through the Butterworth filter and spread ~76,000 power uniformly across every frequency bin. Replacing with a median-filter value instead of zero removed the artifact. Zeroing an outlier is not neutral — it substitutes one discontinuity for another.
 
 ---
 
