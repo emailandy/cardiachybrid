@@ -126,6 +126,23 @@ def evaluate_s1_consumers(gt_data: dict[str, Any], video_path: Path, gt_path_str
     print(f"CCF error (all pauses)  {ccf_err:6.2f}          {ccf_err:6.2f}")
     print(f"intervals reported      {len(s1_raw):6d}          {len(s1_floor):6d}")
 
+    # E5: Print per-interval TP/FP/S6 audit table from committed matcher
+    from sensors.s1_s6_motion import S6CoverageDetector
+    d6 = S6CoverageDetector(profile_name)
+    s6_events = d6.detect_occlusion_from_video(video_path)
+    matched_rep = _match_intervals(s1_floor, gt_ccis, tol_s=3.0)
+    rep_matched_preds = [p for p, _, _, _ in matched_rep]
+
+    print("\n--- Per-Interval Audit Table (>=5.0s Reporting Consumer vs GT, +/-3.0s Monotonic Matcher) ---")
+    for idx, c in enumerate(s1_floor):
+        cs, ce = float(c["t_start_s"]), float(c["t_end_s"])
+        dur = round(ce - cs, 2)
+        is_tp = c in rep_matched_preds
+        ov_s6 = [o for o in s6_events if max(cs, o.t_start_s) < min(ce, o.t_end_s)]
+        s6_str = "True (" + ", ".join(o.degradation_type for o in ov_s6) + ")" if ov_s6 else "False (unexplained >=5s false positive)"
+        status = "TP" if is_tp else "FP"
+        print(f"#{idx+1:02d}: {cs:5.1f}-{ce:5.1f}s (dur={dur:4.1f}s) -> {status:2s} | S6={s6_str}")
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Evaluate sensor against ground truth.")
