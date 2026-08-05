@@ -84,12 +84,16 @@ def test_s1_motion_detector_synthetic_vy() -> None:
 
     ccis = detector.detect_cci_intervals(events, total_duration_s=total_dur)
     assert (
-        len(ccis) == 1
-    ), f"Expected 1 CCI pause interval between epochs, got {len(ccis)}"
-    cci = ccis[0]
-    assert cci["type"] == "compression_interruption"
-    assert abs(cci["duration_s"] - 6.0) <= 0.8
-    assert cci["confidence"] == 0.85
+        len(ccis) == 2
+    ), f"Expected 2 CCI pause intervals (initial 1.77s and intra-epoch 5.7s), got {len(ccis)}"
+    mid_cci = [c for c in ccis if c["t_start_s"] >= 10.0][0]
+    assert mid_cci["type"] == "compression_interruption"
+    assert abs(mid_cci["duration_s"] - 5.7) <= 0.8
+    assert mid_cci["confidence"] == 0.85
+
+    ccf_res = detector.compute_ccf(events)
+    assert ccf_res["ccf"] > 0.0
+    assert ccf_res["denominator_s"] > 0.0
 
 
 def test_s6_coverage_detector_synthetic_metrics() -> None:

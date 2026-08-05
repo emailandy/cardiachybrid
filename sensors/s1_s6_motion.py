@@ -383,6 +383,36 @@ class S1ChestMotionDetector:
         peak_hz = float(masked_freqs[np.argmax(masked_mags)])
         return round(peak_hz * 60.0, 1)
 
+    def compute_ccf(
+        self,
+        motion_events: Sequence[CompressionMotionEvent],
+    ) -> dict[str, Any]:
+        """
+        Computes Chest Compression Fraction (CCF) per Q-012:
+        first compression start to last compression end.
+        """
+        sorted_events = sorted(motion_events, key=lambda e: e.t_start_s)
+        if not sorted_events:
+            return {
+                "ccf": 0.0,
+                "t_first_s": 0.0,
+                "t_last_s": 0.0,
+                "denominator_s": 0.0,
+                "cpr_duration_s": 0.0,
+            }
+        t_first = float(sorted_events[0].t_start_s)
+        t_last = float(sorted_events[-1].t_end_s)
+        denominator = max(t_last - t_first, 1e-6)
+        cpr_duration = sum(float(e.t_end_s - e.t_start_s) for e in sorted_events)
+        ccf = round(cpr_duration / denominator, 3)
+        return {
+            "ccf": ccf,
+            "t_first_s": round(t_first, 2),
+            "t_last_s": round(t_last, 2),
+            "denominator_s": round(denominator, 2),
+            "cpr_duration_s": round(cpr_duration, 2),
+        }
+
     def detect_cci_intervals(
         self,
         motion_events: Sequence[CompressionMotionEvent] | str | Path,
@@ -391,6 +421,7 @@ class S1ChestMotionDetector:
         """
         Emits Chest Compression Interruption (CCI) pause intervals
         with confidence scores between active compression periods.
+        Detection floor is min_pause_duration_s (default 1.0s).
         """
         if isinstance(motion_events, (str, Path)):
             video_path = Path(motion_events)
@@ -409,7 +440,7 @@ class S1ChestMotionDetector:
                 (e.t_end_s for e in motion_events), default=0.0
             )
 
-        min_pause_s = float(self.s1_config.get("min_pause_duration_s", 3.0))
+        min_pause_s = float(self.s1_config.get("min_pause_duration_s", 1.0))
         conf_val = float(self.s1_config.get("confidence", 0.88))
         ccis: list[dict[str, Any]] = []
         idx = 1
@@ -427,8 +458,8 @@ class S1ChestMotionDetector:
                     "id": f"cci_{idx}",
                     "type": "compression_interruption",
                     "t_start_s": 0.0,
-                    "t_end_s": first_t,
-                    "duration_s": first_t,
+                    "t_end_s": round(first_t, 2),
+                    "duration_s": round(first_t, 2),
                     "confidence": conf_val,
                 }
             )
@@ -443,31 +474,13 @@ class S1ChestMotionDetector:
                     {
                         "id": f"cci_{idx}",
                         "type": "compression_interruption",
-                        "t_start_s": pause_start,
-                        "t_end_s": pause_end,
+                        "t_start_s": round(pause_start, 2),
+                        "t_end_s": round(pause_end, 2),
                         "duration_s": round(dur, 2),
                         "confidence": conf_val,
                     }
                 )
                 idx += 1
-
-        active_end_t = (
-            self.last_active_resuscitation_duration_s
-            if self.last_active_resuscitation_duration_s is not None
-            else total_duration_s
-        )
-        last_t = float(sorted_events[-1].t_end_s)
-        if (active_end_t - last_t) >= min_pause_s and (active_end_t - last_t) < 300.0:
-            ccis.append(
-                {
-                    "id": f"cci_{idx}",
-                    "type": "compression_interruption",
-                    "t_start_s": last_t,
-                    "t_end_s": float(active_end_t),
-                    "duration_s": round(float(active_end_t - last_t), 2),
-                    "confidence": conf_val,
-                }
-            )
 
         return ccis
 

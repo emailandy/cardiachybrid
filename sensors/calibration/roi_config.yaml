@@ -23,7 +23,7 @@ profiles:
       min_fps: 15.0
       vy_bandpass_min_hz: 1.3   # 78 cpm
       vy_bandpass_max_hz: 3.0   # 180 cpm
-      energy_threshold_ratio: 0.05
+      energy_threshold_ratio: 0.12
       # min_modulation is ROI-area dependent (absolute energy scales with pixel area) and must be re-derived whenever chest_roi changes
       min_modulation: 0.010
       min_band_power_ratio: 0.15
@@ -35,7 +35,7 @@ profiles:
       impulse_min_spike_px: 2.0
       gap_merge_duration_s: 0.5
       min_active_duration_s: 2.0
-      min_pause_duration_s: 3.0
+      min_pause_duration_s: 1.0
       confidence: 0.85
       description: "Default S1 optical flow motion detection parameters"
     s6_coverage:
@@ -56,7 +56,7 @@ profiles:
       min_fps: 15.0
       vy_bandpass_min_hz: 1.3   # 78 cpm
       vy_bandpass_max_hz: 3.0   # 180 cpm
-      energy_threshold_ratio: 0.05
+      energy_threshold_ratio: 0.12
       # min_modulation is ROI-area dependent (absolute energy scales with pixel area) and must be re-derived whenever chest_roi changes
       min_modulation: 0.010
       min_band_power_ratio: 0.15
@@ -68,7 +68,7 @@ profiles:
       impulse_min_spike_px: 2.0
       gap_merge_duration_s: 0.5
       min_active_duration_s: 2.0
-      min_pause_duration_s: 3.0
+      min_pause_duration_s: 1.0
       confidence: 0.85
       description: "Fallback S1 optical flow motion detection parameters"
     s6_coverage:
@@ -89,7 +89,7 @@ profiles:
       min_fps: 15.0
       vy_bandpass_min_hz: 1.3
       vy_bandpass_max_hz: 3.0
-      energy_threshold_ratio: 0.05
+      energy_threshold_ratio: 0.12
       # min_modulation is ROI-area dependent (absolute energy scales with pixel area) and must be re-derived whenever chest_roi changes
       min_modulation: 0.010
       min_band_power_ratio: 0.15
@@ -101,7 +101,7 @@ profiles:
       impulse_min_spike_px: 2.0
       gap_merge_duration_s: 0.5
       min_active_duration_s: 2.0
-      min_pause_duration_s: 3.0
+      min_pause_duration_s: 1.0
       confidence: 0.88
       description: "Calibrated S1 parameters for simvideo2.mp4"
     s6_coverage:
