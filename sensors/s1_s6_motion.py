@@ -809,6 +809,43 @@ class S1ChestMotionDetector:
             vy_signal, fps=fps, blackout_mask=self.last_blackout_mask
         )
 
+    def filter_ccis_by_consumer(
+        self,
+        ccis: Sequence[dict[str, Any]],
+        consumer: str = "reporting",
+    ) -> list[dict[str, Any]]:
+        """
+        Applies consumer-specific duration floor rules to detected CCI pause intervals:
+        - 'ccf': counts all unoccluded no-flow physical pauses >= min_pause_duration_s.
+        - 'redcap' / 'repeating_group': enforces the >= 3.0s dictionary rule required by the clinical extraction registry.
+        - 'reporting': applies the calibrated reporting floor (cci_reporting_floor_s) from roi_config.yaml.
+        Three consumers, three rules, one measurement.
+        """
+        if consumer == "ccf":
+            floor_s = float(self.s1_config.get("min_pause_duration_s") or 1.0)
+        elif consumer in ("redcap", "repeating_group"):
+            floor_s = float(self.s1_config.get("redcap_cci_floor_s") or 3.0)
+        elif consumer == "reporting":
+            if "cci_reporting_floor_s" not in self.s1_config:
+                raise KeyError(
+                    "cci_reporting_floor_s missing from ROI config for profile "
+                    f"'{self.profile_name}'"
+                )
+            floor_s = float(self.s1_config["cci_reporting_floor_s"])
+        else:
+            raise ValueError(
+                f"Unknown consumer '{consumer}': must be ccf, redcap, or reporting."
+            )
+
+        filtered: list[dict[str, Any]] = []
+        for c in ccis:
+            dur = float(
+                c.get("duration_s", round(float(c["t_end_s"]) - float(c["t_start_s"]), 2))
+            )
+            if dur >= floor_s:
+                filtered.append(c)
+        return filtered
+
 
 class S6CoverageDetector:
     """

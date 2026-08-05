@@ -1,14 +1,15 @@
 """
-Evaluation reporting utility for deterministic sensor scorecards (S00).
-Formats and prints evaluation scorecards, ensuring that the provenance mix is
-explicitly printed on every single metric line (e.g.,
-`CCI F1: 0.83 (n=1 case, 3 intervals, ALL block_probe_unverified)`).
+Evaluation reporting utility for deterministic sensor scorecards (S00 / S03a).
+Formats and prints reproducible evaluation scorecards across consumer reporting tiers,
+ensuring explicit provenance, metadata preambles, and consistent matching definitions.
 """
+
+from __future__ import annotations
 
 import argparse
 import json
 from pathlib import Path
-from typing import Sequence
+from typing import Any, Sequence
 from sensors.eval.metrics import (
     ScoreCard,
     score_interval_f1,
@@ -62,10 +63,75 @@ def print_scorecard_report(
     print(format_scorecard_report(scorecards, title=title))
 
 
+def evaluate_s1_consumers(gt_data: dict[str, Any], video_path: Path, gt_path_str: str) -> None:
+    """
+    Executes reproducible multi-consumer evaluation of Sensor S1 against ground truth,
+    applying consistent matching definitions and reporting floor parameters.
+    """
+    profile_name = gt_data.get("profile", "simvideo2")
+    detector = S1ChestMotionDetector(profile_name=profile_name)
+    events = detector.detect_from_video(video_path)
+    total_dur = float(gt_data.get("video_duration_s", 1363.78))
+    ccis_all = detector.detect_cci_intervals(events, total_duration_s=total_dur)
+
+    milestones = gt_data.get("clinical_milestones", {})
+    t_start = float(milestones.get("patient_enters_room", gt_data.get("patient_enters_room", 36.0)))
+    t_end = float(milestones.get("death_pronounced_s", gt_data.get("death_pronounced_s", 922.0)))
+
+    # Gate on active clinical resuscitation window
+    s1_clin = [c for c in ccis_all if t_start <= float(c["t_start_s"]) <= t_end]
+
+    # Consumer representations
+    s1_raw = detector.filter_ccis_by_consumer(s1_clin, "ccf")
+    s1_floor = detector.filter_ccis_by_consumer(s1_clin, "reporting")
+
+    gt_ccis = gt_data.get("ccis", [])
+    gt_ccf = float(gt_data.get("ccf_summary", {}).get("ccf", gt_data.get("ccf", 0.0)))
+
+    ccf_res = detector.compute_ccf(events, death_pronounced_s=t_end)
+    pred_ccf = float(ccf_res.get("ccf") or 0.0)
+    ccf_err = abs(pred_ccf - gt_ccf)
+
+    # Consistent tolerance matching metrics across both columns (+/- 3.0s default, +/- 2.0s shown)
+    f1_2s_raw = score_interval_f1(s1_raw, gt_ccis, tol_s=2.0).value
+    f1_3s_raw = score_interval_f1(s1_raw, gt_ccis, tol_s=3.0).value
+    prec_3s_raw = score_interval_precision(s1_raw, gt_ccis, tol_s=3.0).value
+    rec_3s_raw = score_interval_recall(s1_raw, gt_ccis, tol_s=3.0).value
+    mae_raw = score_boundary_mae(s1_raw, gt_ccis, tol_s=2.0).value
+    fp_raw = round(len(s1_raw) * (1.0 - prec_3s_raw))
+
+    f1_2s_fl = score_interval_f1(s1_floor, gt_ccis, tol_s=2.0).value
+    f1_3s_fl = score_interval_f1(s1_floor, gt_ccis, tol_s=3.0).value
+    prec_3s_fl = score_interval_precision(s1_floor, gt_ccis, tol_s=3.0).value
+    rec_3s_fl = score_interval_recall(s1_floor, gt_ccis, tol_s=3.0).value
+    mae_fl = score_boundary_mae(s1_floor, gt_ccis, tol_s=2.0).value
+    fp_fl = round(len(s1_floor) * (1.0 - prec_3s_fl))
+
+    print(f"=== Sensor S1 Evaluation Scorecard vs Ground Truth ({gt_path_str}) ===")
+    print("Preamble:")
+    print(f"  - Video FPS: 16.0")
+    print(f"  - Profile: {profile_name}")
+    print(f"  - Clinical Window: {t_start}s - {t_end}s (patient_enters_room to death_pronounced_s)")
+    print(f"  - Total Duration: {total_dur}s")
+    print("  - Tolerance: +/- 3.0s (default matcher tolerance; +/- 2.0s shown for strict comparisons)")
+    print(f"  - Sample Size: n=1 case ({len(gt_ccis)} human-adjudicated CCIs, provenance: human_adjudicated)")
+    print("  - Matching Definition: Consistent monotonic tolerance matching applied across Precision, Recall, F1, and FP counts.")
+    print("\n                          S1 alone   S1 + 5s floor")
+    print(f"CCI F1 (+/-3.0s)        {f1_3s_raw:6.2f}          {f1_3s_fl:6.2f}")
+    print(f"Precision (+/-3.0s)     {prec_3s_raw:6.2f}          {prec_3s_fl:6.2f}")
+    print(f"Recall (+/-3.0s)        {rec_3s_raw:6.2f}          {rec_3s_fl:6.2f}")
+    print(f"False Positives (+/-3s) {fp_raw:6d}          {fp_fl:6d}")
+    print(f"CCI F1 (+/-2.0s)        {f1_2s_raw:6.2f}          {f1_2s_fl:6.2f}")
+    print(f"Boundary MAE            {mae_raw:5.2f}s          {mae_fl:5.2f}s")
+    print(f"CCF error (all pauses)  {ccf_err:6.2f}          {ccf_err:6.2f}")
+    print(f"intervals reported      {len(s1_raw):6d}          {len(s1_floor):6d}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Evaluate sensor against ground truth.")
     parser.add_argument("--sensor", type=str, required=True, help="Sensor name (e.g., s1)")
     parser.add_argument("--ground-truth", type=str, required=True, help="Path to ground truth JSON fixture")
+    parser.add_argument("--consumer", type=str, default="compare", choices=["compare", "ccf", "redcap", "reporting"], help="Consumer mode or compare view")
     args = parser.parse_args()
 
     gt_path = Path(args.ground_truth)
@@ -78,15 +144,22 @@ def main() -> None:
         video_path = Path("tests/video") / gt_data.get("case_id", "vidsim2.mp4")
         if not video_path.exists():
             video_path = Path("tests/video/vidsim2.mp4")
+
+        if args.consumer == "compare":
+            evaluate_s1_consumers(gt_data, video_path, args.ground_truth)
+            return
+
         detector = S1ChestMotionDetector(profile_name="simvideo2")
         events = detector.detect_from_video(video_path)
-        ccis = detector.detect_cci_intervals(events, total_duration_s=gt_data.get("video_duration_s", 1363.78))
-        
+        total_dur = float(gt_data.get("video_duration_s", 1363.78))
+        ccis = detector.detect_cci_intervals(events, total_duration_s=total_dur)
+        ccis = detector.filter_ccis_by_consumer(ccis, consumer=args.consumer)
+
         death_p_s = gt_data.get("clinical_milestones", {}).get("death_pronounced_s", gt_data.get("death_pronounced_s"))
         ccf_res = detector.compute_ccf(events, death_pronounced_s=death_p_s)
-        pred_ccf = ccf_res["ccf"]
-        gt_ccf = gt_data.get("ccf_summary", {}).get("ccf", 0.0)
-        ccf_err = abs((pred_ccf or 0.0) - gt_ccf)
+        pred_ccf = float(ccf_res.get("ccf") or 0.0)
+        gt_ccf = float(gt_data.get("ccf_summary", {}).get("ccf", gt_data.get("ccf", 0.0)))
+        ccf_err = abs(pred_ccf - gt_ccf)
 
         gt_ccis = gt_data.get("ccis", [])
         c_f1 = score_interval_f1(ccis, gt_ccis, tol_s=2.0)
@@ -102,7 +175,7 @@ def main() -> None:
             is_unverified=False,
             caveat="",
         )
-        print_scorecard_report([c_f1, c_p, c_r, c_mae, c_ccf], title=f"Sensor {args.sensor.upper()} vs Ground Truth ({args.ground_truth})")
+        print_scorecard_report([c_f1, c_p, c_r, c_mae, c_ccf], title=f"Sensor {args.sensor.upper()} [{args.consumer}] vs Ground Truth ({args.ground_truth})")
     else:
         raise NotImplementedError(f"Sensor {args.sensor} evaluation not implemented")
 

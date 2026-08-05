@@ -375,4 +375,59 @@ def test_rms_window_spans_two_compression_cycles() -> None:
         assert win / fps >= 2.0 / 1.3, f"{fps} fps -> {win/fps:.2f}s"
 
 
+def test_three_consumers_three_rules_one_measurement(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """
+    R2: Verifies that the reporting layer reads cci_reporting_floor_s from roi_config.yaml,
+    S1 continues to emit every inactive run >= 1.0s unchanged, and asserts:
+    1. changing the YAML value changes the count of reported intervals;
+    2. changing the YAML value does not change the interval set handed to CCF;
+    3. the REDCap/repeating-group path still uses the dictionary >= 3.0s rule.
+    Three consumers, three rules, one measurement.
+    """
+    from typing import Any, Sequence
+    from sensors.s1_s6_motion import S1ChestMotionDetector
+    from codegen.yamlio import load_yaml
+
+    config_path = Path("sensors/calibration/roi_config.yaml")
+    raw_yaml_str = config_path.read_text()
+    test_cfg_path = tmp_path / "roi_config.yaml"
+    test_cfg_path.write_text(raw_yaml_str)
+
+    def mock_load(profile: str = "default") -> dict[str, Any]:
+        data = load_yaml(test_cfg_path)
+        return data.get("profiles", {}).get(profile, {})
+
+    monkeypatch.setattr("sensors.s1_s6_motion.load_roi_config", mock_load)
+
+    detector = S1ChestMotionDetector("simvideo2")
+    raw_ccis = [
+        {"id": "c1", "t_start_s": 10.0, "t_end_s": 11.5, "duration_s": 1.5},
+        {"id": "c2", "t_start_s": 20.0, "t_end_s": 23.5, "duration_s": 3.5},
+        {"id": "c3", "t_start_s": 30.0, "t_end_s": 35.5, "duration_s": 5.5},
+        {"id": "c4", "t_start_s": 40.0, "t_end_s": 48.5, "duration_s": 8.5},
+    ]
+
+    ccf_intervals = detector.filter_ccis_by_consumer(raw_ccis, "ccf")
+    assert len(ccf_intervals) == 4
+
+    redcap_intervals = detector.filter_ccis_by_consumer(raw_ccis, "redcap")
+    assert len(redcap_intervals) == 3
+    assert [c["id"] for c in redcap_intervals] == ["c2", "c3", "c4"]
+
+    report_intervals_5 = detector.filter_ccis_by_consumer(raw_ccis, "reporting")
+    assert len(report_intervals_5) == 2
+    assert [c["id"] for c in report_intervals_5] == ["c3", "c4"]
+
+    modified_yaml_str = raw_yaml_str.replace("cci_reporting_floor_s: 5.0", "cci_reporting_floor_s: 7.0")
+    test_cfg_path.write_text(modified_yaml_str)
+    detector_7 = S1ChestMotionDetector("simvideo2")
+    report_intervals_7 = detector_7.filter_ccis_by_consumer(raw_ccis, "reporting")
+    assert len(report_intervals_7) == 1
+    assert [c["id"] for c in report_intervals_7] == ["c4"]
+
+    assert len(detector_7.filter_ccis_by_consumer(raw_ccis, "ccf")) == 4
+
+
 

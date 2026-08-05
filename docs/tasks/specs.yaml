@@ -373,7 +373,7 @@ S03:
   depends:
   - S00
   gate: "deterministic across 5 runs; CCI intervals emitted with confidence; calibration surface reported"
-  gate_note: "ACCURACY GATE DEFERRED (Q-017: n=1 case, human timestamp precision ~+/-3s, so +/-2s is stricter than ground truth). Evaluated against human gold standard with cci_reporting_floor_s=5.0 as a reporting rule (removing all <5s provider dropouts at zero recall cost; CCF retains all >=1s pauses). Scorecard: CCI F1(+/-2s)=0.33, F1(+/-3s)=0.44, Precision=0.27, Recall(+/-3s)=0.57, Boundary MAE=1.02s, CCF error=0.12, FPs=6."
+  gate_note: "ACCURACY GATE DEFERRED (Q-017: n=1 case, human timestamp precision ~+/-3s, so +/-2s is stricter than ground truth). Evaluated against human gold standard using reproducible evaluation command sensors.eval.report under three-tier consumer duration rules (CCF >=1.0s, REDCap >=3.0s, Reporting >=5.0s). Current-build scorecard (superseding pre-F-021 baselines): CCI F1(+/-3s)=0.44, Precision(+/-3s)=0.36, Recall(+/-3s)=0.57 (drop due to F-024 optical flow pause fragmentation), FPs(+/-3s)=7, CCI F1(+/-2s)=0.33, Boundary MAE=1.02s, CCF error=0.09, intervals reported=11 (two surviving >=5s FPs remain unexplained)."
   modify: []
   reads:
   - sensors/eval/metrics.py
