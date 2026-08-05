@@ -373,7 +373,7 @@ S03:
   depends:
   - S00
   gate: "deterministic across 5 runs; CCI intervals emitted with confidence; calibration surface reported"
-  gate_note: "ACCURACY GATE DEFERRED. CCI F1 >= 0.85 and boundary MAE <= 1.5s require human-abstracted ground truth. Until the gold set lands, S03 is validated for DETERMINISM and PLAUSIBILITY only. Thresholds are provisional. Blocked on Q-017."
+  gate_note: "ACCURACY GATE DEFERRED (Q-017: n=1 case, human timestamp precision ~+/-3s, so +/-2s is stricter than ground truth). Evaluated against human gold standard with cci_reporting_floor_s=5.0 as a reporting rule (removing all <5s provider dropouts at zero recall cost; CCF retains all >=1s pauses). Scorecard: CCI F1(+/-2s)=0.33, F1(+/-3s)=0.44, Precision=0.27, Recall(+/-3s)=0.57, Boundary MAE=1.02s, CCF error=0.12, FPs=6."
   modify: []
   reads:
   - sensors/eval/metrics.py

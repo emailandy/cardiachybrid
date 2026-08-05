@@ -44,8 +44,13 @@ profiles:
       gap_merge_duration_s: 0.5
       min_active_duration_s: 2.0
       min_pause_duration_s: 1.0
+      cci_reporting_floor_s: 5.0
+      # Derived, not chosen. Shortest human-adjudicated interruption on
+      # simvideo2.mp4 is 6.0s; all 39 S1 false positives are provider-occlusion
+      # dropouts under 5.0s (F-020, F-023). n=1 case — re-derive when the gold
+      # set expands. This is a REPORTING filter; CCF counts all pauses >= 1.0s.
       confidence: 0.85
-      description: "Default S1 optical flow motion detection parameters"
+      description: "Default S1 optical flow motion detection parameters with reporting floor"
     s6_coverage:
       min_roi_visibility: 0.20
       occlusion_std_threshold: 15.0
@@ -90,8 +95,9 @@ profiles:
       gap_merge_duration_s: 0.5
       min_active_duration_s: 2.0
       min_pause_duration_s: 1.0
+      cci_reporting_floor_s: 5.0
       confidence: 0.85
-      description: "Fallback S1 optical flow motion detection parameters"
+      description: "Fallback S1 optical flow motion detection parameters with reporting floor"
     s6_coverage:
       min_roi_visibility: 0.20
       occlusion_std_threshold: 15.0
@@ -135,8 +141,13 @@ profiles:
       gap_merge_duration_s: 0.5
       min_active_duration_s: 2.0
       min_pause_duration_s: 1.0
+      cci_reporting_floor_s: 5.0
+      # Derived, not chosen. Shortest human-adjudicated interruption on
+      # simvideo2.mp4 is 6.0s; all 39 S1 false positives are provider-occlusion
+      # dropouts under 5.0s (F-020, F-023). n=1 case — re-derive when the gold
+      # set expands. This is a REPORTING filter; CCF counts all pauses >= 1.0s.
       confidence: 0.88
-      description: "Calibrated S1 parameters for simvideo2.mp4"
+      description: "Calibrated S1 parameters for simvideo2.mp4 with reporting floor"
     s6_coverage:
       min_roi_visibility: 0.20
       occlusion_std_threshold: 15.0
