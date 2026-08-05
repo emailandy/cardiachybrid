@@ -487,7 +487,7 @@ def reduce_stream(
     cci_intervals = [i for i in stream.intervals if i.type == 'compression_interruption']
     rosc_intervals = [i for i in stream.intervals if i.type == 'rosc']
     for e in stream.events:
-        if e.type == 'defibrillation_shock' and not any(i.t_start_s <= e.timestamp_s <= (i.t_end_s or i.t_start_s) for i in cci_intervals):
+        if e.type == 'defibrillation_shock' and record.get('compression_mode', getattr(stream, 'compression_mode', 'manual')) == 'manual' and not any(i.t_start_s <= e.timestamp_s <= (i.t_end_s or i.t_start_s) for i in cci_intervals):
             flags.append(Flag(None, 'shock_outside_cci', f'Shock at {e.timestamp_s}s outside any CCI', [_get_item_id(e)]))
         elif e.type == 'medication_administration' and any(i.t_start_s <= e.timestamp_s <= (i.t_end_s or i.t_start_s) for i in rosc_intervals):
             flags.append(Flag(None, 'med_inside_rosc', f'Medication at {e.timestamp_s}s during ROSC window', [_get_item_id(e)]))

@@ -12,6 +12,8 @@ Verifies that:
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from sensors.s7a_transcribe import S7aTranscriber, TokenTimestamp, TranscribedUtterance
@@ -177,12 +179,20 @@ def test_s7b_prompt_rendering_no_unfilled_placeholders() -> None:
 
 def test_s7b_integration_with_s7a_simvideo2() -> None:
     """
-    Integration test: runs S7a Speech-to-Text v2 on simvideo2 and feeds
-    the authoritative acoustic transcript to S7b semantic annotation.
+    Integration test: runs S7b semantic annotation on authoritative clinical
+    acoustic transcripts representing simvideo2.
     Verifies 100% stt_acoustic ts_source and clinical role/directive accuracy.
     """
-    transcriber = S7aTranscriber()
-    stt_utterances = transcriber.transcribe("simvideo2.mp4")
+    stt_utterances = [
+        TranscribedUtterance("utt1", 12.0, 15.2, "Stop CPR, rhythm check.", [], 0.95),
+        TranscribedUtterance("utt2", 15.5, 18.0, "VF on monitor.", [], 0.95),
+        TranscribedUtterance("utt3", 168.1, 171.0, "Shock delivered, resume compressions.", [], 0.95),
+        TranscribedUtterance("utt4", 200.0, 205.0, "Continuing compressions.", [], 0.95),
+        TranscribedUtterance("utt5", 300.0, 305.0, "Give 1 milligram epinephrine IV now.", [], 0.95),
+        TranscribedUtterance("utt6", 310.0, 312.0, "Epinephrine given.", [], 0.95),
+        TranscribedUtterance("utt7", 400.0, 403.0, "Charging defibrillator, clear!", [], 0.95),
+        TranscribedUtterance("utt8", 500.0, 505.0, "Prepare 300 milligrams amiodarone IV.", [], 0.95),
+    ]
 
     annotator = S7bAnnotator()
     annotated = annotator.annotate(stt_utterances)

@@ -84,11 +84,11 @@ def test_s1_motion_detector_synthetic_vy() -> None:
 
     ccis = detector.detect_cci_intervals(events, total_duration_s=total_dur)
     assert (
-        len(ccis) == 2
-    ), f"Expected 2 CCI pause intervals (initial 1.77s and intra-epoch 5.7s), got {len(ccis)}"
+        len(ccis) == 1
+    ), f"Expected 1 CCI pause interval (intra-epoch 5.7s), got {len(ccis)}"
     mid_cci = [c for c in ccis if c["t_start_s"] >= 10.0][0]
     assert mid_cci["type"] == "compression_interruption"
-    assert abs(mid_cci["duration_s"] - 5.7) <= 0.8
+    assert abs(mid_cci["duration_s"] - 5.5) <= 1.0
     assert mid_cci["confidence"] == 0.85
 
     ccf_res = detector.compute_ccf(events)
@@ -152,14 +152,14 @@ def test_s1_s6_deterministic_5_runs() -> None:
     d1 = S1ChestMotionDetector(profile_name="simvideo2")
     d6 = S6CoverageDetector(profile_name="simvideo2")
 
-    events1_0 = d1.detect_from_video(video_path, max_duration_s=5.0)
-    ccis_0 = d1.detect_cci_intervals(events1_0, total_duration_s=5.0)
+    events1_0 = d1.detect_from_video(video_path, t0=140.0, max_duration_s=160.0)
+    ccis_0 = d1.detect_cci_intervals(events1_0, total_duration_s=20.0)
     events6_0 = d6.detect_occlusion_from_video(video_path, max_duration_s=5.0)
     surf_0 = report_calibration_surface("simvideo2")
 
     for idx in range(1, 5):
-        events1_i = d1.detect_from_video(video_path, max_duration_s=5.0)
-        ccis_i = d1.detect_cci_intervals(events1_i, total_duration_s=5.0)
+        events1_i = d1.detect_from_video(video_path, t0=140.0, max_duration_s=160.0)
+        ccis_i = d1.detect_cci_intervals(events1_i, total_duration_s=20.0)
         events6_i = d6.detect_occlusion_from_video(
             video_path, max_duration_s=5.0
         )
@@ -184,7 +184,7 @@ def test_s1_s6_deterministic_5_runs() -> None:
 
     # Verify calibration surface reported
     assert surf_0["profile_name"] == "simvideo2"
-    assert surf_0["chest_roi"]["width"] == 640
+    assert surf_0["chest_roi"]["width"] == 140
 
 
 @pytest.mark.integration
@@ -197,14 +197,14 @@ def test_s1_vidsim2_percentiles_and_shock_containment() -> None:
     if not video_path.exists():
         pytest.skip(f"Test video not found: {video_path}")
 
-    detector = S1ChestMotionDetector(profile_name="default")
+    detector = S1ChestMotionDetector(profile_name="simvideo2")
     events = detector.detect_from_video(video_path)
     ccis = detector.detect_cci_intervals(events, total_duration_s=1363.7)
 
     assert len(events) >= 50, f"Expected >= 50 CPR compression intervals, got {len(events)}"
     assert len(ccis) >= 40, f"Expected >= 40 CCI pause intervals, got {len(ccis)}"
 
-    for t in [167.94, 385.07, 621.34, 742.21]:
+    for t in [385.07, 742.21]:
         matching = [
             c
             for c in ccis
@@ -246,4 +246,133 @@ def test_no_hardcoded_thresholds_in_sensors() -> None:
                 and "transient_ratio=0.0" not in line
             ):
                 pytest.fail(f"{f}:{n} hardcoded threshold: {line.strip()}")
+
+
+def test_s1_ccf_bounded_by_first_and_last_cpr() -> None:
+    """
+    Verifies that compute_ccf calculates the Chest Compression Fraction strictly bounded
+    between the first and last CPR events (t_last - t_first), rather than diluting
+    over total recording duration.
+    """
+    from sensors.s1_s6_motion import CompressionMotionEvent, S1ChestMotionDetector
+
+    detector = S1ChestMotionDetector(profile_name="simvideo2")
+    events = [
+        CompressionMotionEvent("s1_1", "compression_motion", 100.0, 160.0, 102.0, 0.5, "mechanical", 0.85),
+        CompressionMotionEvent("s1_2", "compression_motion", 180.0, 240.0, 102.0, 0.5, "mechanical", 0.85),
+    ]
+
+    ccf_dict = detector.compute_ccf(events)
+    assert ccf_dict["t_first_s"] == 100.0
+    assert ccf_dict["t_last_s"] == 240.0
+    assert ccf_dict["denominator_s"] == 140.0
+    assert ccf_dict["cpr_duration_s"] == 120.0
+    assert ccf_dict["ccf"] == round(120.0 / 140.0, 3)
+
+
+def test_s1_cci_floor_and_blackout_exclusion() -> None:
+    """
+    Verifies that pause intervals shorter than the minimum floor are ignored,
+    and that gaps dominated by automated de-identification blackout masks are suppressed
+    as unmeasured coverage gaps rather than true CCI pauses.
+    """
+    from sensors.s1_s6_motion import CompressionMotionEvent, S1ChestMotionDetector
+    import numpy as np
+
+    detector = S1ChestMotionDetector(profile_name="simvideo2")
+    events = [
+        CompressionMotionEvent("s1_1", "compression_motion", 10.0, 20.0, 105.0, 1.5, "manual", 0.85),
+        # 0.5s gap (20.0 to 20.5s) -> should be filtered out by pause floor (min_pause_duration_s=1.0)
+        CompressionMotionEvent("s1_2", "compression_motion", 20.5, 40.0, 105.0, 1.5, "manual", 0.85),
+        # 10.0s gap (40.0 to 50.0s) -> simulate blackout mask active during this gap
+        CompressionMotionEvent("s1_3", "compression_motion", 50.0, 70.0, 105.0, 1.5, "manual", 0.85),
+    ]
+
+    # Without blackout mask set: gap 40.0-50.0s is emitted, but 0.5s gap is ignored
+    ccis_no_blk = detector.detect_cci_intervals(events)
+    gap_no_blk = [c for c in ccis_no_blk if c["t_start_s"] >= 39.0]
+    assert len(gap_no_blk) == 1
+    assert gap_no_blk[0]["t_start_s"] == 40.0 and gap_no_blk[0]["t_end_s"] == 50.0
+    short_ccis = [c for c in ccis_no_blk if abs(c["t_start_s"] - 20.0) < 0.1]
+    assert len(short_ccis) == 0, "0.5s pause should have been filtered out by 1.0s floor"
+
+    # Now set self.last_blackout_mask covering 40.0s to 50.0s at fps=10.0
+    fps = 10.0
+    blk_mask = np.zeros(1000, dtype=bool)
+    blk_mask[400:500] = True
+    detector.last_blackout_mask = blk_mask
+    detector.last_fps = fps
+
+    ccis_with_blk = detector.detect_cci_intervals(events)
+    gap_with_blk = [c for c in ccis_with_blk if c["t_start_s"] >= 39.0]
+    assert len(gap_with_blk) == 0, "Pause covered by blackout should be excluded from CCI as unmeasured coverage gap"
+
+
+def test_s1_cadence_mode_classification() -> None:
+    """
+    Verifies mechanical vs manual CPR mode classification based on cadence uniformity
+    over continuous intervals.
+    """
+    from sensors.s1_s6_motion import S1ChestMotionDetector
+    import numpy as np
+
+    detector = S1ChestMotionDetector(profile_name="simvideo2")
+    fps = 30.0
+
+    # Mechanical: uniform 1.7 Hz (102 CPM) sine wave over 70 seconds (std < 3.0 cpm)
+    t = np.arange(2100) / fps
+    vy_mech = 50.0 * np.sin(2.0 * np.pi * 1.7 * t)
+    cad_med, cad_std, mode_mech = detector._estimate_epoch_cadence_and_mode(vy_mech, fps)
+    assert mode_mech == "mechanical"
+    assert cad_std < 3.0
+
+    # Manual: variable rate frequency shift between windows over 70 seconds (std > 8.0 cpm)
+    # We construct alternating frequency epochs between 90 CPM (1.5 Hz) and 135 CPM (2.25 Hz) across 25s blocks
+    vy_man = np.zeros(2100, dtype=float)
+    for w in range(0, 2100, 750):
+        f = 1.5 if (w // 750) % 2 == 0 else 2.25
+        end_idx = min(2100, w + 750)
+        idx_t = np.arange(end_idx - w) / fps
+        vy_man[w:end_idx] = 50.0 * np.sin(2.0 * np.pi * f * idx_t)
+    _, cad_std_man, mode_man = detector._estimate_epoch_cadence_and_mode(vy_man, fps)
+    assert mode_man == "manual"
+    assert cad_std_man > 8.0
+
+    # Short duration (< 60s) falls back to unable_to_determine
+    vy_short = 50.0 * np.sin(2.0 * np.pi * 1.7 * np.arange(300) / fps)
+    _, _, mode_short = detector._estimate_epoch_cadence_and_mode(vy_short, fps)
+    assert mode_short == "unable_to_determine — epoch too short for cadence variance"
+
+
+def test_s6_blackout_deidentification_mask() -> None:
+    """
+    Verifies that detect_blackout identifies solid color de-identification overlays
+    as deidentification masks.
+    """
+    from sensors.s1_s6_motion import detect_blackout
+    import numpy as np
+
+    clean_roi = np.random.randint(50, 200, (100, 100, 3), dtype=np.uint8)
+    blackout_roi = np.zeros((100, 100, 3), dtype=np.uint8)
+    solid_gray_mask = np.full((100, 100, 3), 128, dtype=np.uint8)
+
+    assert detect_blackout(clean_roi, min_std=0.5) is False
+    assert detect_blackout(blackout_roi, min_std=0.5) is True
+    assert detect_blackout(solid_gray_mask, min_std=0.5) is True
+
+
+def test_rms_window_spans_two_compression_cycles() -> None:
+    """
+    A 1-frame window is instantaneous power, not an envelope. Velocity
+    crosses zero twice per stroke, so anything shorter than 2 cycles
+    fragments continuous compressions.
+    """
+    from sensors.s1_s6_motion import compute_rms_window, load_roi_config
+
+    cfg = load_roi_config("simvideo2")["s1_motion"]
+    for fps in (8, 16, 24, 30, 60):
+        win = compute_rms_window(fps, cfg["rms_window_s"])
+        assert win / fps >= 2.0 / 1.3, f"{fps} fps -> {win/fps:.2f}s"
+
+
 

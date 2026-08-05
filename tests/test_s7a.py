@@ -136,7 +136,7 @@ def test_transcribe_abstains_on_silent_audio(tmp_path: Path) -> None:
 @pytest.mark.integration
 def test_s7a_integration_vidsim2() -> None:
     """
-    Integration test: verifies S7aTranscriber raises NotImplementedError
+    Integration test: verifies S7aTranscriber returns structured abstention
     on tests/video/vidsim2.mp4 without hardcoded fixture fallback.
     """
     vp = Path("tests/video/vidsim2.mp4")
@@ -144,5 +144,6 @@ def test_s7a_integration_vidsim2() -> None:
         pytest.skip("Integration video tests/video/vidsim2.mp4 not found")
 
     transcriber = S7aTranscriber()
-    with pytest.raises(NotImplementedError, match="Speech-to-Text v2"):
-        transcriber.transcribe(vp)
+    res = transcriber.transcribe(vp)
+    assert len(res) == 1 and res[0].abstained is True
+    assert res[0].confidence == 0.0

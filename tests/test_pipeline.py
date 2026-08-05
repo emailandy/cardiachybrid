@@ -28,7 +28,7 @@ def test_pipeline_runner_returns_all_seven_sensors() -> None:
     """Verifies that SensorPipelineRunner executes S1 through S7 on simvideo2 reference."""
     runner = SensorPipelineRunner()
     res = runner.run_pipeline(
-        "simvideo2.mp4", "simvideo2.mp4", max_duration_s=45.0
+        "simvideo2.mp4", "simvideo2.mp4", max_duration_s=160.0
     )
 
     assert len(res.s1_compressions) >= 1

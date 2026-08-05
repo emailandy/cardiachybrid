@@ -1,0 +1,74 @@
+# sensors/calibration/audio_config.yaml — Sensor S2 Acoustic Compression Periodicity Profiles
+# Calibrated parameters for Hilbert amplitude envelope STFT detection with frequency lock and stability.
+# Never hardcoded in logic. See S07 specifications and SENSOR_FINDINGS.md.
+
+profiles:
+  default:
+    sr: 16000
+    env_decimate_factor_1: 10
+    env_decimate_factor_2: 16
+    stft_window_s: 4.0
+    stft_hop_s: 0.1
+    band_min_hz: 1.3         # 78 cpm
+    band_max_hz: 3.0         # 180 cpm
+    min_band_power_ratio: 0.05
+    min_peak_snr: 1.65
+    snr_db_threshold: 3.0
+    # Frequency lock and stability discriminator (retaining tight tolerance as broad envelope IQR indicates room contamination)
+    device_locked: true
+    target_device_hz: 1.70   # Learned median from quiet-room mechanical epochs (102.0 CPM)
+    max_freq_delta_hz: 0.08  # Retained tight metronomic lock (|peak_hz - device_hz| <= 0.08) to prevent recall regression
+    max_freq_std_hz: 0.05    # Standard deviation of peak_hz over >= 3 consecutive STFT frames <= 0.05
+    min_active_duration_s: 2.0
+    min_pause_duration_s: 1.0
+    gap_merge_duration_s: 0.5
+    confidence_dual: 0.95    # support: ["s1", "s2"]
+    confidence_s1_only: 0.88 # support: ["s1"]
+    confidence_s2_only: 0.70 # support: ["s2"] (acoustic bridge during confirmed S6 visual occlusion)
+    description: "Default S2 compression audio cadence periodicity parameters with tight frequency lock"
+
+  UNKNOWN:
+    sr: 16000
+    env_decimate_factor_1: 10
+    env_decimate_factor_2: 16
+    stft_window_s: 4.0
+    stft_hop_s: 0.1
+    band_min_hz: 1.3
+    band_max_hz: 3.0
+    min_band_power_ratio: 0.05
+    min_peak_snr: 1.65
+    snr_db_threshold: 3.0
+    device_locked: true
+    target_device_hz: 1.70
+    max_freq_delta_hz: 0.08
+    max_freq_std_hz: 0.05
+    min_active_duration_s: 2.0
+    min_pause_duration_s: 1.0
+    gap_merge_duration_s: 0.5
+    confidence_dual: 0.95
+    confidence_s1_only: 0.88
+    confidence_s2_only: 0.70
+    description: "Fallback S2 parameters for uncalibrated bays"
+
+  simvideo2:
+    sr: 16000
+    env_decimate_factor_1: 10
+    env_decimate_factor_2: 16
+    stft_window_s: 4.0
+    stft_hop_s: 0.1
+    band_min_hz: 1.3
+    band_max_hz: 3.0
+    min_band_power_ratio: 0.05
+    min_peak_snr: 1.65
+    snr_db_threshold: 3.0
+    device_locked: true
+    target_device_hz: 1.70   # Metronomic LUCAS rate (102 CPM) confirmed on quiet-room frames
+    max_freq_delta_hz: 0.08  # Retaining tight tolerance (0.08 Hz) to reject wandering speech formants
+    max_freq_std_hz: 0.05    # Standard deviation over >= 3 consecutive STFT frames <= 0.05
+    min_active_duration_s: 2.0
+    min_pause_duration_s: 1.0
+    gap_merge_duration_s: 0.5
+    confidence_dual: 0.95
+    confidence_s1_only: 0.88
+    confidence_s2_only: 0.70
+    description: "Calibrated S2 acoustic envelope parameters for simvideo2.mp4 with tight frequency lock"

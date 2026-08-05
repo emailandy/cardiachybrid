@@ -131,5 +131,17 @@ Date: 2026-08-01  Session: A06  Decided by: human, agent
 Date: 2026-08-04  Session: S03  Decided by: agent
 1. **Calibrated ROI Configuration Surface (`S03`)**: Implemented `profiles` mapping in `sensors/calibration/roi_config.yaml` supporting `default`, `UNKNOWN`, and `simvideo2` profiles for Sensor S1 (chest-ROI optical flow CPR compression motion detection) and Sensor S6 (visual occlusion and provider crowding coverage notes). In S1, a Butterworth bandpass filter (`1.5-2.5 Hz`, corresponding to `90-150 cpm`) applies to vertical optical flow velocity over the chest ROI, emitting `compression_motion` intervals and deriving pause intervals as `compression_interruption` (CCI) intervals with confidence scores. In S6, ROI standard deviation thresholding (`< 15.0`) emits `coverage_note` events (`provider_crowding`). Both sensors strictly enforce determinism across repeated executions and expose their entire threshold surface via `report_calibration_surface()`.
 
+## 027 — Q-012 Sub-Decision: Gating CCF t_last on death_pronounced
+Date: 2026-08-05  Session: S03  Decided by: human, agent
+1. **Gating `t_last` on Pronouncement of Death**: In CCF calculations (`compute_ccf`), when a confirmed `death_pronounced_s` timestamp is present in clinical milestones or ground truth, `t_last` is strictly gated at that timestamp rather than relying solely on the final observed compression interval boundary. This aligns CCF measurement bounds ($t_{\text{first}} = 36\text{s}$ upon patient room entry with active mechanical CPR to $t_{\text{last}} = 922\text{s}$ upon death pronouncement) with clinical termination and excludes post-resuscitation artifacts or debriefing motion.
+
+## 028 — S07 Sensor S2 Acoustic-Visual Fusion Contract & Occlusion-Gated Operator
+Date: 2026-08-05  Session: S07  Decided by: human, agent
+1. **Retraction of Boolean OR-Fusion Artifact**: Formally retracted earlier reports of improved CCF error (`0.04`) under simple boolean union fusion (`compressions_active = S1 OR S2`). Because ambient room speech and alarms share the $1.3\text{–}3.0\text{ Hz}$ envelope band, OR-fusion allowed noisier acoustic detections to override clean optical signals, erasing 4 of 7 real clinical rhythm check pauses and collapsing $\pm 3\text{s}$ recall from `0.71` to `0.14`. The apparent CCF accuracy improvement arose entirely from over-detection ("never stopped" happens to approximate 90.7% on this case).
+2. **Canonical Occlusion-Gated Fusion Operator**: Adopted strict occlusion-gated arbitration where Sensor S2 arbitrates **ONLY** inside confirmed Sensor S6 visual occlusion windows (`provider_crowding` signatures identified by massive bounding pixel shifts). Where S1 is confident and unoccluded, S1 decides and S2 is ignored; unoccluded S1 gaps remain genuine pauses. Inside S6 occlusion windows, S2 evaluates frequency lock ($| \text{peak\_hz} - \text{device\_hz} | \le 0.08\text{ Hz}$) and frame stability ($\text{std} \le 0.05\text{ Hz}$ over 3 consecutive STFT frames), separating metronomic mechanical LUCAS thumps ($1.70\text{ Hz}$) from wandering speech peaks. This architecture preserves $100\%$ of true recall (`0.71`) while elevating interval precision from `0.07` to `0.10` and $\pm 3\text{s}$ F1 from `0.19` to `0.21`.
+
+
+
+
 
 

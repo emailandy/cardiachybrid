@@ -8,6 +8,7 @@ Phase 4  D5 D6 D12                          — reducer   ← D12 IS THE MILESTO
 Phase 5  D7 D8                              — warehouse
 Phase 6  D9 D10 P4 P5 D11                   — loop closure
 Phase 7  D13 + eval harness                 — hardening
+Sensor Layer: S00 S01 S02 S03 S07           — evidence-driven reprioritization of S07 (S2 fusion) directly after S03
 
 ## Hard dependencies — violating these wastes days
 - D14 MUST precede any prompt work. It defines the attribute contract the

@@ -319,7 +319,7 @@ class CCFReportGenerator:
 def generate_ccf_report(
     video_path: str | Path,
     case_id: str = "simvideo2",
-    profile_name: str = "default",
+    profile_name: str | None = None,
     candidate_shock_times_s: Sequence[float] | None = (
         167.94,
         385.07,
@@ -328,6 +328,8 @@ def generate_ccf_report(
     ),
 ) -> CCFReport:
     """Convenience wrapper for generating a CCFReport."""
+    if profile_name is None:
+        profile_name = "simvideo2" if case_id == "simvideo2" else "default"
     generator = CCFReportGenerator(profile_name=profile_name)
     return generator.generate_report(
         video_path=video_path,

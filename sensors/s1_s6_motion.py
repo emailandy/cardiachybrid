@@ -31,6 +31,8 @@ class CompressionMotionEvent:
     t_end_s: float
     cadence_cpm: float
     confidence: float
+    cadence_std_cpm: float | None = None
+    compression_mode: str = "unable_to_determine"  # enum "mechanical", "manual", "unable_to_determine"
 
 
 @dataclass(frozen=True)
@@ -42,8 +44,27 @@ class CoverageNoteEvent:
     channel: str  # enum "visual_chest", "monitor_ocr", "audio_room"
     t_start_s: float
     t_end_s: float
-    degradation_type: str  # e.g. "provider_crowding", "visual_occlusion"
+    degradation_type: str  # e.g. "provider_crowding", "visual_occlusion", "deidentification_mask"
     confidence: float
+
+
+def detect_blackout(roi: Any, min_std: float = 0.5) -> bool:
+    """
+    Detects automated privacy / de-identification blackout masks over an ROI.
+    Returns True if max pixel intensity is 0 or standard deviation < min_std.
+    """
+    arr = np.array(roi, dtype=float)
+    if arr.size == 0:
+        return True
+    return bool(arr.max() == 0 or np.std(arr) < min_std)
+
+
+def compute_rms_window(fps: float, rms_window_s: float) -> int:
+    """
+    Computes rolling RMS envelope window size in frames with int(round(...)).
+    Enforces a floor of 3 frames so low-fps sources cannot silently degrade to no smoothing.
+    """
+    return max(3, int(round(fps * float(rms_window_s))))
 
 
 def load_roi_config(profile_name: str = "default") -> dict[str, Any]:
@@ -121,6 +142,8 @@ class S1ChestMotionDetector:
         self.last_cpr_window_mask: np.ndarray | None = None
         self.last_active_resuscitation_duration_s: float | None = None
         self.last_coverage_notes: list[dict[str, Any]] = []
+        self.last_blackout_mask: np.ndarray | None = None
+        self.last_fps: float | None = None
 
     def _validate_track(self, active_mask: np.ndarray, duration_s: float) -> None:
         """
@@ -157,16 +180,82 @@ class S1ChestMotionDetector:
             logger.info("Rejected %d optical flow impulse spikes", n_spikes)
         return vy_clean, n_spikes
 
+    def _frames(self, seconds: float, fps: float, name: str) -> int:
+        n = int(round(seconds * fps))
+        if n == 0:
+            raise ValueError(f"{name} ({seconds}s at {fps} fps) evaluates to 0 frames")
+        return n
+
+    def _estimate_epoch_cadence_and_mode(
+        self,
+        seg_filtered: np.ndarray,
+        fps: float,
+    ) -> tuple[float, float | None, str]:
+        """
+        Estimates median cadence CPM, cadence standard deviation across 20s windows,
+        and compression mode ('mechanical', 'manual', or 'unable_to_determine').
+        """
+        dur_s = len(seg_filtered) / fps
+        if dur_s < 4.0:
+            cad = self._estimate_cadence_cpm(seg_filtered, fps)
+            return cad, None, "unable_to_determine — epoch too short for cadence variance"
+
+        mech_max_std = float(
+            self.s1_config.get("mechanical_cadence_max_std_cpm", 3.0)
+        )
+        man_min_std = float(
+            self.s1_config.get("manual_cadence_min_std_cpm", 8.0)
+        )
+
+        win_frames = self._frames(20.0, fps, "variance window")
+        hop_frames = self._frames(10.0, fps, "variance hop")
+        cadences: list[float] = []
+
+        if len(seg_filtered) <= win_frames:
+            cad = self._estimate_cadence_cpm(seg_filtered, fps)
+            cadences.append(cad)
+        else:
+            for w_s in range(0, len(seg_filtered) - win_frames + 1, hop_frames):
+                w_sig = seg_filtered[w_s : w_s + win_frames]
+                cad = self._estimate_cadence_cpm(w_sig, fps)
+                cadences.append(cad)
+
+        med_cad = round(float(np.median(cadences)), 1) if cadences else 102.0
+
+        if not (80.0 <= med_cad <= 140.0):
+            return med_cad, None, "unable_to_determine — cadence outside physiological range"
+
+        if len(cadences) < 3:
+            return med_cad, None, "unable_to_determine — epoch too short for cadence variance"
+
+        std_cad_overall = float(np.std(cadences))
+        sub_stds = [float(np.std(cadences[i : i + 3])) for i in range(len(cadences) - 2)]
+        min_sub_std = min(sub_stds)
+
+        if min_sub_std < mech_max_std:
+            mode = "mechanical"
+            std_cad = round(min_sub_std, 1)
+        elif std_cad_overall > man_min_std and all(s > man_min_std for s in sub_stds):
+            mode = "manual"
+            std_cad = round(std_cad_overall, 1)
+        else:
+            mode = "unable_to_determine"
+            std_cad = round(std_cad_overall, 1)
+
+        return med_cad, std_cad, mode
+
     def detect_from_vy_signal(
         self,
         vy_signal: np.ndarray | Sequence[float],
         fps: float = 30.0,
+        blackout_mask: np.ndarray | Sequence[bool] | None = None,
     ) -> list[CompressionMotionEvent]:
         """
         Detects CPR compression intervals from vertical velocity signal vy(t)
         using a Two-Stage architecture:
           Stage 1 (Window Gate): Scale-free frequency-domain discriminator on 60s windows
           Stage 2 (Continuous Segmentation): Continuous rolling RMS envelope thresholding
+        Excludes automated privacy / de-identification blackout frames from energy thresholding.
         """
         vy_arr = np.array(vy_signal, dtype=float)
         n_frames = len(vy_arr)
@@ -182,6 +271,18 @@ class S1ChestMotionDetector:
         conf_val = float(self.s1_config.get("confidence", 0.88))
         bump_thresh = float(self.s1_config.get("bump_threshold_px", 30.0))
         bump_mask = np.abs(vy_arr_clean) > bump_thresh
+
+        if blackout_mask is not None and len(blackout_mask) == n_frames:
+            blk_arr = np.array(blackout_mask, dtype=bool)
+            self.last_blackout_mask = blk_arr
+        elif self.last_blackout_mask is not None and len(self.last_blackout_mask) == n_frames:
+            blk_arr = self.last_blackout_mask
+        else:
+            blk_arr = np.zeros(n_frames, dtype=bool)
+            self.last_blackout_mask = blk_arr
+
+        self.last_fps = fps
+        excluded_mask = bump_mask | blk_arr
 
         duration_s = float(n_frames / fps)
 
@@ -202,7 +303,8 @@ class S1ChestMotionDetector:
         for w_start in range(0, n_frames, hop_frames):
             w_end = min(n_frames, w_start + win_frames)
             w_raw = vy_arr_clean[w_start:w_end]
-            if len(w_raw) / fps < 4.0:
+            w_blk = blk_arr[w_start:w_end]
+            if len(w_raw) / fps < 4.0 or np.mean(w_blk) > 0.8:
                 continue
             f = np.fft.rfftfreq(len(w_raw), d=1.0 / float(fps))
             P = np.abs(np.fft.rfft(w_raw)) ** 2
@@ -226,6 +328,18 @@ class S1ChestMotionDetector:
                 cpr_window_mask[w_start:w_end] = True
 
         if not np.any(cpr_window_mask):
+            self.last_cpr_window_mask = cpr_window_mask
+            self.last_active_resuscitation_duration_s = 0.0
+            self.last_coverage_notes = [
+                {
+                    "type": "coverage_note",
+                    "channel": "visual_chest",
+                    "t_start_s": 0.0,
+                    "t_end_s": round(duration_s, 2),
+                    "duration_s": round(duration_s, 2),
+                    "note": "unmeasured_epoch_no_periodic_motion",
+                }
+            ]
             raise NoPeriodicMotion(
                 "No periodic CPR motion detected across track"
             )
@@ -260,6 +374,7 @@ class S1ChestMotionDetector:
         if in_unm:
             unm_dur = (len(cpr_window_mask) - unm_start) / fps
             if unm_dur >= 30.0:
+                note_str = "unmeasured_epoch_no_periodic_motion" if unm_start == 0 else "unmeasured_debrief_no_periodic_motion"
                 self.last_coverage_notes.append(
                     {
                         "type": "coverage_note",
@@ -267,7 +382,7 @@ class S1ChestMotionDetector:
                         "t_start_s": round(unm_start / fps, 2),
                         "t_end_s": round(len(cpr_window_mask) / fps, 2),
                         "duration_s": round(unm_dur, 2),
-                        "note": "unmeasured_debrief_no_periodic_motion",
+                        "note": note_str,
                     }
                 )
 
@@ -278,13 +393,14 @@ class S1ChestMotionDetector:
         b, a = signal.butter(2, [low, high], btype="band")
         filtered = signal.filtfilt(b, a, vy_arr_clean)
 
-        win = max(1, int(fps * 0.1))
+        rms_window_s = float(self.s1_config.get("rms_window_s", 1.6))
+        win = compute_rms_window(fps, rms_window_s)
         kernel = np.ones(win, dtype=float) / float(win)
         energy = np.convolve(filtered**2, kernel, mode="same")
 
-        valid_energy = energy[cpr_window_mask & (~bump_mask)]
+        valid_energy = energy[cpr_window_mask & (~excluded_mask)]
         if len(valid_energy) == 0:
-            raise NoPeriodicMotion("No valid non-bump frames in CPR window")
+            raise NoPeriodicMotion("No valid non-excluded frames in CPR window")
 
         baseline = float(np.percentile(valid_energy, 10))
         active_p = float(np.percentile(valid_energy, 90))
@@ -299,7 +415,7 @@ class S1ChestMotionDetector:
         )
         threshold = baseline + thresh_ratio * (active_p - baseline)
 
-        raw_active = (energy > threshold) & cpr_window_mask & (~bump_mask)
+        raw_active = (energy > threshold) & cpr_window_mask & (~excluded_mask)
 
         # Gap merge (0.5s)
         gap_merge_s = float(self.s1_config.get("gap_merge_duration_s", 0.5))
@@ -336,7 +452,9 @@ class S1ChestMotionDetector:
                 dur = (i - s_idx) / fps
                 if dur >= min_active_s:
                     sub_sig = filtered[s_idx:i]
-                    cad = self._estimate_cadence_cpm(sub_sig, fps)
+                    cad, cad_std, mode = self._estimate_epoch_cadence_and_mode(
+                        sub_sig, fps
+                    )
                     events.append(
                         CompressionMotionEvent(
                             id=f"s1_{idx_counter}",
@@ -345,6 +463,8 @@ class S1ChestMotionDetector:
                             t_end_s=round(i / fps, 2),
                             cadence_cpm=cad,
                             confidence=conf_val,
+                            cadence_std_cpm=cad_std,
+                            compression_mode=mode,
                         )
                     )
                     idx_counter += 1
@@ -353,7 +473,9 @@ class S1ChestMotionDetector:
             dur = (len(active_mask) - s_idx) / fps
             if dur >= min_active_s:
                 sub_sig = filtered[s_idx:]
-                cad = self._estimate_cadence_cpm(sub_sig, fps)
+                cad, cad_std, mode = self._estimate_epoch_cadence_and_mode(
+                    sub_sig, fps
+                )
                 events.append(
                     CompressionMotionEvent(
                         id=f"s1_{idx_counter}",
@@ -362,6 +484,8 @@ class S1ChestMotionDetector:
                         t_end_s=round(len(active_mask) / fps, 2),
                         cadence_cpm=cad,
                         confidence=conf_val,
+                        cadence_std_cpm=cad_std,
+                        compression_mode=mode,
                     )
                 )
 
@@ -386,27 +510,61 @@ class S1ChestMotionDetector:
     def compute_ccf(
         self,
         motion_events: Sequence[CompressionMotionEvent],
+        death_pronounced_s: float | None = None,
     ) -> dict[str, Any]:
         """
         Computes Chest Compression Fraction (CCF) per Q-012:
-        first compression start to last compression end.
+        first compression start to last compression end (gated on death_pronounced when present).
+        CCF denominator gates on compression_mode (mechanical/manual) rather than Stage 1 alone.
         """
         sorted_events = sorted(motion_events, key=lambda e: e.t_start_s)
         if not sorted_events:
             return {
-                "ccf": 0.0,
+                "ccf": None,
+                "note": "unmeasured_epoch_no_periodic_motion_detected",
                 "t_first_s": 0.0,
                 "t_last_s": 0.0,
                 "denominator_s": 0.0,
                 "cpr_duration_s": 0.0,
             }
-        t_first = float(sorted_events[0].t_start_s)
-        t_last = float(sorted_events[-1].t_end_s)
+
+        valid_modes = ("mechanical", "manual")
+        first_mode_ev = next(
+            (e for e in sorted_events if getattr(e, "compression_mode", None) in valid_modes),
+            None,
+        )
+        if first_mode_ev is not None:
+            t_first = float(first_mode_ev.t_start_s)
+            valid_events = [e for e in sorted_events if float(e.t_start_s) >= t_first - 1e-6]
+        else:
+            t_first = float(sorted_events[0].t_start_s)
+            valid_events = sorted_events
+
+        if not valid_events:
+            valid_events = sorted_events
+            t_first = float(sorted_events[0].t_start_s)
+
+        if death_pronounced_s is not None and float(death_pronounced_s) > t_first:
+            t_last = float(death_pronounced_s)
+        else:
+            t_last = float(valid_events[-1].t_end_s)
+
         denominator = max(t_last - t_first, 1e-6)
-        cpr_duration = sum(float(e.t_end_s - e.t_start_s) for e in sorted_events)
+        cpr_duration = sum(
+            max(0.0, min(t_last, float(e.t_end_s)) - max(t_first, float(e.t_start_s)))
+            for e in valid_events
+            if float(e.t_start_s) < t_last and float(e.t_end_s) > t_first
+        )
         ccf = round(cpr_duration / denominator, 3)
+        note = "normal"
+        if hasattr(self, "last_coverage_notes") and any(
+            "no_periodic_motion" in n.get("note", "") for n in getattr(self, "last_coverage_notes", [])
+        ):
+            note = "unmeasured_debrief_excluded"
+
         return {
             "ccf": ccf,
+            "note": note,
             "t_first_s": round(t_first, 2),
             "t_last_s": round(t_last, 2),
             "denominator_s": round(denominator, 2),
@@ -422,6 +580,7 @@ class S1ChestMotionDetector:
         Emits Chest Compression Interruption (CCI) pause intervals
         with confidence scores between active compression periods.
         Detection floor is min_pause_duration_s (default 1.0s).
+        Excludes unmeasured de-identification blackout gaps by splitting pause intervals.
         """
         if isinstance(motion_events, (str, Path)):
             video_path = Path(motion_events)
@@ -451,25 +610,82 @@ class S1ChestMotionDetector:
                 "No active CPR compression intervals found across track"
             )
 
-        first_t = float(sorted_events[0].t_start_s)
-        if first_t >= min_pause_s:
-            ccis.append(
-                {
-                    "id": f"cci_{idx}",
-                    "type": "compression_interruption",
-                    "t_start_s": 0.0,
-                    "t_end_s": round(first_t, 2),
-                    "duration_s": round(first_t, 2),
-                    "confidence": conf_val,
-                }
-            )
-            idx += 1
+        valid_modes = ("mechanical", "manual")
+        first_mode_ev = next(
+            (e for e in sorted_events if getattr(e, "compression_mode", None) in valid_modes),
+            None,
+        )
+        if first_mode_ev is not None:
+            t_first = float(first_mode_ev.t_start_s)
+            sorted_events = [e for e in sorted_events if float(e.t_start_s) >= t_first - 1e-6]
+        else:
+            t_first = float(sorted_events[0].t_start_s)
+
+        if not sorted_events:
+            sorted_events = sorted(motion_events, key=lambda e: e.t_start_s)
+            t_first = float(sorted_events[0].t_start_s)
 
         for i in range(len(sorted_events) - 1):
             pause_start = float(sorted_events[i].t_end_s)
             pause_end = float(sorted_events[i + 1].t_start_s)
             dur = pause_end - pause_start
             if dur >= min_pause_s:
+                if (
+                    hasattr(self, "last_blackout_mask")
+                    and self.last_blackout_mask is not None
+                ):
+                    fps_val = float(getattr(self, "last_fps", None) or 16.0)
+                    i_s = int(round(pause_start * fps_val))
+                    i_e = int(round(pause_end * fps_val))
+                    if (
+                        0 <= i_s < len(self.last_blackout_mask)
+                        and 0 <= i_e <= len(self.last_blackout_mask)
+                        and i_e > i_s
+                    ):
+                        sub_mask = self.last_blackout_mask[i_s:i_e]
+                        if np.any(sub_mask):
+                            if not hasattr(self, "last_coverage_notes") or self.last_coverage_notes is None:
+                                self.last_coverage_notes = []
+                            changes = np.where(np.diff(sub_mask))[0] + 1
+                            indices = [0] + list(changes) + [len(sub_mask)]
+                            for k_run in range(len(indices) - 1):
+                                r_start_idx = indices[k_run]
+                                r_end_idx = indices[k_run + 1]
+                                is_blk = sub_mask[r_start_idx]
+                                r_start_t = (
+                                    pause_start if r_start_idx == 0 else round(pause_start + r_start_idx / fps_val, 2)
+                                )
+                                r_end_t = (
+                                    pause_end if r_end_idx == len(sub_mask) else round(pause_start + r_end_idx / fps_val, 2)
+                                )
+                                r_dur = round(r_end_t - r_start_t, 2)
+                                if r_dur <= 0:
+                                    continue
+                                if is_blk:
+                                    self.last_coverage_notes.append(
+                                        {
+                                            "type": "coverage_note",
+                                            "channel": "visual_chest",
+                                            "t_start_s": r_start_t,
+                                            "t_end_s": r_end_t,
+                                            "duration_s": r_dur,
+                                            "note": "deidentification_mask",
+                                        }
+                                    )
+                                else:
+                                    if r_dur >= 0.05:
+                                        ccis.append(
+                                            {
+                                                "id": f"cci_{idx}",
+                                                "type": "compression_interruption",
+                                                "t_start_s": r_start_t,
+                                                "t_end_s": r_end_t,
+                                                "duration_s": r_dur,
+                                                "confidence": conf_val,
+                                            }
+                                        )
+                                        idx += 1
+                            continue
                 ccis.append(
                     {
                         "id": f"cci_{idx}",
@@ -501,7 +717,118 @@ class S1ChestMotionDetector:
     ) -> np.ndarray:
         """
         Extracts optical flow vertical velocity signal vy(t) across the configured
-        chest ROI between timestamps t0 and t1.
+        chest ROI between timestamps t0 and t1. Also extracts blackout flags.
+        """
+        path = Path(video_path)
+        if not path.exists():
+            raise FileNotFoundError(f"Video file not found: {path}")
+
+        cap = cv2.VideoCapture(str(path))
+        if not cap.isOpened():
+            raise RuntimeError(f"Failed to open video file: {path}")
+
+        fps = float(cap.get(cv2.CAP_PROP_FPS) or 30.0)
+        self.last_fps = fps
+        roi_box = self.profile.get("chest_roi", {})
+        rx = int(roi_box.get("x", 600))
+        ry = int(roi_box.get("y", 400))
+        rw = int(roi_box.get("width", 720))
+        rh = int(roi_box.get("height", 480))
+
+        start_frame = int(t0 * fps)
+        if start_frame > 0:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
+
+        vy_signal: list[float] = []
+        blackout_flags: list[bool] = []
+        ret, prev_frame = cap.read()
+        if not ret or prev_frame is None:
+            cap.release()
+            return np.array([], dtype=float)
+
+        prev_gray = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
+        prev_roi = prev_gray[ry : ry + rh, rx : rx + rw]
+        blackout_flags.append(detect_blackout(prev_roi))
+        vy_signal.append(0.0)
+
+        frame_count = 1
+        max_frames = (
+            int((t1 - t0) * fps) if t1 is not None else None
+        )
+
+        while True:
+            if max_frames is not None and frame_count >= max_frames:
+                break
+            ret, frame = cap.read()
+            if not ret or frame is None:
+                break
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            roi_gray = gray[ry : ry + rh, rx : rx + rw]
+            is_blk = detect_blackout(roi_gray)
+            blackout_flags.append(is_blk)
+
+            flow = cv2.calcOpticalFlowFarneback(
+                prev_roi,
+                roi_gray,
+                None,
+                pyr_scale=0.5,
+                levels=3,
+                winsize=15,
+                iterations=3,
+                poly_n=5,
+                poly_sigma=1.2,
+                flags=0,
+            )
+            vy_val = float(np.mean(flow[..., 1]))
+            vy_signal.append(vy_val)
+            prev_roi = roi_gray
+            frame_count += 1
+
+        cap.release()
+        self.last_blackout_mask = np.array(blackout_flags, dtype=bool)
+        return np.array(vy_signal, dtype=float)
+
+    def detect_from_video(
+        self,
+        video_path: str | Path,
+        max_duration_s: float | None = None,
+        t0: float = 0.0,
+    ) -> list[CompressionMotionEvent]:
+        """
+        Executes S1 motion detection on a video recording.
+        Accepts max_duration_s and t0 for rapid unit test verification.
+        """
+        path = Path(video_path)
+        cap = cv2.VideoCapture(str(path))
+        fps = float(cap.get(cv2.CAP_PROP_FPS) or 30.0)
+        cap.release()
+        vy_signal = self.extract_vy_signal(
+            video_path, t0=t0, t1=max_duration_s
+        )
+        return self.detect_from_vy_signal(
+            vy_signal, fps=fps, blackout_mask=self.last_blackout_mask
+        )
+
+
+class S6CoverageDetector:
+    """
+    Sensor S6: Detects visual occlusions and provider crowding degradation
+    over the calibrated chest ROI.
+    """
+
+    def __init__(self, profile_name: str = "default") -> None:
+        self.profile_name = profile_name
+        self.profile = load_roi_config(profile_name)
+        self.s6_config = dict(self.profile.get("s6_coverage", {}))
+
+    def detect_blackout_from_video(
+        self,
+        video_path: str | Path,
+        max_duration_s: float | None = None,
+    ) -> list[CoverageNoteEvent]:
+        """
+        Detects automated privacy / de-identification blackout masks across video.
+        Emits CoverageNoteEvents with degradation_type='deidentification_mask'.
         """
         path = Path(video_path)
         if not path.exists():
@@ -517,82 +844,68 @@ class S1ChestMotionDetector:
         ry = int(roi_box.get("y", 400))
         rw = int(roi_box.get("width", 720))
         rh = int(roi_box.get("height", 480))
+        min_std = float(self.s6_config.get("blackout_min_std", 0.5))
 
-        grid_y, grid_x = np.mgrid[
-            ry : ry + rh : 40, rx : rx + rw : 40
-        ].astype(np.float32)
-        prev_pts = np.vstack((grid_x.flatten(), grid_y.flatten())).T.reshape(
-            -1, 1, 2
-        )
-
-        start_frame = int(t0 * fps)
-        if start_frame > 0:
-            cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
-
-        vy_signal: list[float] = []
-        ret, prev_frame = cap.read()
-        if not ret or prev_frame is None:
-            cap.release()
-            return np.array([], dtype=float)
-
-        prev_gray = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
-        frame_count = 1
+        blackout_flags: list[bool] = []
+        timestamps_s: list[float] = []
+        frame_idx = 0
         max_frames = (
-            int((t1 - t0) * fps) if t1 is not None else None
+            int(max_duration_s * fps) if max_duration_s is not None else None
         )
 
         while True:
-            if max_frames is not None and frame_count >= max_frames:
+            if max_frames is not None and frame_idx >= max_frames:
                 break
             ret, frame = cap.read()
             if not ret or frame is None:
                 break
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            next_pts, status, _ = cv2.calcOpticalFlowPyrLK(
-                prev_gray, gray, prev_pts, None  # type: ignore[call-overload]
+            roi_gray = gray[ry : ry + rh, rx : rx + rw]
+            is_blk = detect_blackout(roi_gray, min_std=min_std)
+            blackout_flags.append(is_blk)
+            timestamps_s.append(frame_idx / fps)
+            frame_idx += 1
+
+        cap.release()
+
+        events: list[CoverageNoteEvent] = []
+        in_blk = False
+        s_idx = 0
+        idx_counter = 1
+        for i, is_blk in enumerate(blackout_flags):
+            if is_blk and not in_blk:
+                in_blk = True
+                s_idx = i
+            elif not is_blk and in_blk:
+                in_blk = False
+                e_idx = i
+                events.append(
+                    CoverageNoteEvent(
+                        id=f"s6_blk_{idx_counter}",
+                        event_type="coverage_note",
+                        channel="visual_chest",
+                        t_start_s=round(timestamps_s[s_idx], 2),
+                        t_end_s=round(timestamps_s[e_idx], 2),
+                        degradation_type="deidentification_mask",
+                        confidence=1.0,
+                    )
+                )
+                idx_counter += 1
+        if in_blk:
+            e_idx = len(blackout_flags) - 1
+            events.append(
+                CoverageNoteEvent(
+                    id=f"s6_blk_{idx_counter}",
+                    event_type="coverage_note",
+                    channel="visual_chest",
+                    t_start_s=round(timestamps_s[s_idx], 2),
+                    t_end_s=round(timestamps_s[e_idx], 2),
+                    degradation_type="deidentification_mask",
+                    confidence=1.0,
+                )
             )
-            good_old = prev_pts[status == 1]
-            good_new = next_pts[status == 1]
-            if len(good_new) > 0 and len(good_old) > 0:
-                vy_val = float(np.mean(good_new[:, 1] - good_old[:, 1]))
-                vy_signal.append(vy_val)
-            else:
-                vy_signal.append(0.0)
-            prev_gray = gray
-            frame_count += 1
 
-        cap.release()
-        return np.array(vy_signal, dtype=float)
-
-    def detect_from_video(
-        self,
-        video_path: str | Path,
-        max_duration_s: float | None = None,
-    ) -> list[CompressionMotionEvent]:
-        """
-        Executes S1 motion detection on a video recording.
-        Accepts max_duration_s for rapid unit test verification.
-        """
-        path = Path(video_path)
-        cap = cv2.VideoCapture(str(path))
-        fps = float(cap.get(cv2.CAP_PROP_FPS) or 30.0)
-        cap.release()
-        vy_signal = self.extract_vy_signal(
-            video_path, t0=0.0, t1=max_duration_s
-        )
-        return self.detect_from_vy_signal(vy_signal, fps=fps)
-
-
-class S6CoverageDetector:
-    """
-    Sensor S6: Detects visual occlusions and provider crowding degradation
-    over the calibrated chest ROI.
-    """
-
-    def __init__(self, profile_name: str = "default") -> None:
-        self.profile_name = profile_name
-        self.profile = load_roi_config(profile_name)
-        self.s6_config = dict(self.profile.get("s6_coverage", {}))
+        return events
 
     def detect_occlusion_from_metrics(
         self,
@@ -663,8 +976,10 @@ class S6CoverageDetector:
         max_duration_s: float | None = None,
     ) -> list[CoverageNoteEvent]:
         """
-        Computes ROI pixel intensity variance across a video file to detect
-        provider crowding and visual occlusions.
+        Computes temporal difference occlusion signatures across a video file to detect
+        provider crowding and visual occlusions:
+        - Entry/Exit: massive pixel shift bounding spike
+        - During: ROI internal stillness while surrounding resuscitation room moves
         """
         path = Path(video_path)
         if not path.exists():
@@ -681,12 +996,25 @@ class S6CoverageDetector:
         rw = int(roi_box.get("width", 720))
         rh = int(roi_box.get("height", 480))
 
-        std_signal: list[float] = []
-        timestamps_s: list[float] = []
-        frame_idx = 0
+        entry_spike_thresh = float(self.s6_config.get("occlusion_entry_spike_px", 20.0))
+        max_roi_still_thresh = float(self.s6_config.get("occlusion_max_roi_still_px", 1.5))
+        min_room_active_thresh = float(self.s6_config.get("occlusion_min_room_active_px", 0.02))
+        min_dur_s = float(self.s6_config.get("min_occlusion_duration_s", 0.5))
+        conf_val = float(self.s6_config.get("confidence", 0.90))
+
+        roi_diffs: list[float] = [0.0]
+        room_diffs: list[float] = [0.0]
+        timestamps_s: list[float] = [0.0]
+        frame_idx = 1
         max_frames = (
             int(max_duration_s * fps) if max_duration_s is not None else None
         )
+
+        ret, prev_frame = cap.read()
+        if not ret or prev_frame is None:
+            cap.release()
+            return []
+        prev_gray = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY).astype(np.float32)
 
         while True:
             if max_frames is not None and frame_idx >= max_frames:
@@ -694,15 +1022,81 @@ class S6CoverageDetector:
             ret, frame = cap.read()
             if not ret or frame is None:
                 break
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            roi_gray = gray[ry : ry + rh, rx : rx + rw]
-            std_val = float(np.std(roi_gray))
-            std_signal.append(std_val)
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY).astype(np.float32)
+            diff = np.abs(gray - prev_gray)
+            roi_slice = diff[ry : ry + rh, rx : rx + rw]
+            r_diff = float(np.mean(roi_slice)) if roi_slice.size > 0 else 0.0
+            room_size = gray.size - roi_slice.size
+            rm_diff = float((np.sum(diff) - np.sum(roi_slice)) / room_size) if room_size > 0 else 0.0
+            roi_diffs.append(r_diff)
+            room_diffs.append(rm_diff)
             timestamps_s.append(frame_idx / fps)
+            prev_gray = gray
             frame_idx += 1
 
         cap.release()
-        return self.detect_occlusion_from_metrics(std_signal, timestamps_s)
+
+        n_pts = len(roi_diffs)
+        roi_arr = np.array(roi_diffs, dtype=float)
+        room_arr = np.array(room_diffs, dtype=float)
+        ts_arr = np.array(timestamps_s, dtype=float)
+
+        # Stillness during occlusion while surrounding room moves
+        during_mask = (roi_arr < max_roi_still_thresh) & (room_arr > min_room_active_thresh)
+
+        events: list[CoverageNoteEvent] = []
+        in_occ = False
+        s_idx = 0
+        idx_counter = 1
+        w_spike = max(1, int(fps * 0.5))
+
+        for i, is_occ in enumerate(during_mask):
+            if is_occ and not in_occ:
+                in_occ = True
+                s_idx = i
+            elif not is_occ and in_occ:
+                in_occ = False
+                e_idx = i - 1
+                dur = float(ts_arr[e_idx] - ts_arr[s_idx])
+                if dur >= min_dur_s:
+                    s_win = max(0, s_idx - w_spike)
+                    e_win = min(n_pts, e_idx + w_spike)
+                    spike_max = float(np.max(roi_arr[s_win:e_win]))
+                    if spike_max >= entry_spike_thresh:
+                        events.append(
+                            CoverageNoteEvent(
+                                id=f"s6_occ_{idx_counter:03d}",
+                                event_type="coverage_note",
+                                channel="visual_chest",
+                                t_start_s=round(float(ts_arr[s_idx]), 2),
+                                t_end_s=round(float(ts_arr[e_idx]), 2),
+                                degradation_type="provider_crowding",
+                                confidence=conf_val,
+                            )
+                        )
+                        idx_counter += 1
+
+        if in_occ:
+            e_idx = len(during_mask) - 1
+            dur = float(ts_arr[e_idx] - ts_arr[s_idx])
+            if dur >= min_dur_s:
+                s_win = max(0, s_idx - w_spike)
+                e_win = min(n_pts, e_idx + w_spike)
+                spike_max = float(np.max(roi_arr[s_win:e_win]))
+                if spike_max >= entry_spike_thresh:
+                    events.append(
+                        CoverageNoteEvent(
+                            id=f"s6_occ_{idx_counter:03d}",
+                            event_type="coverage_note",
+                            channel="visual_chest",
+                            t_start_s=round(float(ts_arr[s_idx]), 2),
+                            t_end_s=round(float(ts_arr[e_idx]), 2),
+                            degradation_type="provider_crowding",
+                            confidence=conf_val,
+                        )
+                    )
+
+        return events
 
 
 def detect_visual_occlusion(

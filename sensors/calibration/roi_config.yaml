@@ -23,7 +23,7 @@ profiles:
       min_fps: 15.0
       vy_bandpass_min_hz: 1.3   # 78 cpm
       vy_bandpass_max_hz: 3.0   # 180 cpm
-      energy_threshold_ratio: 0.12
+      energy_threshold_ratio: 0.05
       # min_modulation is ROI-area dependent (absolute energy scales with pixel area) and must be re-derived whenever chest_roi changes
       min_modulation: 0.010
       min_band_power_ratio: 0.15
@@ -33,6 +33,14 @@ profiles:
       impulse_rejection_k: 8.0
       impulse_rejection_win: 5
       impulse_min_spike_px: 2.0
+      # Cadence stability discriminator (provisional: n=1 device, 1 video; per-site calibration required)
+      mechanical_cadence_max_std_cpm: 3.0
+      manual_cadence_min_std_cpm: 8.0
+      mode_min_duration_s: 60.0
+      # expected_cadence_cpm is a smoothing parameter, not a detection constraint — S1 must still detect off-cadence CPR
+      expected_cadence_cpm: 102.0
+      # rms_window_s must span at least two compression cycles at slowest passband rate (1.3 Hz / 78 cpm = 1.54s) to prevent zero-crossing envelope collapse
+      rms_window_s: 1.6
       gap_merge_duration_s: 0.5
       min_active_duration_s: 2.0
       min_pause_duration_s: 1.0
@@ -41,9 +49,14 @@ profiles:
     s6_coverage:
       min_roi_visibility: 0.20
       occlusion_std_threshold: 15.0
-      min_occlusion_duration_s: 2.0
+      min_occlusion_duration_s: 0.5
+      blackout_min_std: 0.5
+      # Temporal difference occlusion discriminator (calibrated against characterized provider crowding dropouts)
+      occlusion_entry_spike_px: 20.0   # Massive bounding pixel shift at occlusion entry/exit
+      occlusion_max_roi_still_px: 1.5  # Internal stillness inside ROI during occlusion
+      occlusion_min_room_active_px: 0.02 # Concurrent moving room outside ROI
       confidence: 0.90
-      description: "Default S6 visual occlusion and provider crowding parameters"
+      description: "Default S6 visual occlusion and provider crowding parameters with temporal difference gating"
 
   UNKNOWN:
     chest_roi:
@@ -56,7 +69,7 @@ profiles:
       min_fps: 15.0
       vy_bandpass_min_hz: 1.3   # 78 cpm
       vy_bandpass_max_hz: 3.0   # 180 cpm
-      energy_threshold_ratio: 0.12
+      energy_threshold_ratio: 0.05
       # min_modulation is ROI-area dependent (absolute energy scales with pixel area) and must be re-derived whenever chest_roi changes
       min_modulation: 0.010
       min_band_power_ratio: 0.15
@@ -66,6 +79,14 @@ profiles:
       impulse_rejection_k: 8.0
       impulse_rejection_win: 5
       impulse_min_spike_px: 2.0
+      # Cadence stability discriminator (provisional: n=1 device, 1 video; per-site calibration required)
+      mechanical_cadence_max_std_cpm: 3.0
+      manual_cadence_min_std_cpm: 8.0
+      mode_min_duration_s: 60.0
+      # expected_cadence_cpm is a smoothing parameter, not a detection constraint — S1 must still detect off-cadence CPR
+      expected_cadence_cpm: 102.0
+      # rms_window_s must span at least two compression cycles at slowest passband rate (1.3 Hz / 78 cpm = 1.54s) to prevent zero-crossing envelope collapse
+      rms_window_s: 1.6
       gap_merge_duration_s: 0.5
       min_active_duration_s: 2.0
       min_pause_duration_s: 1.0
@@ -74,9 +95,13 @@ profiles:
     s6_coverage:
       min_roi_visibility: 0.20
       occlusion_std_threshold: 15.0
-      min_occlusion_duration_s: 2.0
+      min_occlusion_duration_s: 0.5
+      blackout_min_std: 0.5
+      occlusion_entry_spike_px: 20.0
+      occlusion_max_roi_still_px: 1.5
+      occlusion_min_room_active_px: 0.02
       confidence: 0.90
-      description: "Fallback S6 visual occlusion and provider crowding parameters"
+      description: "Fallback S6 visual occlusion and provider crowding parameters with temporal difference gating"
 
   simvideo2:
     chest_roi:
@@ -89,7 +114,7 @@ profiles:
       min_fps: 15.0
       vy_bandpass_min_hz: 1.3
       vy_bandpass_max_hz: 3.0
-      energy_threshold_ratio: 0.12
+      energy_threshold_ratio: 0.05
       # min_modulation is ROI-area dependent (absolute energy scales with pixel area) and must be re-derived whenever chest_roi changes
       min_modulation: 0.010
       min_band_power_ratio: 0.15
@@ -99,6 +124,14 @@ profiles:
       impulse_rejection_k: 8.0
       impulse_rejection_win: 5
       impulse_min_spike_px: 2.0
+      # Cadence stability discriminator (provisional: n=1 device, 1 video; per-site calibration required)
+      mechanical_cadence_max_std_cpm: 3.0
+      manual_cadence_min_std_cpm: 8.0
+      mode_min_duration_s: 60.0
+      # expected_cadence_cpm is a smoothing parameter, not a detection constraint — S1 must still detect off-cadence CPR
+      expected_cadence_cpm: 102.0
+      # rms_window_s must span at least two compression cycles at slowest passband rate (1.3 Hz / 78 cpm = 1.54s) to prevent zero-crossing envelope collapse
+      rms_window_s: 1.6
       gap_merge_duration_s: 0.5
       min_active_duration_s: 2.0
       min_pause_duration_s: 1.0
@@ -107,6 +140,11 @@ profiles:
     s6_coverage:
       min_roi_visibility: 0.20
       occlusion_std_threshold: 15.0
-      min_occlusion_duration_s: 2.0
+      min_occlusion_duration_s: 0.5
+      blackout_min_std: 0.5
+      # Temporal difference occlusion discriminator (calibrated against characterized provider crowding dropouts)
+      occlusion_entry_spike_px: 20.0   # Massive bounding pixel shift at occlusion entry/exit
+      occlusion_max_roi_still_px: 1.5  # Internal stillness inside ROI during occlusion
+      occlusion_min_room_active_px: 0.02 # Concurrent moving room outside ROI
       confidence: 0.92
-      description: "Calibrated S6 parameters for simvideo2.mp4"
+      description: "Calibrated S6 parameters for simvideo2.mp4 with temporal difference gating"

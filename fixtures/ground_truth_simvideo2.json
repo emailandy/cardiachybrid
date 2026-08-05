@@ -2,96 +2,90 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "case_id": "simvideo2.mp4",
   "video_duration_s": 1363.78,
-  "note": "F-017: simvideo2.mp4 is a SCREEN RECORDING of a UI playing CCTV footage, not direct camera output (nb_read_frames=21821 vs r_frame_rate=16/1). Every S1 and S3 parameter is calibrated against this stack, not against direct capture. Validation on real bay footage is required before any parameter is treated as transferable. CCIs carry block_probe_unverified provenance and must never be used for accuracy calibration without human verification (Q-017).",
+  "t0_iso": "2023-11-07T07:55:57",
+  "note": "Human gold standard annotations derived from ACLS Sim Video Review (Patient 1). T0 = 2023-11-07T07:55:57 matches burned-in timecode and S5 video OCR at t=300s (08:00:57.072). Note: human timestamp precision is roughly +/-3s, which bounds every accuracy claim made against it. Acoustic measurements differ by up to 2.9s because acoustic detection is an instantaneous physical measurement whereas human annotation involves observing digital display/clocks.",
+  "provenance": "human_adjudicated",
   "shocks": [
     {
-      "timestamp_s": 167.94,
+      "timestamp_s": 165.0,
       "is_shock": true,
-      "provenance": "acoustic_confirmed"
+      "provenance": "human_adjudicated",
+      "acoustic_measured": 167.94
     },
     {
-      "timestamp_s": 385.07,
+      "timestamp_s": 388.0,
       "is_shock": true,
-      "provenance": "acoustic_confirmed"
+      "provenance": "human_adjudicated",
+      "acoustic_measured": 385.07
     },
     {
-      "timestamp_s": 621.34,
+      "timestamp_s": 622.0,
       "is_shock": true,
-      "provenance": "acoustic_confirmed"
+      "provenance": "human_adjudicated",
+      "acoustic_measured": 621.34
     },
     {
-      "timestamp_s": 742.21,
+      "timestamp_s": 742.0,
       "is_shock": true,
-      "provenance": "acoustic_confirmed"
+      "provenance": "human_adjudicated",
+      "acoustic_measured": 742.21
     },
     {
-      "timestamp_s": 861.0,
-      "is_shock": false,
-      "note": "Non-shock transient negative control",
-      "provenance": "acoustic_confirmed"
-    },
-    {
-      "timestamp_s": 884.5,
-      "is_shock": false,
-      "note": "Non-shock transient negative control",
-      "provenance": "acoustic_confirmed"
+      "timestamp_s": 879.0,
+      "is_shock": true,
+      "provenance": "human_adjudicated",
+      "acoustic_measured": null
     }
   ],
   "ccis": [
-    {
-      "start_s": 142.0,
-      "end_s": 152.0,
-      "duration_s": 10.0,
-      "provenance": "block_probe_unverified"
-    },
-    {
-      "start_s": 162.0,
-      "end_s": 175.0,
-      "duration_s": 13.0,
-      "provenance": "block_probe_unverified"
-    },
-    {
-      "start_s": 200.0,
-      "end_s": 232.0,
-      "duration_s": 32.0,
-      "provenance": "block_probe_unverified"
-    },
-    {
-      "start_s": 384.0,
-      "end_s": 388.0,
-      "duration_s": 4.0,
-      "provenance": "block_probe_unverified"
-    },
-    {
-      "start_s": 550.0,
-      "end_s": 570.0,
-      "duration_s": 20.0,
-      "provenance": "block_probe_unverified"
-    },
-    {
-      "start_s": 613.0,
-      "end_s": 623.0,
-      "duration_s": 10.0,
-      "provenance": "block_probe_unverified"
-    },
-    {
-      "start_s": 724.0,
-      "end_s": 744.0,
-      "duration_s": 20.0,
-      "provenance": "block_probe_unverified"
-    },
-    {
-      "start_s": 844.0,
-      "end_s": 866.0,
-      "duration_s": 22.0,
-      "provenance": "block_probe_unverified"
-    }
+    {"start_s": 147.0, "end_s": 155.0, "duration_s": 8.0, "provenance": "human_adjudicated"},
+    {"start_s": 245.0, "end_s": 256.0, "duration_s": 11.0, "provenance": "human_adjudicated"},
+    {"start_s": 363.0, "end_s": 371.0, "duration_s": 8.0, "provenance": "human_adjudicated"},
+    {"start_s": 484.0, "end_s": 490.0, "duration_s": 6.0, "provenance": "human_adjudicated"},
+    {"start_s": 607.0, "end_s": 617.0, "duration_s": 10.0, "provenance": "human_adjudicated"},
+    {"start_s": 727.0, "end_s": 736.0, "duration_s": 9.0, "provenance": "human_adjudicated"},
+    {"start_s": 844.0, "end_s": 874.0, "duration_s": 30.0, "provenance": "human_adjudicated"}
   ],
   "active_resuscitation_window_s": [
-    0.0,
-    880.0
+    36.0,
+    922.0
   ],
+  "ccf_summary": {
+    "ccf": 0.907,
+    "cpr_duration_s": 804.0,
+    "denominator_s": 886.0,
+    "t_first_s": 36.0,
+    "t_last_s": 922.0,
+    "provenance": "human_adjudicated"
+  },
+  "clinical_milestones": {
+    "patient_enters_room_s": 36.0,
+    "first_team_member_enters_s": 7.0,
+    "ems_handoff_window_s": [52.0, 94.0],
+    "bed_transfer_complete_s": 102.0,
+    "initial_ed_rhythm": "VF",
+    "initial_ed_rhythm_s": 152.0,
+    "ett_confirmation": "auscultation",
+    "ett_confirmation_s": 834.0,
+    "ett_placed_by": "EMS",
+    "ed_airway_attempts": 0,
+    "death_pronounced_s": 922.0,
+    "rosc": false,
+    "compression_mode": "mechanical",
+    "device_vendor_model": "LUCAS",
+    "applied_by": "EMS",
+    "ed_pads_applied": false,
+    "pads_source": "EMS",
+    "epi_doses_s": [188.0, 292.0, 434.0, 617.0, 624.0, 784.0],
+    "other_meds_s": [
+      {"medication": "calcium_chloride", "timestamp_s": 309.0},
+      {"medication": "lidocaine", "timestamp_s": 434.0},
+      {"medication": "magnesium", "timestamp_s": 487.0}
+    ],
+    "provenance": "human_adjudicated"
+  },
   "rosc": [],
-  "death_pronounced": false,
+  "death_pronounced": true,
+  "death_pronounced_s": 922.0,
   "dnr_confirmed": false
 }

@@ -167,21 +167,22 @@ def validate_stream(
             )
         )
 
-    # V04: every shock timestamp falls inside some CCI
-    sev = _get_severity(config, "V04_shock_inside_cci")
-    ccis = [iv for iv in intervals if iv.type == "compression_interruption"]
-    for e in events:
-        if e.type == "defibrillation_shock":
-            in_cci = any(iv.t_start_s <= e.timestamp_s <= (iv.t_end_s or iv.t_start_s) for iv in ccis)
-            if not in_cci:
-                results.append(
-                    Result(
-                        validator_id="V04_shock_inside_cci",
-                        severity=sev,
-                        field_name=None,
-                        message=f"Shock at {e.timestamp_s}s outside any CCI interval",
+    # V04: every shock timestamp falls inside some CCI (only valid for manual compression mode)
+    if record.get("compression_mode", "manual") == "manual":
+        sev = _get_severity(config, "V04_shock_inside_cci")
+        ccis = [iv for iv in intervals if iv.type == "compression_interruption"]
+        for e in events:
+            if e.type == "defibrillation_shock":
+                in_cci = any(iv.t_start_s <= e.timestamp_s <= (iv.t_end_s or iv.t_start_s) for iv in ccis)
+                if not in_cci:
+                    results.append(
+                        Result(
+                            validator_id="V04_shock_inside_cci",
+                            severity=sev,
+                            field_name=None,
+                            message=f"Shock at {e.timestamp_s}s outside any CCI interval",
+                        )
                     )
-                )
 
     # V05: any shock present => shockable rhythm recorded SOMEWHERE in the case
     sev = _get_severity(config, "V05_shock_implies_shockable")
