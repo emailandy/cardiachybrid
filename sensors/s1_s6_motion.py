@@ -118,6 +118,9 @@ class S1ChestMotionDetector:
         self.profile_name = profile or profile_name
         self.profile = load_roi_config(self.profile_name)
         self.s1_config = dict(self.profile.get("s1_motion", {}))
+        self.last_cpr_window_mask: np.ndarray | None = None
+        self.last_active_resuscitation_duration_s: float | None = None
+        self.last_coverage_notes: list[dict[str, Any]] = []
 
     def _validate_track(self, active_mask: np.ndarray, duration_s: float) -> None:
         """
@@ -160,7 +163,10 @@ class S1ChestMotionDetector:
         fps: float = 30.0,
     ) -> list[CompressionMotionEvent]:
         """
-        Detects CPR compression intervals from vertical velocity signal vy(t).
+        Detects CPR compression intervals from vertical velocity signal vy(t)
+        using a Two-Stage architecture:
+          Stage 1 (Window Gate): Scale-free frequency-domain discriminator on 60s windows
+          Stage 2 (Continuous Segmentation): Continuous rolling RMS envelope thresholding
         """
         vy_arr = np.array(vy_signal, dtype=float)
         n_frames = len(vy_arr)
@@ -173,12 +179,102 @@ class S1ChestMotionDetector:
         min_hz = float(self.s1_config.get("vy_bandpass_min_hz", 1.3))
         max_hz = float(self.s1_config.get("vy_bandpass_max_hz", 3.0))
         min_active_s = float(self.s1_config.get("min_active_duration_s", 2.0))
-        conf_val = float(self.s1_config.get("confidence", 0.85))
+        conf_val = float(self.s1_config.get("confidence", 0.88))
+        bump_thresh = float(self.s1_config.get("bump_threshold_px", 30.0))
+        bump_mask = np.abs(vy_arr_clean) > bump_thresh
 
+        duration_s = float(n_frames / fps)
+
+        min_ratio = float(self.s1_config.get("min_band_power_ratio", 0.15))
+        cpr_min_f = float(self.s1_config.get("cpr_peak_min_hz", 1.5))
+        cpr_max_f = float(self.s1_config.get("cpr_peak_max_hz", 2.5))
+        min_snr = float(self.s1_config.get("min_peak_snr", 10.0))
+
+        # --- Stage 1: Window Gate ---
+        cpr_window_mask = np.zeros(n_frames, dtype=bool)
+
+        win_s = min(60.0, duration_s)
+        hop_s = 30.0 if duration_s >= 60.0 else max(5.0, duration_s / 4.0)
+        win_frames = int(win_s * fps)
+        hop_frames = int(hop_s * fps)
+        min_eff_snr = min_snr if duration_s >= 60.0 else max(4.0, min_snr * 0.5)
+
+        for w_start in range(0, n_frames, hop_frames):
+            w_end = min(n_frames, w_start + win_frames)
+            w_raw = vy_arr_clean[w_start:w_end]
+            if len(w_raw) / fps < 4.0:
+                continue
+            f = np.fft.rfftfreq(len(w_raw), d=1.0 / float(fps))
+            P = np.abs(np.fft.rfft(w_raw)) ** 2
+            tot_m = f >= 0.1
+            tot_p = float(P[tot_m].sum()) if np.any(tot_m) else 0.0
+            band_m = (f >= min_hz) & (f <= max_hz)
+            band_p = float(P[band_m].sum()) if np.any(band_m) else 0.0
+            b_ratio = (band_p / tot_p) if tot_p > 0.0 else 0.0
+            p_idx = int(P[band_m].argmax()) if np.any(band_m) else 0
+            p_f = float(f[band_m][p_idx]) if np.any(band_m) else 0.0
+            p_pow = float(P[band_m][p_idx]) if np.any(band_m) else 0.0
+            med_p = float(np.median(P[tot_m])) if np.any(tot_m) else 1e-9
+            p_snr = (p_pow / med_p) if med_p > 0.0 else 0.0
+
+            is_cpr = (
+                (b_ratio >= min_ratio)
+                and (cpr_min_f <= p_f <= cpr_max_f)
+                and (p_snr >= min_eff_snr)
+            )
+            if is_cpr:
+                cpr_window_mask[w_start:w_end] = True
+
+        if not np.any(cpr_window_mask):
+            raise NoPeriodicMotion(
+                "No periodic CPR motion detected across track"
+            )
+
+        self.last_cpr_window_mask = cpr_window_mask
+        self.last_active_resuscitation_duration_s = float(
+            cpr_window_mask.sum() / fps
+        )
+
+        # Unmeasured debrief coverage notes
+        self.last_coverage_notes = []
+        in_unm = False
+        unm_start = 0
+        for i in range(len(cpr_window_mask)):
+            if not cpr_window_mask[i] and not in_unm:
+                in_unm = True
+                unm_start = i
+            elif cpr_window_mask[i] and in_unm:
+                in_unm = False
+                unm_dur = (i - unm_start) / fps
+                if unm_dur >= 30.0:
+                    self.last_coverage_notes.append(
+                        {
+                            "type": "coverage_note",
+                            "channel": "visual_chest",
+                            "t_start_s": round(unm_start / fps, 2),
+                            "t_end_s": round(i / fps, 2),
+                            "duration_s": round(unm_dur, 2),
+                            "note": "unmeasured_epoch_no_periodic_motion",
+                        }
+                    )
+        if in_unm:
+            unm_dur = (len(cpr_window_mask) - unm_start) / fps
+            if unm_dur >= 30.0:
+                self.last_coverage_notes.append(
+                    {
+                        "type": "coverage_note",
+                        "channel": "visual_chest",
+                        "t_start_s": round(unm_start / fps, 2),
+                        "t_end_s": round(len(cpr_window_mask) / fps, 2),
+                        "duration_s": round(unm_dur, 2),
+                        "note": "unmeasured_debrief_no_periodic_motion",
+                    }
+                )
+
+        # --- Stage 2: Continuous Rolling RMS Segmentation ---
         nyq = fps / 2.0
         low = max(0.01, min(0.99, min_hz / nyq))
         high = max(low + 0.01, min(0.99, max_hz / nyq))
-
         b, a = signal.butter(2, [low, high], btype="band")
         filtered = signal.filtfilt(b, a, vy_arr_clean)
 
@@ -186,156 +282,10 @@ class S1ChestMotionDetector:
         kernel = np.ones(win, dtype=float) / float(win)
         energy = np.convolve(filtered**2, kernel, mode="same")
 
-        bump_thresh = float(self.s1_config.get("bump_threshold_px", 30.0))
-        bump_mask = np.abs(vy_arr_clean) > bump_thresh
-        n_frames = len(energy)
-        duration_s = float(n_frames / fps)
-        conf_val = float(self.s1_config.get("confidence", 0.85))
+        valid_energy = energy[cpr_window_mask & (~bump_mask)]
+        if len(valid_energy) == 0:
+            raise NoPeriodicMotion("No valid non-bump frames in CPR window")
 
-        if duration_s < 60.0:
-            return self._detect_cci_window(
-                energy,
-                filtered,
-                bump_mask,
-                fps,
-                t_offset=0.0,
-                min_active_s=min_active_s,
-                conf_val=conf_val,
-                start_idx=1,
-            )
-
-        win_frames = int(60.0 * fps)
-        hop_frames = int(30.0 * fps)
-        raw_events: list[CompressionMotionEvent] = []
-        idx_counter = 1
-
-        for w_start in range(0, n_frames, hop_frames):
-            w_end = min(n_frames, w_start + win_frames)
-            if (w_end - w_start) / fps < 10.0:
-                continue
-            try:
-                win_evs = self._detect_cci_window(
-                    energy[w_start:w_end],
-                    filtered[w_start:w_end],
-                    bump_mask[w_start:w_end],
-                    fps,
-                    t_offset=float(w_start / fps),
-                    min_active_s=min_active_s,
-                    conf_val=conf_val,
-                    start_idx=idx_counter,
-                )
-                raw_events.extend(win_evs)
-                idx_counter += len(win_evs)
-            except NoPeriodicMotion:
-                continue
-
-        if not raw_events:
-            raise NoPeriodicMotion(
-                "No periodic CPR motion detected across track"
-            )
-
-        # Merge overlapping or contiguous events across windows
-        raw_events.sort(key=lambda e: e.t_start_s)
-        merged: list[CompressionMotionEvent] = [raw_events[0]]
-        for curr in raw_events[1:]:
-            last = merged[-1]
-            if curr.t_start_s <= last.t_end_s + 0.5:
-                new_end = max(last.t_end_s, curr.t_end_s)
-                dur_last = last.t_end_s - last.t_start_s
-                dur_curr = curr.t_end_s - curr.t_start_s
-                new_cad = round(
-                    (
-                        last.cadence_cpm * dur_last
-                        + curr.cadence_cpm * dur_curr
-                    )
-                    / max(dur_last + dur_curr, 1e-6),
-                    1,
-                )
-                merged[-1] = CompressionMotionEvent(
-                    id=last.id,
-                    event_type="compression_motion",
-                    t_start_s=last.t_start_s,
-                    t_end_s=new_end,
-                    cadence_cpm=new_cad,
-                    confidence=last.confidence,
-                )
-            else:
-                merged.append(
-                    CompressionMotionEvent(
-                        id=f"s1_{len(merged) + 1}",
-                        event_type="compression_motion",
-                        t_start_s=curr.t_start_s,
-                        t_end_s=curr.t_end_s,
-                        cadence_cpm=curr.cadence_cpm,
-                        confidence=curr.confidence,
-                    )
-                )
-
-        return merged
-
-    def _detect_cci_window(
-        self,
-        energy_win: np.ndarray,
-        filtered_win: np.ndarray,
-        bump_win: np.ndarray,
-        fps: float,
-        t_offset: float,
-        min_active_s: float,
-        conf_val: float,
-        start_idx: int = 1,
-    ) -> list[CompressionMotionEvent]:
-        # Scale-free frequency-domain discriminator (band power ratio, peak CPR cadence, SNR)
-        # Note: The 3.0-5.0 Hz band carries screen-recording refresh artifacts per F-017;
-        # the band-power ratio normalizes across artifact floors.
-        f = np.fft.rfftfreq(len(filtered_win), d=1.0 / float(fps))
-        P = np.abs(np.fft.rfft(filtered_win)) ** 2
-        total_mask = f >= 0.1
-        total_power = (
-            float(P[total_mask].sum()) if np.any(total_mask) else 0.0
-        )
-
-        min_hz = float(self.s1_config.get("vy_bandpass_min_hz", 1.3))
-        max_hz = float(self.s1_config.get("vy_bandpass_max_hz", 3.0))
-        band_mask = (f >= min_hz) & (f <= max_hz)
-        band_power = float(P[band_mask].sum()) if np.any(band_mask) else 0.0
-        band_ratio = (
-            (band_power / total_power) if total_power > 0.0 else 0.0
-        )
-
-        peak_idx = int(P[band_mask].argmax()) if np.any(band_mask) else 0
-        peak_f = (
-            float(f[band_mask][peak_idx]) if np.any(band_mask) else 0.0
-        )
-        peak_power = (
-            float(P[band_mask][peak_idx]) if np.any(band_mask) else 0.0
-        )
-
-        med_power = (
-            float(np.median(P[total_mask])) if np.any(total_mask) else 1e-9
-        )
-        peak_snr = (
-            (peak_power / med_power) if med_power > 0.0 else 0.0
-        )
-
-        min_ratio = float(
-            self.s1_config.get("min_band_power_ratio", 0.15)
-        )
-        cpr_min_f = float(self.s1_config.get("cpr_peak_min_hz", 1.5))
-        cpr_max_f = float(self.s1_config.get("cpr_peak_max_hz", 2.5))
-        min_snr = float(self.s1_config.get("min_peak_snr", 10.0))
-
-        if (
-            (band_ratio < min_ratio)
-            or not (cpr_min_f <= peak_f <= cpr_max_f)
-            or (peak_snr < min_snr)
-        ):
-            raise NoPeriodicMotion(
-                f"Frequency discriminator failed: ratio={band_ratio:.3f} (min {min_ratio}), peak_f={peak_f:.2f}Hz ({cpr_min_f}-{cpr_max_f}Hz), snr={peak_snr:.1f} (min {min_snr})"
-            )
-
-        valid_energy = (
-            energy_win[~bump_win] if np.any(~bump_win) else energy_win
-        )
         baseline = float(np.percentile(valid_energy, 10))
         active_p = float(np.percentile(valid_energy, 90))
         min_mod = float(self.s1_config.get("min_modulation", 0.010))
@@ -343,66 +293,74 @@ class S1ChestMotionDetector:
             raise NoPeriodicMotion(
                 f"Energy modulation ({active_p - baseline:.4f}) below floor ({min_mod})"
             )
+
         thresh_ratio = float(
             self.s1_config.get("energy_threshold_ratio", 0.05)
         )
         threshold = baseline + thresh_ratio * (active_p - baseline)
 
-        active_mask = (energy_win > threshold) & (~bump_win)
-        duration_s = float(len(energy_win) / fps)
-        self._validate_track(active_mask, duration_s)
+        raw_active = (energy > threshold) & cpr_window_mask & (~bump_mask)
 
+        # Gap merge (0.5s)
         gap_merge_s = float(self.s1_config.get("gap_merge_duration_s", 0.5))
         gap_merge_frames = int(gap_merge_s * fps)
-        last_active = -100000
-        for i in range(len(energy_win)):
+        active_mask = raw_active.copy()
+        last_act = -100000
+        for i in range(len(active_mask)):
             if active_mask[i]:
-                if 0 < (i - last_active) <= gap_merge_frames:
-                    active_mask[last_active:i] = True
-                last_active = i
+                if 0 < (i - last_act) <= gap_merge_frames:
+                    active_mask[last_act:i] = True
+                last_act = i
 
+        # Validate active fraction within the active resuscitation epoch
+        active_epoch_len = int(cpr_window_mask.sum())
+        if (active_epoch_len / fps) >= 60.0:
+            frac = float(np.mean(active_mask[cpr_window_mask]))
+            if frac < 0.05 or frac > 0.98:
+                raise SensorFailure(
+                    f"{frac:.1%} active over {active_epoch_len/fps:.1f}s — threshold is outside the signal"
+                )
+
+        # Form continuous CompressionMotionEvent intervals
         events: list[CompressionMotionEvent] = []
-        in_active = False
+        in_act = False
         s_idx = 0
-        idx_counter = start_idx
-        t_axis = t_offset + np.arange(len(energy_win)) / float(fps)
+        idx_counter = 1
 
-        for i, is_act in enumerate(active_mask):
-            if is_act and not in_active:
-                in_active = True
+        for i in range(len(active_mask)):
+            if active_mask[i] and not in_act:
+                in_act = True
                 s_idx = i
-            elif not is_act and in_active:
-                in_active = False
-                e_idx = i - 1
-                dur = float(t_axis[e_idx] - t_axis[s_idx])
+            elif not active_mask[i] and in_act:
+                in_act = False
+                dur = (i - s_idx) / fps
                 if dur >= min_active_s:
-                    seg_filtered = filtered_win[s_idx : e_idx + 1]
-                    cadence = self._estimate_cadence_cpm(seg_filtered, fps)
+                    sub_sig = filtered[s_idx:i]
+                    cad = self._estimate_cadence_cpm(sub_sig, fps)
                     events.append(
                         CompressionMotionEvent(
                             id=f"s1_{idx_counter}",
                             event_type="compression_motion",
-                            t_start_s=float(t_axis[s_idx]),
-                            t_end_s=float(t_axis[e_idx]),
-                            cadence_cpm=cadence,
+                            t_start_s=round(s_idx / fps, 2),
+                            t_end_s=round(i / fps, 2),
+                            cadence_cpm=cad,
                             confidence=conf_val,
                         )
                     )
                     idx_counter += 1
 
-        if in_active:
-            e_idx = len(energy_win) - 1
-            dur = float(t_axis[e_idx] - t_axis[s_idx])
+        if in_act:
+            dur = (len(active_mask) - s_idx) / fps
             if dur >= min_active_s:
-                seg_filtered = filtered_win[s_idx : e_idx + 1]
-                cadence = self._estimate_cadence_cpm(seg_filtered, fps)
+                sub_sig = filtered[s_idx:]
+                cad = self._estimate_cadence_cpm(sub_sig, fps)
                 events.append(
                     CompressionMotionEvent(
                         id=f"s1_{idx_counter}",
                         event_type="compression_motion",
-                        t_start_s=float(t_axis[s_idx]),
-                        t_end_s=float(t_axis[e_idx]),
-                        cadence_cpm=cadence,
+                        t_start_s=round(s_idx / fps, 2),
+                        t_end_s=round(len(active_mask) / fps, 2),
+                        cadence_cpm=cad,
                         confidence=conf_val,
                     )
                 )
@@ -452,7 +410,7 @@ class S1ChestMotionDetector:
             )
 
         min_pause_s = float(self.s1_config.get("min_pause_duration_s", 3.0))
-        conf_val = float(self.s1_config.get("confidence", 0.85))
+        conf_val = float(self.s1_config.get("confidence", 0.88))
         ccis: list[dict[str, Any]] = []
         idx = 1
 
@@ -487,21 +445,26 @@ class S1ChestMotionDetector:
                         "type": "compression_interruption",
                         "t_start_s": pause_start,
                         "t_end_s": pause_end,
-                        "duration_s": dur,
+                        "duration_s": round(dur, 2),
                         "confidence": conf_val,
                     }
                 )
                 idx += 1
 
+        active_end_t = (
+            self.last_active_resuscitation_duration_s
+            if self.last_active_resuscitation_duration_s is not None
+            else total_duration_s
+        )
         last_t = float(sorted_events[-1].t_end_s)
-        if total_duration_s - last_t >= min_pause_s:
+        if (active_end_t - last_t) >= min_pause_s and (active_end_t - last_t) < 300.0:
             ccis.append(
                 {
                     "id": f"cci_{idx}",
                     "type": "compression_interruption",
                     "t_start_s": last_t,
-                    "t_end_s": float(total_duration_s),
-                    "duration_s": float(total_duration_s - last_t),
+                    "t_end_s": float(active_end_t),
+                    "duration_s": round(float(active_end_t - last_t), 2),
                     "confidence": conf_val,
                 }
             )

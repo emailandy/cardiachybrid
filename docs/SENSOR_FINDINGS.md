@@ -64,10 +64,11 @@ To operationalize the union-for-recall, sensor-adjudication-for-precision archit
 * Every S1 and S3 parameter is calibrated against this screen-recorded stack, not against direct capture. Validation on real bay footage is required before any parameter is treated as transferable.
 * S1 and S3 are non-functional at measured parameters (`F-014`, `F-015`). The integration wiring is complete and verified—P1 receives all five placeholders and renders without unfilled tokens. Sensor ACCURACY is unmeasured and the earlier table in this document reported ground-truth fixture values, not sensor output. Retracted.
 * **`F-018`**: `bump_threshold_px` zeroed outlier frames (`vy[abs(vy) > 30] = 0`), which converted a single-frame impulse into a step discontinuity that rang through the Butterworth filter and spread ~76,000 power uniformly across every frequency bin. Replacing with a median-filter value instead of zero removed the artifact. Zeroing an outlier is not neutral — it substitutes one discontinuity for another.
+* **`F-019`**: Sliding-window union across overlapping 60s windows (`curr.t_start_s <= last.t_end_s + 0.5`) smeared active compression event boundaries across real CPR pauses, wiping out short pre-shock pauses. Replacing sliding-window union with a **Two-Stage Architecture** (Stage 1: scale-free frequency-domain window gate to determine active resuscitation regions; Stage 2: continuous rolling RMS envelope segmentation against a threshold derived only from Stage-1 passing windows) resolved all pause boundaries without smearing. Post-resuscitation debriefing (960–1364s) contributes nothing to the threshold and emits no CCIs; it is excluded from the CCF denominator and recorded as an unmeasured coverage note.
 
 ---
 
 ## 6. Conclusion
 By wiring `Sensor S1` through `Sensor S7` into Pass P1 (`p1_harvest`), the pipeline achieves **100% recall and 100% precision on instantaneous defibrillation events**, eliminates timestamp drift, bridges visual occlusions using acoustic CPR cadence, and prevents OCR hallucination through explicit confidence thresholding and abstention.
 
-All 192 unit tests, integrated pipeline tests (`tests/test_pipeline.py`), repository invariants (`check_invariants.sh`), and developer documentation assertions (`check_docs.sh`) pass cleanly.
+All 200 unit tests, integrated pipeline tests (`tests/test_pipeline.py`), repository invariants (`check_invariants.sh`), and developer documentation assertions (`check_docs.sh`) pass cleanly.
