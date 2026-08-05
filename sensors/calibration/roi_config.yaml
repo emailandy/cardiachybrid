@@ -47,15 +47,17 @@ profiles:
       cci_reporting_floor_s: 5.0
       # Derived, not chosen. Shortest human-adjudicated interruption on
       # simvideo2.mp4 is 6.0s (n=1 case, re-derive on gold set expansion).
-      # Applied to S1 clinical window (36-922s), removes 28 sub-5s false
-      # positives (35 -> 7 under +/-3s tolerance matching; 32 -> 6 under overlap
-      # matching). Six false positives survive >= 5.0s:
-      #   FP #1 (341.7-347.1s, dur=5.4s): S6 True (provider_crowding)
-      #   FP #2 (351.8-357.9s, dur=6.1s): S6 True (provider_crowding)
-      #   FP #3 (509.6-514.9s, dur=5.2s): S6 True (provider_crowding)
-      #   FP #4 (630.2-635.5s, dur=5.3s): S6 False (unexplained >=5s false positive)
-      #   FP #5 (639.4-644.7s, dur=5.2s): S6 False (unexplained >=5s false positive)
-      #   FP #6 (758.2-767.0s, dur=8.8s): S6 True (provider_crowding)
+      # Applied to S1 clinical window (36-922s), reduces false positives from
+      # 35 to 7 under consistent +/-3.0s monotonic tolerance matching (or 32
+      # to 6 under any-overlap matching). The seven surviving false positives
+      # under +/-3.0s tolerance matching and their S6 verdicts are:
+      #   FP #1 (249.5-256.4s, dur=6.9s): S6 True (provider_crowding). Overlaps GT pause #2 (245-256s) but start delta (+4.5s) exceeds +/-3.0s tolerance.
+      #   FP #2 (341.7-347.1s, dur=5.4s): S6 True (provider_crowding).
+      #   FP #3 (351.8-357.9s, dur=6.1s): S6 True (provider_crowding).
+      #   FP #4 (509.6-514.9s, dur=5.2s): S6 True (provider_crowding).
+      #   FP #5 (630.2-635.5s, dur=5.3s): S6 False (unexplained >=5s false positive).
+      #   FP #6 (639.4-644.7s, dur=5.2s): S6 False (unexplained >=5s false positive).
+      #   FP #7 (758.2-767.0s, dur=8.8s): S6 True (provider_crowding).
       # This is a REPORTING filter; CCF counts all pauses >= 1.0s.
       confidence: 0.85
       description: "Default S1 optical flow motion detection parameters with reporting floor"
@@ -106,15 +108,17 @@ profiles:
       cci_reporting_floor_s: 5.0
       # Derived, not chosen. Shortest human-adjudicated interruption on
       # simvideo2.mp4 is 6.0s (n=1 case, re-derive on gold set expansion).
-      # Applied to S1 clinical window (36-922s), removes 28 sub-5s false
-      # positives (35 -> 7 under +/-3s tolerance matching; 32 -> 6 under overlap
-      # matching). Six false positives survive >= 5.0s:
-      #   FP #1 (341.7-347.1s, dur=5.4s): S6 True (provider_crowding)
-      #   FP #2 (351.8-357.9s, dur=6.1s): S6 True (provider_crowding)
-      #   FP #3 (509.6-514.9s, dur=5.2s): S6 True (provider_crowding)
-      #   FP #4 (630.2-635.5s, dur=5.3s): S6 False (unexplained >=5s false positive)
-      #   FP #5 (639.4-644.7s, dur=5.2s): S6 False (unexplained >=5s false positive)
-      #   FP #6 (758.2-767.0s, dur=8.8s): S6 True (provider_crowding)
+      # Applied to S1 clinical window (36-922s), reduces false positives from
+      # 35 to 7 under consistent +/-3.0s monotonic tolerance matching (or 32
+      # to 6 under any-overlap matching). The seven surviving false positives
+      # under +/-3.0s tolerance matching and their S6 verdicts are:
+      #   FP #1 (249.5-256.4s, dur=6.9s): S6 True (provider_crowding). Overlaps GT pause #2 (245-256s) but start delta (+4.5s) exceeds +/-3.0s tolerance.
+      #   FP #2 (341.7-347.1s, dur=5.4s): S6 True (provider_crowding).
+      #   FP #3 (351.8-357.9s, dur=6.1s): S6 True (provider_crowding).
+      #   FP #4 (509.6-514.9s, dur=5.2s): S6 True (provider_crowding).
+      #   FP #5 (630.2-635.5s, dur=5.3s): S6 False (unexplained >=5s false positive).
+      #   FP #6 (639.4-644.7s, dur=5.2s): S6 False (unexplained >=5s false positive).
+      #   FP #7 (758.2-767.0s, dur=8.8s): S6 True (provider_crowding).
       # This is a REPORTING filter; CCF counts all pauses >= 1.0s.
       confidence: 0.85
       description: "Fallback S1 optical flow motion detection parameters with reporting floor"
@@ -164,15 +168,17 @@ profiles:
       cci_reporting_floor_s: 5.0
       # Derived, not chosen. Shortest human-adjudicated interruption on
       # simvideo2.mp4 is 6.0s (n=1 case, re-derive on gold set expansion).
-      # Applied to S1 clinical window (36-922s), removes 28 sub-5s false
-      # positives (35 -> 7 under +/-3s tolerance matching; 32 -> 6 under overlap
-      # matching). Six false positives survive >= 5.0s:
-      #   FP #1 (341.7-347.1s, dur=5.4s): S6 True (provider_crowding)
-      #   FP #2 (351.8-357.9s, dur=6.1s): S6 True (provider_crowding)
-      #   FP #3 (509.6-514.9s, dur=5.2s): S6 True (provider_crowding)
-      #   FP #4 (630.2-635.5s, dur=5.3s): S6 False (unexplained >=5s false positive)
-      #   FP #5 (639.4-644.7s, dur=5.2s): S6 False (unexplained >=5s false positive)
-      #   FP #6 (758.2-767.0s, dur=8.8s): S6 True (provider_crowding)
+      # Applied to S1 clinical window (36-922s), reduces false positives from
+      # 35 to 7 under consistent +/-3.0s monotonic tolerance matching (or 32
+      # to 6 under any-overlap matching). The seven surviving false positives
+      # under +/-3.0s tolerance matching and their S6 verdicts are:
+      #   FP #1 (249.5-256.4s, dur=6.9s): S6 True (provider_crowding). Overlaps GT pause #2 (245-256s) but start delta (+4.5s) exceeds +/-3.0s tolerance.
+      #   FP #2 (341.7-347.1s, dur=5.4s): S6 True (provider_crowding).
+      #   FP #3 (351.8-357.9s, dur=6.1s): S6 True (provider_crowding).
+      #   FP #4 (509.6-514.9s, dur=5.2s): S6 True (provider_crowding).
+      #   FP #5 (630.2-635.5s, dur=5.3s): S6 False (unexplained >=5s false positive).
+      #   FP #6 (639.4-644.7s, dur=5.2s): S6 False (unexplained >=5s false positive).
+      #   FP #7 (758.2-767.0s, dur=8.8s): S6 True (provider_crowding).
       # This is a REPORTING filter; CCF counts all pauses >= 1.0s.
       confidence: 0.88
       description: "Calibrated S1 parameters for simvideo2.mp4 with reporting floor"

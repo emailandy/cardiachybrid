@@ -116,7 +116,7 @@ def evaluate_s1_consumers(gt_data: dict[str, Any], video_path: Path, gt_path_str
     print("  - Tolerance: +/- 3.0s (default matcher tolerance; +/- 2.0s shown for strict comparisons)")
     print(f"  - Sample Size: n=1 case ({len(gt_ccis)} human-adjudicated CCIs, provenance: human_adjudicated)")
     print("  - Matching Definition: Consistent monotonic tolerance matching applied across Precision, Recall, F1, and FP counts.")
-    print("\n                          S1 alone   S1 + 5s floor")
+    print("\n                          S1 (>=1.0s CCF)   S1 (>=5.0s Reporting)")
     print(f"CCI F1 (+/-3.0s)        {f1_3s_raw:6.2f}          {f1_3s_fl:6.2f}")
     print(f"Precision (+/-3.0s)     {prec_3s_raw:6.2f}          {prec_3s_fl:6.2f}")
     print(f"Recall (+/-3.0s)        {rec_3s_raw:6.2f}          {rec_3s_fl:6.2f}")
