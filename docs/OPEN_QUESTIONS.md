@@ -174,3 +174,5 @@ Q-015 Three TEAM calibration anchor cases at consensus global 2, 6, 9 require hu
 **T-056 (D11)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
 **T-057 (D05)**: What is the correct value for 'Self-review Q2'? (specs.yaml does not determine this).
 **T-058 (D05)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
+
+Q-018 — The ground truth fixture `fixtures/ground_truth_simvideo2.json` contains a `"$schema"` key pointing to the JSON Schema Draft 2020-12 meta-schema (`"https://json-schema.org/draft/2020-12/schema"`). The file contains instance data rather than schema definitions; this key is instance metadata and must not be mistaken for a JSON schema validation contract. Status: DOCUMENTED.

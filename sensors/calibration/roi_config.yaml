@@ -49,8 +49,11 @@ profiles:
       # simvideo2.mp4 is 6.0s (n=1 case, re-derive on gold set expansion).
       # Applied to S1 clinical window (36-922s), reduces false positives from
       # 35 to 7 under consistent +/-3.0s monotonic tolerance matching (or 32
-      # to 6 under any-overlap matching). The seven surviving false positives
-      # under +/-3.0s tolerance matching and their S6 verdicts are:
+      # to 6 under any-overlap matching).
+      # RECALL COST: The floor costs exactly one true interruption (GT #1: 147-155s,
+      # dur=8.0s), which S1 optical flow truncated to 4.62s (150.00-154.62s) and
+      # which was discarded by the >=5.0s floor (F-027), dropping recall 5/7 -> 4/7.
+      # The seven surviving false positives under +/-3.0s tolerance matching and their S6 verdicts are:
       #   FP #1 (249.5-256.4s, dur=6.9s): S6 True (provider_crowding). Overlaps GT pause #2 (245-256s) but start delta (+4.5s) exceeds +/-3.0s tolerance.
       #   FP #2 (341.7-347.1s, dur=5.4s): S6 True (provider_crowding).
       #   FP #3 (351.8-357.9s, dur=6.1s): S6 True (provider_crowding).
@@ -110,8 +113,11 @@ profiles:
       # simvideo2.mp4 is 6.0s (n=1 case, re-derive on gold set expansion).
       # Applied to S1 clinical window (36-922s), reduces false positives from
       # 35 to 7 under consistent +/-3.0s monotonic tolerance matching (or 32
-      # to 6 under any-overlap matching). The seven surviving false positives
-      # under +/-3.0s tolerance matching and their S6 verdicts are:
+      # to 6 under any-overlap matching).
+      # RECALL COST: The floor costs exactly one true interruption (GT #1: 147-155s,
+      # dur=8.0s), which S1 optical flow truncated to 4.62s (150.00-154.62s) and
+      # which was discarded by the >=5.0s floor (F-027), dropping recall 5/7 -> 4/7.
+      # The seven surviving false positives under +/-3.0s tolerance matching and their S6 verdicts are:
       #   FP #1 (249.5-256.4s, dur=6.9s): S6 True (provider_crowding). Overlaps GT pause #2 (245-256s) but start delta (+4.5s) exceeds +/-3.0s tolerance.
       #   FP #2 (341.7-347.1s, dur=5.4s): S6 True (provider_crowding).
       #   FP #3 (351.8-357.9s, dur=6.1s): S6 True (provider_crowding).
@@ -170,8 +176,11 @@ profiles:
       # simvideo2.mp4 is 6.0s (n=1 case, re-derive on gold set expansion).
       # Applied to S1 clinical window (36-922s), reduces false positives from
       # 35 to 7 under consistent +/-3.0s monotonic tolerance matching (or 32
-      # to 6 under any-overlap matching). The seven surviving false positives
-      # under +/-3.0s tolerance matching and their S6 verdicts are:
+      # to 6 under any-overlap matching).
+      # RECALL COST: The floor costs exactly one true interruption (GT #1: 147-155s,
+      # dur=8.0s), which S1 optical flow truncated to 4.62s (150.00-154.62s) and
+      # which was discarded by the >=5.0s floor (F-027), dropping recall 5/7 -> 4/7.
+      # The seven surviving false positives under +/-3.0s tolerance matching and their S6 verdicts are:
       #   FP #1 (249.5-256.4s, dur=6.9s): S6 True (provider_crowding). Overlaps GT pause #2 (245-256s) but start delta (+4.5s) exceeds +/-3.0s tolerance.
       #   FP #2 (341.7-347.1s, dur=5.4s): S6 True (provider_crowding).
       #   FP #3 (351.8-357.9s, dur=6.1s): S6 True (provider_crowding).

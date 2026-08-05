@@ -1,4 +1,4 @@
-# docs/SENSOR_FINDINGS.md — Comprehensive Sensor Layer Findings (F-013 through F-026)
+# docs/SENSOR_FINDINGS.md — Comprehensive Sensor Layer Findings (F-013 through F-029)
 
 This standalone technical synthesis consolidates empirical findings, architectural limitations, and negative results established across Phase 3 of the Google Antigravity Resuscitation Quality Case (`resus_qc`) engineering build. All results are measured against human-adjudicated gold standard observations on reference simulation case `simvideo2.mp4` ($n=1$).
 
@@ -13,7 +13,7 @@ This standalone technical synthesis consolidates empirical findings, architectur
 
 * **Sensor S1 (Chest-ROI Optical Flow Motion + Three-Tier Consumer Duration Rules)**:
   * **Status**: Functional and deterministic ($100\%$ repeatable across independent runs on current build).
-  * **Performance (Current Build under $\pm 3.0\text{s}$ Monotonic Tolerance Matching)**: Captures clinical interruptions with **Interval Recall ($\pm 3.0\text{s}$) = `0.71`** ($5/7$) on un-floored CCF consumer detections ($\ge 1.0\text{s}$) and **`0.57`** ($4/7$) under the calibrated reporting floor ($\ge 5.0\text{s}$). Achieves boundary precision of **$\text{MAE} = 1.02\text{s}$** and active CPR fraction estimation with a **$\text{CCF error} = 0.09$** against human gold standard observation on the active clinical window ($36.0\text{–}922.0\text{s}$). (Note: all historical evaluation figures predating F-021 envelope smoothing and three-tier consumer gating are formally superseded by commits `769269f` and `9da9e74`).
+  * **Performance (Current Build under $\pm 3.0\text{s}$ Monotonic Tolerance Matching)**: Captures clinical interruptions with **Interval Recall ($\pm 3.0\text{s}$) = `0.71`** ($5/7$) on un-floored CCF consumer detections ($\ge 1.0\text{s}$) and **`0.57`** ($4/7$) under the calibrated reporting floor ($\ge 5.0\text{s}$). Achieves boundary precision of **$\text{MAE} = 1.02\text{s}$** and active CPR fraction estimation with a **$\text{CCF error} = 0.09$** against human gold standard observation on the active clinical window ($36.0\text{–}922.0\text{s}$). (Note: all historical evaluation figures predating F-021 envelope smoothing and three-tier consumer gating are formally superseded by commits `769269f`, `5017dbc`, and `9da9e74`).
   * **The Three-Tier Consumer Architecture (Three Consumers, Three Rules, One Measurement)**:
     1. **CCF Computation**: Retains all unoccluded physical pauses $\ge 1.0\text{s}$ (`min_pause_duration_s`), capturing true no-flow physical resuscitation intervals without omission ($40$ intervals reported in clinical window after filtering out 4 sub-$1.0\text{s}$ de-identification mask splittings from the 44 raw emitted detections).
     2. **REDCap Payload / Repeating Group**: Enforces the dictionary $\ge 3.0\text{s}$ rule required by data specifications (`num_cci_v2`).
@@ -23,10 +23,23 @@ This standalone technical synthesis consolidates empirical findings, architectur
 
 ## 2. What Does Not Work, and Why
 
-* **Sensor S1 Pause Fragmentation (`F-024`)**:
-  * **Status**: Identified architectural optical flow limitation under provider motion.
-  * **The Finding**: When applying the $5.0\text{s}$ reporting floor, interval recall ($\pm 3.0\text{s}$ tolerance) dropped from `0.71` to `0.57` because S1 optical flow fragmented the real 10-second clinical rhythm check pause at $607\text{–}617\text{s}$ (GT CCI #5) into a $1.5\text{s}$ sliver ($614.1\text{–}615.6\text{s}$). Clinical providers leaning across the chest ROI during the rhythm check introduced non-zero optical flow displacement, prematurely breaking the inactive pause interval.
-  * **Conclusion**: The reporting floor did not cost clinical recall; optical flow fragmentation caused by provider motion during pauses did, and the reporting floor exposed it.
+* **Reporting Floor Recall Loss on GT #1 (`F-027`, Retraction of `F-024`)**:
+  * **Status**: Characterized optical flow boundary truncation defect.
+  * **Retraction Note**: Earlier reports (`F-024`) incorrectly claimed GT #5 ($607\text{–}617\text{s}$) was lost to the floor. In fact, floored interval #7 ($608.9\text{–}617.2\text{s}$, $\text{dur}=8.4\text{s}$) cleanly matches GT #5 at both boundaries ($\Delta\text{start} = +1.9\text{s}$, $\Delta\text{end} = +0.2\text{s}$). `F-024` is retracted as factually false.
+  * **The Finding (`F-027`)**: The true clinical pause lost when applying the $5.0\text{s}$ reporting floor is **GT #1 ($147.0\text{–}155.0\text{s}$, $\text{dur}=8.0\text{s}$)**. S1 optical flow started late at $150.00\text{s}$ and ended early at $154.62\text{s}$, producing a truncated detection of **$4.62\text{s}$** ($< 5.0\text{s}$) with confidence $0.88$. The $\ge 5.0\text{s}$ reporting floor discarded this $4.62\text{s}$ detection, dropping interval recall from $5/7$ (`0.71`) to $4/7$ (`0.57`). The phrase "zero recall cost" is false: the reporting floor costs exactly one true clinical interruption due to optical flow boundary truncation.
+
+* **Total Fragmentation of Longest Clinical Pause GT #7 (`F-028`)**:
+  * **Status**: Severe optical flow fragmentation defect under clinician movement.
+  * **The Finding**: The longest clinical pause in the case—**GT #7 ($844.0\text{–}874.0\text{s}$, $\text{dur}=30.0\text{s}$)**, representing $36.6\%$ of all clinical no-flow time ($30.0\text{s} / 82.0\text{s}$)—was completely missed as a coherent interval. Continuous provider intervention at the chest during resuscitation termination fragmented the 30-second pause into four short slivers:
+    * $845.66\text{–}846.85\text{s}$ ($\text{dur}=1.19\text{s}$)
+    * $853.16\text{–}855.41\text{s}$ ($\text{dur}=2.25\text{s}$)
+    * $862.48\text{–}863.73\text{s}$ ($\text{dur}=1.25\text{s}$)
+    * $870.91\text{–}874.73\text{s}$ ($\text{dur}=3.82\text{s}$)
+  * **Conclusion**: S1 detected only $8.51\text{s}$ of pause time, missing **$71.6\%$ ($21.49\text{s}$)** of the no-flow duration. Because every fragment is $< 5.0\text{s}$, the reporting floor discarded all four fragments, completely omitting GT #7 from reported intervals.
+
+* **Structural Absence of Defibrillation Shock Containment (`F-029`)**:
+  * **Status**: Validated mechanical CPR physiology.
+  * **The Finding**: In contrast to manual CPR protocols, automated mechanical CPR devices (LUCAS) continue compressions uninterrupted through defibrillation shocks. Across all five confirmed shocks ($165.0\text{s}$, $388.0\text{s}$, $622.0\text{s}$, $742.0\text{s}$, $879.0\text{s}$), **zero shocks fall inside any clinical pause**. Each shock occurs $+10.0\text{s}$, $+17.0\text{s}$, $+5.0\text{s}$, $+6.0\text{s}$, and $+5.0\text{s}$ after the preceding pause ends. Earlier claims of "100% shock containment in CCIs" are structurally invalid for mechanical CPR.
 
 * **Surviving and Unexplained False Positives under Reporting Floor**:
   * Exactly seven false positive interruptions survive the $\ge 5.0\text{s}$ reporting floor under consistent $\pm 3.0\text{s}$ monotonic tolerance matching (or six under any-overlap matching). Evaluated against Sensor S6 visual occlusion tracking, the seven false positives are:
@@ -40,7 +53,7 @@ This standalone technical synthesis consolidates empirical findings, architectur
 
 * **Sensor S2 (Compression Audio Cadence & Onset Detection) — `F-023`**:
   * **Status**: Architectural shell. Definitive negative methodological result on single-channel room audio.
-  * **Envelope Periodicity Failure**: Hilbert amplitude-envelope STFT analysis ($1.3\text{–}3.0\text{ Hz}$) cannot separate metronomic mechanical CPR from ambient room conversation, equipment alarms, and ventilator cycling. When measured across the quietest tertile of S1-confirmed mechanical compressions ($n=755$ STFT frames), the acoustic peak frequency shows an interquartile range (IQR) of **$1.50\text{–}1.95\text{ Hz}$** ($90\text{–}117\text{ CPM}$). Because all seven true clinical pauses exhibit wandering acoustic peaks across **$1.50\text{–}2.40\text{ Hz}$**, the distributions overlap completely. A frequency lock tight enough to protect real pauses ($1.70 \pm 0.08\text{ Hz}$) bridges 0 of 18 visual occlusion windows; widening the tolerance erases real interruptions and collapses clinical recall.
+  * **Envelope Periodicity Failure**: Hilbert amplitude-envelope STFT analysis ($1.3\text{–}3.0\text{ Hz}$) cannot separate metronomic mechanical CPR from ambient room conversation, equipment alarms, and ventilator cycling. Measured across the quietest tertile of S1-confirmed mechanical compressions ($n=755$ STFT frames), the acoustic peak frequency shows an interquartile range (IQR) of **$1.50\text{–}1.95\text{ Hz}$** ($90\text{–}117\text{ CPM}$). Because all seven true clinical pauses exhibit wandering acoustic peaks across **$1.50\text{–}2.40\text{ Hz}$**, the distributions overlap completely. A frequency lock tight enough to protect real pauses ($1.70 \pm 0.08\text{ Hz}$) bridges 0 of 18 visual occlusion windows; widening the tolerance erases real interruptions and collapses clinical recall.
   * **Transient Onset Failure (IOI)**: Evaluating spectral flux Inter-Onset Intervals (IOIs) to track broadband mechanical piston thumps revealed that during rock-steady mechanical compressions (where optical flow proved zero cadence drift over $820\text{s}$), onset intervals show wide, irregular dispersion ($\text{std} = \mathbf{0.137\text{s}}$ against a metronomic target of $< 0.03\text{s}$). This is statistically indistinguishable from ambient noise during true clinical pauses ($\text{std} = \mathbf{0.279\text{s}}$).
   * **Root Cause & Conclusion**: Single-channel acoustic features inevitably track whatever energy is loudest in the passband. During ongoing resuscitation, speech formants and alarms dominate mechanical piston strikes. **Sensor S2 cannot function on single-channel room footage without Sensor S7a speech rejection first.**
 
@@ -73,7 +86,7 @@ This standalone technical synthesis consolidates empirical findings, architectur
 
 ## 4. The Methodological Result & Silent-Pass Defects
 
-Across this phase of engineering, we discovered **eleven silent-pass defects** where code executed without errors and passed automated test suites while failing catastrophically on real clinical data or executing against incorrect analytical boundaries. Each defect was exposed solely by executing deterministic sensor logic directly against reference video and measuring output against independent human ground truth:
+Across this phase of engineering, we discovered **thirteen silent-pass defects** where code executed without errors and passed automated test suites while failing catastrophically on real clinical data or executing against incorrect analytical boundaries. Each defect was exposed solely by executing deterministic sensor logic directly against reference video and measuring output against independent human ground truth:
 
 1. **`F-013` / `F-014`**: Standalone audio scanning claiming functionality on synthetic tests while generating $100\%$ false positive rates on room speech.
 2. **`F-015` / `F-016`**: Vacuous self-comparison evaluation fixtures where test predictions and ground truth originated from identical mock objects (`F-016`), artificially inflating reported F1 and WER metrics to `1.0` and `0.0`.
@@ -84,8 +97,10 @@ Across this phase of engineering, we discovered **eleven silent-pass defects** w
 7. **Single-Sample Variance Artifacts**: Standard deviation computations over single windows or single STFT frames yielding degenerate `0.000` variance and passing stability floors trivially.
 8. **Spatial Intensity Thresholding**: Attempting to detect provider crowding via pixel texture standard deviation ($< 15.0$) rather than temporal difference motion kinetics.
 9. **`F-025` / OR-Fusion Over-Detection**: Relying on simple boolean union (`S1 OR S2`) or un-gated envelope energy, where continuous background room noise created an illusion of continuous CPR while erasing $57\%$ of real clinical interruptions.
-10. **`F-024`**: Pause fragmentation during true rhythm check interruptions caused by clinician movement across the chest ROI, exposed during reporting floor boundary evaluation.
-11. **`F-026` / Ungated CCF Report Disagreement**: `test_ccf.py::test_generate_ccf_report_vidsim2` passes cleanly while `ccf_report.py` runs over the full un-truncated video duration ($1,363.78\text{s}$), ungated on `death_pronounced_s` ($922.0\text{s}$) and without consumer floor filtering (`filter_ccis_by_consumer`), directly contradicting Decision 027 / Q-012. A green test running against the wrong window produces **$\text{CCF} = 0.8766$**, which directly disagrees with the validated evaluation path's **$\text{CCF} = 0.8170$**.
+10. **`F-027` / GT #1 Reporting Floor Recall Cost**: S1 optical flow truncated the true 8.0s pause at $147\text{–}155\text{s}$ into a $4.62\text{s}$ detection, which was discarded by the $\ge 5.0\text{s}$ floor (dropping recall $5/7 \to 4/7$).
+11. **`F-028` / GT #7 Pause Fragmentation**: S1 optical flow fragmented the longest 30.0s clinical pause ($844\text{–}874\text{s}$) into 4 sub-$5\text{s}$ slivers ($1.19\text{s}$, $2.25\text{s}$, $1.25\text{s}$, $3.82\text{s}$), missing $71.6\%$ ($21.49\text{s}$) of no-flow duration.
+12. **`F-029` / Shock Containment Inversion**: Assuming defibrillation shocks fall inside pauses during mechanical CPR; in reality, 0 of 5 shocks fall inside pauses (landing 5–17s after pauses end).
+13. **`F-026` / Ungated CCF Report Disagreement**: `test_ccf.py::test_generate_ccf_report_vidsim2` passes cleanly while `ccf_report.py` runs over the full un-truncated video duration ($1,363.78\text{s}$), ungated on `death_pronounced_s` ($922.0\text{s}$) and without consumer floor filtering (`filter_ccis_by_consumer`), directly contradicting Decision 027 / Q-012. A green test running against the wrong window produces **$\text{CCF} = 0.8766$**, which directly disagrees with the validated evaluation path's **$\text{CCF} = 0.8170$**.
 
 **The Transferable Core**: Automated test passage is not scientific validation. The permanent value of this architecture lies in its **fail-loudly discipline**: zero hardcoded literals, strict byte-identical determinism, explicit abstention on degraded channels, data-derived calibration profiles from config files, and the absolute requirement to score against real human ground truth before asserting functional validity.
 
@@ -93,17 +108,17 @@ Across this phase of engineering, we discovered **eleven silent-pass defects** w
 
 ## 5. Summary Scorecard (S1 Standalone on Current Build, `simvideo2.mp4`)
 
-Evaluated against human-adjudicated gold standard observations ($T_0 = \text{2023-11-07T07:55:57}$, $n=1$ case, $7$ true interruptions, $\text{GT CCF} = 0.907$, active clinical window $36.0\text{–}922.0\text{s}$) through reproducible command `python -m sensors.eval.report --sensor s1 --ground-truth fixtures/ground_truth_simvideo2.json --consumer compare`:
+Evaluated against human-adjudicated gold standard observations ($T_0 = \text{2023-11-07T07:55:57}$, $n=1$ case, $7$ true interruptions summing to $82.0\text{s}$, $\text{GT CCF} = 0.9074$, active clinical window $36.0\text{–}922.0\text{s}$ with denominator $886.0\text{s}$) through reproducible command `python -m sensors.eval.report --sensor s1 --ground-truth fixtures/ground_truth_simvideo2.json --consumer compare`:
 
 | Metric | S1 (>=1.0s CCF consumer) | S1 (>=5.0s Reporting consumer) | Clinical Interpretation & Status |
 | :--- | :--- | :--- | :--- |
 | **CCI F1 ($\pm 3.0\text{s}$)** | `0.21` | **`0.44`** | Doubled performance by filtering sub-$5\text{s}$ visual provider dropouts. |
 | **Interval Precision ($\pm 3.0\text{s}$)** | `0.12` | **`0.36`** | False positives dropped from $35$ to $7$ under monotonic tolerance matching. |
-| **Interval Recall ($\pm 3.0\text{s}$)** | `0.71` ($5/7$) | **`0.57`** ($4/7$) | Recall drop ($5 \to 4$ matched) caused by optical flow fragmentation on pause #5 (`F-024`). |
+| **Interval Recall ($\pm 3.0\text{s}$)** | `0.71` ($5/7$) | **`0.57`** ($4/7$) | Recall drop ($5 \to 4$) caused by optical flow truncation of GT #1 ($8.0\text{s} \to 4.62\text{s}$) discarded by floor (`F-027`). |
 | **False Positives ($\pm 3.0\text{s}$)** | `35` | **`7`** | Consistently defined under $\pm 3.0\text{s}$ tolerance matching ($6$ under any-overlap matching). |
 | **CCI F1 ($\pm 2.0\text{s}$)** | `0.13` | **`0.33`** | $\pm 2.0\text{s}$ tolerance is stricter than human clock precision ($\approx \pm 3\text{s}$). |
 | **Boundary MAE ($\pm 2.0\text{s}$)** | `1.02s` | **`1.02s`** | Sub-second boundary precision on matched interruptions. |
-| **CCF Error (All Pauses)** | `0.09` | **`0.09`** | Dynamic computed error against eval path CCF $0.817$ vs GT $0.907$. |
+| **CCF Error (All Pauses)** | `0.09` | **`0.09`** | Produced by **cancelling errors**: S1 accumulates $+55.8\text{s}$ excess pause time ($137.8\text{s}$ vs $82.0\text{s}$ GT) while missing $21.5\text{s}$ in GT #7 (`F-028`). |
 | **Reported Intervals** | $40 \text{ total}$ | **$11 \text{ total}$** | Raw emitted set is 44 intervals; CCF tier excludes 4 sub-1.0s de-identification mask splittings. |
 
-*(Note: All earlier baselines from prior builds are officially superseded by commits `769269f` and `9da9e74` and replaced by this reproducible measurement on current code).*
+*(Note: All earlier baselines from prior builds are officially superseded by commits `769269f`, `5017dbc`, and `9da9e74` and replaced by this reproducible measurement on current code).*
