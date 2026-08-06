@@ -2,8 +2,9 @@
 
 > **EXECUTIVE CONCLUSION**: The `resus_qc` sensor pipeline is **NOT HANDOFF-READY** for unmonitored execution by clinicians on 25 real resuscitation cases. 
 > 
-> **CRITICAL DEPENDENCY ON CLINICAL INQUIRY Q1**: The assessment's conclusion that the repository has even one working sensor is **strictly conditional on Q1** (`OPEN_QUESTIONS.md` `Q-020`): *Do the resuscitation bay cameras burn a timestamp into the video image?*
-> - **If NO**: Sensor S5 cannot run at all. S5 is currently the repository's **only sensor validated against an independent ground truth source** ($100\%$ accuracy on `simvideo2`). If the bay cameras do not burn timestamps into video frames, the pipeline has **ZERO sensors validated against an independent source on real footage**.
+> **CRITICAL DEPENDENCIES ON CLINICAL INQUIRY Q1 & ENVIRONMENT (R1)**:
+> 1. **Gating Timecode Query Q1 (`Q-020`)**: The assessment's conclusion that the repository has even one working sensor is **strictly conditional on Q1** (*Do bay cameras burn timestamps into video frames?*). If **NO**, Sensor S5 cannot run, leaving **ZERO working sensors validated against an independent source on real footage**.
+> 2. **Bleeding-Edge Stack & Air-Gap Incompatibility (R1)**: The development environment runs Python 3.14.2, OpenCV 5.0, NumPy 2.5.1, SciPy 1.18.0. Standard hospital workstations (RHEL/Ubuntu with Python 3.9–3.11 and zero internet access) cannot install or execute this uncontained stack. Handoff is blocked on an air-gapped container image or pinned offline wheelhouse.
 > 
 > Under the deployment constraint—where the pipeline executes locally in an air-gapped hospital environment on real Protected Health Information (PHI) without engineering access to video, audio, or transcripts—the existing debug loop disappears. Of 12 calibrated threshold sets across the sensor layer, **7 fail silently (Type b, 58.3%)** without self-detecting violation; uncalibrated camera ROIs will produce confident erroneous measurements rather than failing loudly; and the self-test requires a synthetic video harness to verify decoding and geometry without PHI.
 
@@ -185,11 +186,46 @@ camera_roi:
 
 ---
 
+## N6. Bleeding-Edge Stack & Hospital Delivery Feasibility Assessment (R1)
+
+### 1. The Installation Risk
+The development environment is running on a bleeding-edge toolchain:
+- **Python**: `3.14.2`
+- **OpenCV**: `opencv-python-headless 5.0.0.93`
+- **NumPy**: `2.5.1`
+- **SciPy**: `1.18.0`
+
+Hospital IT environments typically deploy Enterprise Linux (RHEL 8/9) or Ubuntu LTS (20.04/22.04) workstations locked to system Python versions (**3.9 – 3.11**), with zero root permissions and **strictly zero outbound Internet access** to PyPI. 
+
+This presents a critical handoff barrier: **the current development environment cannot be directly `pip install`ed on clinical machines**.
+
+### 2. Code Compatibility & OpenCV 4.x vs 5.x Assessment
+- **Minimum Python Version**: The codebase requires **Python 3.10+** (due to union type syntax `X | Y` across dataclasses and standard library typing features). It cannot run on Python 3.9 without backwards-compatibility imports (`from __future__ import annotations` is present, but runtime type evaluations require $\ge 3.10$).
+- **OpenCV API Usage**:
+  * S1 optical flow relies on: `cv2.VideoCapture`, `cv2.CAP_PROP_FPS`, `cv2.CAP_PROP_FRAME_COUNT`, `cv2.cvtColor`, `cv2.COLOR_BGR2GRAY`, and `cv2.calcOpticalFlowFarneback`.
+  * S5 OCR relies on: `cv2.imread`, `cv2.IMREAD_GRAYSCALE`, and `cv2.matchTemplate(..., cv2.TM_CCOEFF_NORMED)`.
+  * **Result**: None of these calls are OpenCV 5-exclusive; all exist identically across OpenCV 3.x, 4.x, and 5.x.
+- **Numerical Drift in Farnebäck Optical Flow**:
+  * While the API is identical, C++ implementation details, SIMD vectorization (AVX2 vs AVX-512 vs NEON), and underlying BLAS libraries differ across OpenCV versions and compiler flags.
+  * Farnebäck optical flow velocities ($v_y$) can drift by $10^{-4}$ to $10^{-3}\text{ px}$. Near sharp threshold boundaries (`min_modulation: 0.010`, `rms_threshold: 0.25`), this drift can flip frame-level classifications, shifting pause boundaries by fractions of a second.
+  * **Self-Test Refusal Rule**: The known-answer self-test (`python -m resus_qc.self_test`) in N2 must perform a strict cryptographic hash comparison against the manifest and **REFUSE TO RUN (exit code 1)** upon any numerical mismatch, rather than issuing a soft warning.
+
+### 3. Air-Gapped Hospital Delivery Options
+
+| Delivery Mode | Mechanism | Air-Gap Viability | Feasibility Assessment |
+| :--- | :--- | :--- | :--- |
+| **Option A: Outbound `pip install`** | Clinician runs `pip install -r requirements.txt` on hospital network. | **ZERO (Infeasible)** | Blocked by hospital firewall and lack of outbound internet access. |
+| **Option B: Standalone OCI Container Image** | Docker / Podman / Apptainer / Singularity tarball containing exact Linux base, Python 3.11/3.14, pinned OpenCV 5.0, NumPy, and code. | **HIGH (Recommended)** | **Survives air-gapped networks**. Single signed image transferred via secure USB; eliminates all host dependency skew and ensures bit-identical C-runtime math. |
+| **Option C: Pinned Offline Wheelhouse** | Pre-downloaded `.whl` bundle (`manylinux_2_28_x86_64`) installed via `pip install --no-index --find-links=wheels/`. | **MEDIUM (Fallback)** | Survives air-gap, but requires matching host Python minor version ($\ge 3.10$) and compatible host C-libraries (glibc). |
+
+---
+
 ## Synthesis & Actionable Roadmap
 
 The pipeline cannot be handed off for unassisted clinical execution in its current state. Before any implementation begins, **Questions Q1 and Q2 must be answered by the clinical team**. If confirmed feasible, the following engineering gates must be executed:
 
 1. **Gate 1: Synthetic Video Self-Test (`resus_qc.self_test`)**: Ship a self-test harness with a synthetically rendered reference video and intermediate arrays to verify end-to-end decoding, optical flow, OCR, and report determinism locally on the clinical machine without PHI.
-2. **Gate 2: Camera ROI Calibration Tool**: Build an interactive or coordinate-validated ROI onboarding script to prevent running hardcoded manikin ROIs on real patient beds.
-3. **Gate 3: Telemetry Export Package (`telemetry.json`)**: Implement automated serialization of PHI-free confidence distributions, mode classifier variance logs, duration histograms, and abstention tables for remote diagnosis.
-4. **Gate 4: Timecode Ingestion Fallback**: Implement container-level presentation timestamp (PTS) decoding and manual $T_0$ operator entry to decouple the pipeline from burned-in CCTV text overlays.
+2. **Gate 2: Containerized / Offline Delivery Package**: Build an air-gapped container image (or offline wheelhouse) pinning Python $\ge 3.10$, OpenCV, and SciPy to eliminate host dependency skew.
+3. **Gate 3: Camera ROI Calibration Tool**: Build an interactive or coordinate-validated ROI onboarding script to prevent running hardcoded manikin ROIs on real patient beds.
+4. **Gate 4: Telemetry Export Package (`telemetry.json`)**: Implement automated serialization of PHI-free confidence distributions, mode classifier variance logs, duration histograms, and abstention tables for remote diagnosis.
+5. **Gate 5: Timecode Ingestion Fallback**: Implement container-level presentation timestamp (PTS) decoding and manual $T_0$ operator entry to decouple the pipeline from burned-in CCTV text overlays.

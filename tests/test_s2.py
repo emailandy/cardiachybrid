@@ -56,12 +56,13 @@ def test_load_audio_config_profiles() -> None:
     assert fallback["band_min_hz"] == default["band_min_hz"]
 
 
-def test_s2_detects_compressions_through_synthetic_full_occlusion_window_where_s1_fails(
+def test_s2_stft_peak_detection_on_synthetic_sinusoid(
     tmp_path: Path,
 ) -> None:
     """
-    Verifies the S07 acceptance gate: detects CPR compressions through a synthetic
-    full-occlusion window where Sensor S1 optical flow fails under frequency lock.
+    Verifies STFT peak detection and harmonic tracking on a synthetic 1.70 Hz sinusoid
+    in Gaussian noise. Note: tests mathematical signal processing only; does NOT prove
+    or assert compression cadence isolation on real clinical room audio (F-023).
     """
     sr = 16000
     duration_s = 20.0
@@ -115,13 +116,11 @@ def test_s2_abstains_on_silent_audio(tmp_path: Path) -> None:
     assert res[0].support == []
 
 
-def test_s1_s2_occlusion_gated_fusion() -> None:
+def test_s1_s2_interval_merging_logic_on_mock_dataclasses() -> None:
     """
-    Verifies occlusion-gated acoustic-visual fusion rules:
-    - S1 confident (unoccluded): S1 decides, S2 ignored.
-    - S1 gap AND S6 occlusion detected: S2 decides (coverage note emitted if active, NOT a CCI).
-    - S1 gap, NO occlusion: genuine pause (S2 ignored, CCI emitted).
-    - Support labels track contributing sensors explicitly.
+    Verifies interval-merging and coverage note assignment on mock dataclasses.
+    Tests data structure routing only; this is NOT a validated clinical fusion strategy
+    (retracted under F-020 and F-023 item 9 where OR-fusion erased 57% of real pauses).
     """
     s1_intervals = [
         MockS1Interval("s1_1", "compression_motion", t_start_s=40.0, t_end_s=50.0),

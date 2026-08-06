@@ -137,7 +137,14 @@ def test_transcribe_abstains_on_silent_audio(tmp_path: Path) -> None:
 def test_s7a_integration_vidsim2() -> None:
     """
     Integration test: verifies S7aTranscriber returns structured abstention
-    on tests/video/vidsim2.mp4 without hardcoded fixture fallback.
+    on tests/video/vidsim2.mp4 because no ASR model is implemented.
+
+    PINNING COMMENT (R3 / F-016):
+    vidsim2.mp4 contains audible speech (including team directives and the 922s
+    death pronouncement). S7a currently returns abstained=True (confidence=0.0)
+    strictly because S7a is an architectural shell without an ASR model.
+    A future test failure here (returning non-abstained transcriptions) indicates
+    that S7a has started working, NOT that a regression occurred.
     """
     vp = Path("tests/video/vidsim2.mp4")
     if not vp.exists():

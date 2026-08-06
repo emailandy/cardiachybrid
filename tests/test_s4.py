@@ -67,10 +67,10 @@ def test_s4_abstains_below_080_confidence() -> None:
     assert valid_reading.heart_rate_bpm == 110.0
 
 
-def test_s4_deterministic_across_runs(tmp_path: Path) -> None:
+def test_s4_shell_dataclass_construction_determinism(tmp_path: Path) -> None:
     """
-    Verifies that extract_vitals_series produces deterministic output lists
-    without relying on hardcoded reference fixture data (F-016).
+    Verifies that extract_vitals_series produces deterministic dataclass instances
+    across repeated calls on dummy video inputs (structural shell test).
     """
     dummy_video = tmp_path / "video.mp4"
     dummy_video.touch()
