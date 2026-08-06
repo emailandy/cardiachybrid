@@ -203,16 +203,26 @@ Q-019 — Defibrillator Acoustic Calibration, Simulation Provenance, Ground Trut
   - status: BLOCKED on direct bay audio, real footage gold set, & S7a
   - blocks: S02 / S10 per-device acoustic calibration & clinical deployment
 
-Q-020 — Resuscitation Bay Camera Burned-In Timestamp Geometry & Font Format (Inquiry to Clinician / Handoff Gating).
-  - question: Do the resuscitation bay cameras burn a timestamp into the video image? If so, what format (e.g. `YYYY-MM-DD HH:MM:SS` or `MM/DD/YYYY HH:MM:SS.mmm AM/PM`), and is it in a fixed screen position across bays?
-  - architectural impact: Sensor S5 is currently the ONLY sensor validated against an independent ground truth source. If the clinical cameras do not burn timestamps into pixel frames, S5 cannot run, and the pipeline has zero ground-truth-validated sensors on real footage.
+Q-020 — Resuscitation Bay Camera Burned-In Timestamp Geometry & Font Format.
+  - answer from clinical lead (V1): Real bay footage carries burned-in timestamp in upper-left corner with format `"11/7/2023 08:04:59.748 AM"` (matching S5 template format).
+  - technical caveats & vulnerabilities recorded (V1):
+    * `P.png` (`P`) is missing from `sensors/calibration/timecode/`; afternoon cases (`PM`) will abstain or mis-match against `A.png`.
+    * Hardcoded column offsets in `_TIMECODE_COLS` break on varying digit counts (e.g. 2-digit vs 1-digit month/day) and shifting window layouts.
+    * Date order ambiguity: Pixels cannot distinguish `M/D/YYYY` from `D/M/YYYY` for day $\le 12$, risking 12-hour or multi-month chart anchoring errors.
   - owner: clinical lead / engineering
-  - status: OPEN / INQUIRY TO CLINICIAN
-  - blocks: Handoff package architecture & clock anchor design
+  - status: ANSWERED (with V1 hardening caveats recorded)
+  - blocks: S5 template expansion & OCR layout robustness
 
 Q-021 — Real Bay Video Ingestion Verification Clip (Inquiry to Clinician / Codec & Geometry Verification).
-  - question: Can the institution provide a short, de-identified or synthetic clip from the actual bay camera — no patient, staff only or an empty bay — solely to verify codec, frame rate (CFR vs VFR), resolution, and camera ROI geometry?
-  - architectural impact: Air-gapped handoff cannot be debugged remotely. A blank bay clip proves that OpenCV can decode the container, determines whether presentation timestamps drift over 20 minutes, and allows coordinate validation of `chest_roi` before real resuscitations are processed.
+  - answer from clinical lead (V5): No dedicated bay clip available; opening 30 seconds of simulation video `simvideo4` contains an empty bay.
+  - assessment: `simvideo4` is simulation footage (720p @ 25 fps), not real clinical bay camera footage. It does not establish real bay camera codec, frame rate (CFR vs VFR), resolution, camera angle, or chest ROI geometry. Real bay camera ingestion remains unverified.
   - owner: clinical lead / engineering
+  - status: OPEN (Awaiting real hospital bay clip / configuration profile)
+  - blocks: Real camera ROI onboarding & container verification
+
+Q-022 — Bay Camera DVR Date Format Standardization (M/D/YYYY vs D/M/YYYY).
+  - question: Is the DVR burned-in date format standardized to US `M/D/YYYY` across all resuscitation bay cameras, or is it camera-specific / operator-configurable?
+  - architectural impact: S5 parses `%m/%d/%Y`. If a camera uses `%d/%m/%Y`, dates with day $\le 12$ parse silently to confident incorrect calendar dates, shifting the entire case anchor in the EHR.
+  - owner: clinical lead
   - status: OPEN / INQUIRY TO CLINICIAN
-  - blocks: Handoff package ingestion testing
+  - blocks: Multi-camera clock anchor generalisation
