@@ -118,12 +118,12 @@ custom_device_x:
     assert detector.min_confidence == 0.85
 
 
-def test_s4_simvideo2_reference_includes_abstention_window(
+def test_s4_shell_returns_monitor_ocr_type(
     tmp_path: Path,
 ) -> None:
     """
-    Verifies that run_s4_monitor_ocr executes on video sequence inputs
-    without returning hardcoded fixture data (F-016).
+    Verifies that run_s4_monitor_ocr executes on dummy video inputs
+    and returns MonitorOCRReading dataclass instances (structural shell test).
     """
     dummy_video = tmp_path / "video.mp4"
     dummy_video.touch()
@@ -133,17 +133,19 @@ def test_s4_simvideo2_reference_includes_abstention_window(
 
 
 @pytest.mark.integration
+@pytest.mark.xfail(
+    reason="S4 monitor OCR is an uncalibrated architectural shell without a real vision OCR model (F-016)",
+    strict=True,
+)
 def test_s4_integration_vidsim2() -> None:
     """
-    Integration test: runs S4 monitor OCR on tests/video/vidsim2.mp4.
+    Integration test: S4 is an architectural shell without a trained OCR model.
+    Marked xfail to prevent presenting a green pass to clinicians on an unbuilt sensor.
     """
     vp = Path("tests/video/vidsim2.mp4")
     if not vp.exists():
         pytest.skip("Integration video tests/video/vidsim2.mp4 not found")
 
     readings = run_s4_monitor_ocr(vp, device_model="simvideo2_default")
-    assert len(readings) >= 1
-    for r in readings:
-        assert r.type == "monitor_ocr"
-        assert r.t_start_s <= r.t_end_s
-        assert 0.0 <= r.confidence <= 1.0
+    # Fails strict xfail because run_s4_monitor_ocr currently returns a mock reading without OCR
+    assert False, "S4 monitor OCR has no vision OCR engine implemented (F-016)"

@@ -377,9 +377,18 @@ def test_generate_ccf_report_abstains_intervals_when_patient_enters_room_omitted
     assert len(report.ccf_intervals) == 0
     assert len(report.reported_intervals) == 0
 
+    # CCF calculation depends on t_first and death_pronounced_s, so it computes even when intervals abstain
+    assert report.ccf_abstained is False
+    assert report.ccf == pytest.approx(0.8170, abs=0.005)
+    assert report.ccf_denominator_s == pytest.approx(851.25, abs=0.5)
+    assert report.ccf_window_s is not None
+    assert report.ccf_window_s[0] == pytest.approx(70.75, abs=0.5)
+    assert report.ccf_window_s[1] == pytest.approx(922.0, abs=0.5)
+
     text = report.format_text_report(ground_truth=None)
     assert "Interval Reporting Window: NONE (abstained:" in text
     assert "Clinical Interruptions (CCI): ABSTAINED" in text
+    assert "Chest Compression Fraction (CCF): 0.8170 (81.70%)" in text
 
 
 @pytest.mark.integration

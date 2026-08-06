@@ -120,11 +120,10 @@ Every calibrated parameter in `roi_config.yaml` was evaluated against its failur
 | **S6 Occlusion** | `occlusion_entry_spike_px` / `still_px` | 20.0 px / 1.5 px | **(b) SILENT WRONG** | Clinician leaning over chest for carotid pulse check generates identical signature, causing S6 to falsely label real pauses as visual occlusions. |
 | **S3 Defib** | `profile: "default"` / `UNKNOWN` | Uncalibrated | **(a) Fail-Loud / Abstain** | Explicitly emits `adjudication_status="UNAVAILABLE"` and notes "no calibrated profile for this device (Q-019)" (Invariant I5). |
 
-### Summary Counts (P3 Corrected):
+### Summary Counts (Q2 Corrected):
 - **Total Parameter Sets Evaluated**: 12
-- **Self-Detecting / Fail-Loud (Type a)**: 5
-- **Self-Detecting Abstention Gate (Type a)**: 1 (S3 device profile)
-- **Silent Wrong Answer (Type b)**: **7 (58.3% of threshold sets)**:
+- **Self-Detecting / Fail-Loud / Abstaining (Type a)**: **5 (41.7%)** (4 S1 Stage-1 parameter sets + S3 uncalibrated profile gate)
+- **Silent Wrong Answers (Type b)**: **7 (58.3% of threshold sets)**:
   1. Mode classifier mechanical std threshold (`3.0 CPM`)
   2. Mode classifier manual std threshold (`8.0 CPM`)
   3. Rolling RMS envelope window (`1.6s`)
@@ -141,9 +140,9 @@ Every calibrated parameter in `roi_config.yaml` was evaluated against its failur
 
 | Scenario | Behavior on Clinician Workstation | Defect Classification | Recommended Hardening |
 | :--- | :--- | :--- | :--- |
-| **Dependency / Environment Drift** | If OpenCV, SciPy, or PyTorch versions differ, optical flow or filter rounding drifts by centiseconds; if libraries fail to import, execution aborts. | **Fail-Loud on crash; Silent Drift on version skew**. | Add strict pip pin file (`requirements-frozen.txt`) and mandatory `self_test` pre-run. |
+| **Dependency / Environment Drift (Q1)** | Repository is running on Python 3.14.2 (`numpy==2.5.1`, `scipy==1.18.0`, `opencv-python-headless==5.0.0.93`). Version skew across Python 3.11–3.14 or BLAS/LAPACK builds will drift boundary centiseconds silently without crashing. | **Fail-Loud on crash; Silent Drift on version skew**. | Add strict pip pin file (`requirements-frozen.txt`) with exact Python version assertion inside `python -m resus_qc.self_test`. |
 | **Unsupported Video Codec (HEVC/H.265, ProRes, VFR)** | `cv2.VideoCapture.isOpened()` returns `False` $\to$ raises `RuntimeError("Failed to open video file")`. If container opens but frames decode black $\to$ raises `NoPeriodicMotion`. | **Fail-Loud**. | Add explicit pre-flight codec inspection via `ffprobe` verifying container compatibility and constant frame rate (CFR). |
-| **Timecode Overlay Absent or Shifted (Q1)** | S5 OCR template matching returns `None` on all frames $\to$ `t0_iso` set to `None` $\to$ report prints `T0 Clock Anchor: None (source: unavailable)`. | **Silent Degradation**: Absolute clock synchronization collapses; relative offsets continue without clock validation. | Require explicit operator confirmation of $T_0$ if S5 returns `None`. |
+| **Timecode Overlay Absent or Shifted (Q1 / Q-020)** | S5 OCR template matching returns `None` on all frames $\to$ `t0_iso` set to `None` $\to$ report prints `T0 Clock Anchor: None (source: unavailable)`. | **Silent Degradation**: Absolute clock synchronization collapses; relative offsets continue without clock validation. | Require explicit operator confirmation of $T_0$ if S5 returns `None`. |
 | **ROI Configuration Mismatch (New Camera / Bay Angle)** | Hardcoded `chest_roi` points to wrong pixel coordinates. If region is static wall $\to$ raises `NoPeriodicMotion`. If region contains moving staff $\to$ **detects false CPR over empty bed**. | **Catastrophic Silent Wrong Answer** if non-patient motion occurs in ROI. | Require interactive or configuration-validated ROI bounding box per camera bay. |
 | **Missing Operator Milestones (P4)** | If `death_pronounced_s` is omitted $\to$ CCF is ABSTAINED (`ccf_abstained=True`, Invariant I6). If `patient_enters_room_s` is omitted $\to$ interval reporting is ABSTAINED (`intervals_abstained=True`, P4). | **Fail-Loud / Abstain for both CCF and Interval Reporting** (Defaulting prohibited). | Require explicit operator milestones or abstain from all windowed calculations. |
 
