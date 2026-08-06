@@ -16,7 +16,7 @@ default:
     considered validated. See CR-003 and Q-019.
   device_model: "UNKNOWN — see CR-003 / Q-019"
   warning: >
-    Fitted to one event on one case, not general. Its name 'default' is historical;
+    Fitted, not general. Fitted to one event on one case, not general. Its name 'default' is historical;
     it is a fit, not a validated default. Different manufacturers produce different charge
     tones. A device outside 400-1000 Hz or rising slower than 40 Hz/s would
     be missed. Per-device calibration required before production.
