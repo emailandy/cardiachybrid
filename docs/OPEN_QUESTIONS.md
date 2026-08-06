@@ -177,3 +177,10 @@ Q-015 Three TEAM calibration anchor cases at consensus global 2, 6, 9 require hu
 **T-058 (D05)**: What is the correct value for 'Self-review Q3'? (specs.yaml does not determine this).
 
 Q-018 — The ground truth fixture `fixtures/ground_truth_simvideo2.json` contains a `"$schema"` key pointing to the JSON Schema Draft 2020-12 meta-schema (`"https://json-schema.org/draft/2020-12/schema"`). The file contains instance data rather than schema definitions; this key is instance metadata and must not be mistaken for a JSON schema validation contract. Status: DOCUMENTED.
+
+Q-019 — Defibrillator Acoustic Calibration Profile for simvideo2.
+  - options: (a) Attempt parameter fitting on two audible charge tones from re-encoded footage, (b) Block defibrillator profile creation on uncompressed direct resuscitation bay audio captures with known device models.
+  - default: Option (b). Re-encoding plausibly destroyed continuous charge tones on 2 of 5 shocks (F-013, F-015, F-017), making footage-level calibration fitted rather than validated. Defibrillator equipment model for simvideo2 is unknown.
+  - owner: clinical lead / engineering
+  - status: BLOCKED on direct bay audio
+  - blocks: S02 / S10 per-device acoustic calibration
