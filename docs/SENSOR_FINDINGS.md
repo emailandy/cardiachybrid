@@ -113,6 +113,8 @@ Across this phase of engineering, we discovered **fifteen silent-pass and report
 
 Evaluated against human-adjudicated gold standard observations ($T_0 = \text{2023-11-07T07:55:57}$, $n=1$ case, $7$ true interruptions summing to $82.0\text{s}$, $\text{GT CCF} = 0.9037$ over active CPR window $70.75\text{–}922.0\text{s}$) through reproducible command `python -m sensors.eval.report --sensor s1 --ground-truth fixtures/ground_truth_simvideo2.json --consumer compare`:
 
+* **Tier-Independent Metric**: **$\text{CCF Error (70.75–922s)} = 0.09$** — Evaluated via `compute_ccf()` as $\text{CPR Duration} / (\text{death\_pronounced\_s} - \text{t\_first}) = 695.29\text{s} / 851.25\text{s} = \mathbf{0.8170}$ (error $\mathbf{0.09}$ vs comparable GT CCF $0.9037$ over identical window $70.75\text{–}922.0\text{s}$). Note: ungated report path produces $\mathbf{0.8766}$ (`F-026`). Derived independently from active motion events; consumer reporting tiers do not affect it.
+
 | Metric | S1 (>=1.0s CCF consumer) | S1 (>=5.0s Reporting consumer) | Clinical Interpretation & Status |
 | :--- | :--- | :--- | :--- |
 | **CCI F1 ($\pm 3.0\text{s}$)** | `0.21` | **`0.44`** | Doubled performance by filtering sub-$5\text{s}$ visual provider dropouts. |
@@ -121,7 +123,6 @@ Evaluated against human-adjudicated gold standard observations ($T_0 = \text{202
 | **False Positives ($\pm 3.0\text{s}$)** | `35` | **`7`** | Consistently defined under $\pm 3.0\text{s}$ tolerance matching ($6$ under any-overlap matching). |
 | **CCI F1 ($\pm 2.0\text{s}$)** | `0.13` | **`0.33`** | $\pm 2.0\text{s}$ tolerance is stricter than human clock precision ($\approx \pm 3\text{s}$). |
 | **Boundary MAE ($\pm 2.0\text{s}$)** | `1.02s` | **`1.02s`** | Sub-second boundary precision on matched interruptions. |
-| **CCF Error (70.75-922s)** | `0.09` | **`0.09`** | Evaluated via `compute_ccf()` as $\text{CPR Duration} / (\text{death\_pronounced\_s} - \text{t\_first}) = 695.29\text{s} / 851.25\text{s} = \mathbf{0.8170}$ (error $\mathbf{0.09}$ vs comparable GT CCF $0.9037$ over identical window $70.75\text{–}922.0\text{s}$). Note: ungated report path produces $\mathbf{0.8766}$ (`F-026`). |
 | **Reported Intervals** | $40 \text{ total}$ | **$11 \text{ total}$** | Raw emitted set in interval reporting window ($36\text{–}922\text{s}$) is 44 intervals; CCF tier excludes 4 sub-1.0s mask splittings. |
 
 #### Detailed CCF Window Reconciliation & Decomposition (Four Numbers)

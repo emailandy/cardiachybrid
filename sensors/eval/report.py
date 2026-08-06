@@ -120,6 +120,7 @@ def evaluate_s1_consumers(gt_data: dict[str, Any], video_path: Path, gt_path_str
     print("  - Tolerance: +/- 3.0s (default matcher tolerance; +/- 2.0s shown for strict comparisons)")
     print(f"  - Sample Size: n=1 case ({len(gt_ccis)} human-adjudicated CCIs, provenance: human_adjudicated)")
     print("  - Matching Definition: Consistent monotonic tolerance matching applied across Precision, Recall, F1, and FP counts.")
+    print(f"  - Tier-Independent Metric: CCF error (70.75-922s) = {ccf_err:.2f} (derived independently from active motion events)")
     print("\n                          S1 (>=1.0s CCF)   S1 (>=5.0s Reporting)")
     print(f"CCI F1 (+/-3.0s)        {f1_3s_raw:6.2f}          {f1_3s_fl:6.2f}")
     print(f"Precision (+/-3.0s)     {prec_3s_raw:6.2f}          {prec_3s_fl:6.2f}")
@@ -127,7 +128,6 @@ def evaluate_s1_consumers(gt_data: dict[str, Any], video_path: Path, gt_path_str
     print(f"False Positives (+/-3s) {fp_raw:6d}          {fp_fl:6d}")
     print(f"CCI F1 (+/-2.0s)        {f1_2s_raw:6.2f}          {f1_2s_fl:6.2f}")
     print(f"Boundary MAE            {mae_raw:5.2f}s          {mae_fl:5.2f}s")
-    print(f"CCF error (70.75-922s)  {ccf_err:6.2f}          {ccf_err:6.2f}")
     print(f"intervals reported      {len(s1_raw):6d}          {len(s1_floor):6d}")
 
     # E5: Print per-interval TP/FP/S6 audit table from committed matcher
