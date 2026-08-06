@@ -113,11 +113,14 @@ def test_s3_adjudicator_vidsim2() -> None:
     detector = S3DefibDetector("default")
 
     # 1. Check candidate shocks under windowed adjudication
-    # Under uncalibrated default profile, detector does not confirm shocks on re-encoded audio (F-030 / Q-019)
+    # PINNING DEFECT F-030: Under uncalibrated default profile, detector does not confirm
+    # shocks on re-encoded/unconfirmed footage (F-030 / Q-019).
+    # NOTE: A test failure here in the future means S3 has been successfully calibrated and started working.
     for t in [167.94, 385.07, 621.34, 742.21]:
         verdict = detector.adjudicate(video_path, t, window_s=30.0)
         assert not verdict.confirmed, (
-            f"Expected candidate at {t}s to not confirm under uncalibrated default profile (F-030)"
+            f"Expected candidate at {t}s to not confirm under uncalibrated default profile (F-030). "
+            f"If this assertion fails, S3 has started working / been successfully calibrated."
         )
 
     # 2. 2/2 negative controls (F-013) must REJECT

@@ -178,10 +178,20 @@ Q-015 Three TEAM calibration anchor cases at consensus global 2, 6, 9 require hu
 
 Q-018 — The ground truth fixture `fixtures/ground_truth_simvideo2.json` contains a `"$schema"` key pointing to the JSON Schema Draft 2020-12 meta-schema (`"https://json-schema.org/draft/2020-12/schema"`). The file contains instance data rather than schema definitions; this key is instance metadata and must not be mistaken for a JSON schema validation contract. Status: DOCUMENTED.
 
-Q-019 — Defibrillator Acoustic Calibration Profile for simvideo2 & Acoustic Ground Truth Provenance.
+Q-019 — Defibrillator Acoustic Calibration Profile for simvideo2, Acoustic Ground Truth Provenance, & Verbal Candidate Source Design.
   - options: (a) Attempt parameter fitting on two audible charge tones from re-encoded footage, (b) Block defibrillator profile creation on uncompressed direct resuscitation bay audio captures with known device models.
   - default: Option (b). Re-encoding plausibly destroyed continuous charge tones on 2 of 5 shocks (F-013, F-015, F-017), making footage-level calibration fitted rather than validated. Defibrillator equipment model for simvideo2 is unknown.
-  - provenance note: The four `acoustic_measured` timestamps in `fixtures/ground_truth_simvideo2.json` (167.94s, 385.07s, 621.34s, 742.21s) represent manual spectrogram inspection readings rather than automated S3 detector confirmations (F-030). The automated detector under the uncalibrated profile yielded 6 false positives on the full track and confirms zero shocks. Automated S3 adjudication is unavailable pending device calibration.
+  - provenance & discrimination note (L1 / F-030): The four `acoustic_measured` timestamps in `fixtures/ground_truth_simvideo2.json` (167.94s, 385.07s, 621.34s, 742.21s) represent manual spectrogram inspection readings rather than automated S3 detector confirmations. The automated detector under the uncalibrated profile yielded 6 false positives on the full track and confirms zero shocks. S3's negative control at 861.0s and 884.5s returning `(0.0, 0.0)` is a vacuous pass: a detector returning `(0.0, 0.0)` for every input cannot distinguish "correctly rejects negatives" from "rejects everything." A valid negative control requires the detector to first confirm a true positive. The default defib profile currently has zero discrimination evidence in either direction. Do not attempt to construct one from this footage.
+  - three candidate hypotheses for missing tones (L3): (1) method failure in acoustic detection, (2) lossy audio re-encoding artifacts (F-017), or (3) simulated shocks where no physical charge tone was generated (the gold standard is titled "ACLS Sim Video Review"; an encode chain degrades uniformly, whereas 165s and 742s retain tones while 388s and 622s have none — inconsistent presence fits inconsistent generation better than inconsistent compression). Manual slope figures are measurements of a phenomenon whose physical generation remains unconfirmed.
+  - verbal candidate source design (L5): Verbal announcement is a candidate SOURCE for S3's windowed adjudicator, not a fallback detector.
+    * Announcement is intent rather than delivery; shocks are sometimes aborted.
+    * Verbal and acoustic timestamps are not interchangeable (gold standard records cross-modal differences up to 2.9s, which spans most of the peri-shock pause metric).
+    * A verbally derived shock must occupy a different field from an acoustically confirmed one and must NEVER populate peri-shock pause.
+    * Absence of verbal announcement is UNAVAILABLE, not zero shocks (Invariant I5).
+    * Blocked on S7a (speech-to-text), currently a shell.
+    * If gold standard shock times were annotated from team speech and behavior, scoring a speech detector against them constitutes same-modality comparison (F-016 family defect) and must be explicitly declared before reporting accuracy numbers.
+    * Trigger phrase vocabulary is a clinical question and must not be engineered without clinical input.
+    * Roadmap note: S7a is the precondition for both the shock-candidate channel and the S2 retest (F-023), making it the highest-leverage remaining sensor.
   - owner: clinical lead / engineering
-  - status: BLOCKED on direct bay audio
+  - status: BLOCKED on direct bay audio & S7a
   - blocks: S02 / S10 per-device acoustic calibration

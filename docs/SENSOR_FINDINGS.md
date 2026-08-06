@@ -73,10 +73,11 @@ This standalone technical synthesis consolidates empirical findings, architectur
 
 ## 3. What We Learned About the Footage
 
-* **`F-017` (Screen Recording & Re-Encoding Artifacts)**:
+* **`F-017` (Screen Recording & Re-Encoding Artifacts & Simulation Status)**:
   * `simvideo2.mp4` is a **screen recording of a computer UI playing CCTV video**, not a direct video capture (`nb_read_frames=21821` vs container rate $16\text{ fps}$).
   * UI presentation freezes and frame duplication induce synthetic vertical velocity variance ($\text{std} \approx 0.252\text{ px/frame}$), while the active chest occupies only a fraction of the frame ($140\times140$ within $1920\times1080$).
-  * Additional compression re-encoding steps passed to the audio track plausibly destroyed continuous rising charge tones and acoustic piston strike transients.
+  * **Missing Charge Tones — Three Candidate Hypotheses (L3 / Q-019)**: Lossy audio compression re-encoding is one of three candidate explanations for missing/intermittent charge tones, alongside method failure and the possibility of simulated shocks where no physical tone was generated (the gold standard dataset is titled "ACLS Sim Video Review"; an encode chain degrades uniformly, whereas 165s and 742s retain tones while 388s and 622s have none — inconsistent presence fits inconsistent physical generation better than inconsistent compression). Manual slope figures are measurements of a phenomenon whose physical generation is unconfirmed.
+  * **Simulation Nature Caveat & Accuracy Bounds (L4)**: The nature of this case (simulation manikin exercise vs real human resuscitation) is unconfirmed, and this bounds every accuracy claim across all sensors (chest compliance/recoil for S1, thoracic acoustics for S2, and whether CCF 0.907 reflects real practice). Gold set expansion must explicitly distinguish simulation vs real bay footage, because a simulation gold set generalises only to simulation.
   * **Critical Caveat**: Every parameter in this build is calibrated against this screen-recorded stack ($n=1$ case). Direct resuscitation bay cameras are untested and may behave completely differently—particularly regarding acoustic clarity and optical continuity.
 
 * **`F-020` & `F-021` (De-Identification Masks vs RMS Smoothing)**:
@@ -87,7 +88,7 @@ This standalone technical synthesis consolidates empirical findings, architectur
 
 ## 4. The Methodological Result & Silent-Pass Defects
 
-Across this phase of engineering, we discovered **eighteen silent-pass and reporting defects** where code executed without errors, passed automated test suites while failing catastrophically on real clinical data, executed against incorrect analytical boundaries, or masked underlying verification errors:
+Across this phase of engineering, we discovered **nineteen silent-pass and reporting defects** where code executed without errors, passed automated test suites while failing catastrophically on real clinical data, executed against incorrect analytical boundaries, or masked underlying verification errors:
 
 1. **`F-013` / `F-014`**: Standalone audio scanning claiming functionality on synthetic tests while generating $100\%$ false positive rates on room speech.
 2. **`F-015` / `F-016`**: Vacuous self-comparison evaluation fixtures where test predictions and ground truth originated from identical mock objects (`F-016`), artificially inflating reported F1 and WER metrics to `1.0` and `0.0`.
@@ -107,6 +108,7 @@ Across this phase of engineering, we discovered **eighteen silent-pass and repor
 16. **`F-030` / S02 Automated 4-Shock Confirmation Misattribution & Retraction**: Early S02 documentation claimed S3 automated detection of all 4 shocks at $167.94\text{s}, 385.07\text{s}, 621.34\text{s}, 742.21\text{s}$ with $\text{MAE} \le 0.07\text{s}$. In reality, those 4 timestamps were manual spectrogram inspection readings; the automated detector under the uncalibrated `default` profile detected 6 false positives on the full track (`F-013`) and confirmed zero shocks (`test_s3.py` only asserted `verdict is not None`). S3 adjudication is marked `UNAVAILABLE` under Invariant I5 pending per-device calibration (`Q-019`).
 17. **`F-031` / REDCap Tier Over-Count ($\ge 3.0\text{s}$)**: The REDCap repeating group consumer tier ($\ge 3.0\text{s}$) emits 16 intervals where the gold standard has 7, more than doubling the true interruption count. Under $\pm 3.0\text{s}$ tolerance matching, 5 intervals match true pauses (GT #1, #3, #4, #5, #6), 11 are false positives (provider dropouts and split pauses), and 2 GT pauses are missed/fragmented (GT #2 split; GT #7 fragmented). This tier must not feed production REDCap `num_cci_v2` without review.
 18. **Vacuous Assertion in Test Suite (`assert verdict is not None`)**: `test_s3.py` asserted `assert verdict is not None` on windowed adjudication across the four shock timestamps, passing vacuously while `verdict.confirmed` was False and masking that the automated detector confirmed zero shocks under the uncalibrated profile (`F-016` family silent-pass defect).
+19. **Vacuous Negative Control in Defibrillator Calibration (L1)**: Presenting `inspect_rejection_window` returning `(0.0 Hz/s, 0.00)` at $861.0\text{s}$ and $884.5\text{s}$ as proof that S3 rejects uncharged loud transients was a vacuous negative control (`F-016` family defect). Because the uncalibrated detector confirms zero true shocks and returns `(0.0, 0.0)` on all non-detections, it cannot distinguish "correctly rejects negatives" from "rejects everything." Discrimination evidence for the default defib profile is void until a true positive is confirmed.
 
 **The Transferable Core**: Automated test passage is not scientific validation. The permanent value of this architecture lies in its **fail-loudly discipline**: zero hardcoded literals, strict byte-identical determinism, explicit abstention on degraded channels, data-derived calibration profiles from config files, and the absolute requirement to score against real human ground truth and real terminal output before asserting functional validity.
 
