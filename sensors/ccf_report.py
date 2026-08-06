@@ -181,14 +181,14 @@ class CCFReport:
         """
         lines: list[str] = []
 
-        # H4: Prominent Clinician Readership Banner (M4)
+        # H4: Prominent Clinician Readership Banner (N0)
         lines.append("=" * 80)
         lines.append("NOT FOR CLINICAL OR PERFORMANCE ASSESSMENT.")
         lines.append(
-            "Validation output from n=1 manikin simulation. Performance on real patients is unmeasured."
+            "In the single manikin validation case, interval precision was 0.36 and the longest"
         )
         lines.append(
-            "Interval precision 0.36. The longest interruption in the validation case was not detected."
+            "interruption was not detected. Accuracy on this case is unmeasured."
         )
         lines.append("=" * 80)
         lines.append("")
@@ -200,7 +200,8 @@ class CCFReport:
         lines.append(f"T0 Clock Anchor: {self.t0_iso} (source: {self.t0_source})")
         lines.append(
             f"Interval Reporting Window: {self.interval_window_s[0]:.2f}s - {self.interval_window_s[1]:.2f}s "
-            f"(patient_enters_room_s: {self.patient_enters_room_source}, death_pronounced_s: {self.death_pronounced_source})"
+            f"(patient_enters_room_s: {self.patient_enters_source if hasattr(self, 'patient_enters_source') else self.patient_enters_room_source}, "
+            f"death_pronounced_s: {self.death_pronounced_source})"
         )
         if self.ccf_window_s is not None and self.ccf_denominator_s is not None:
             lines.append(
@@ -216,12 +217,18 @@ class CCFReport:
             f"Milestones Origin: t_first = {self.t_first_s:.2f}s is SENSOR-DERIVED ({self.t_first_source}); "
             f"window bounds are OPERATOR-SUPPLIED ({self.patient_enters_room_source} / {self.death_pronounced_source})."
         )
-        # H2b: Note early compression bout exclusion
-        lines.append(
-            "Note on t_first Anchor (H2b / Q-012): t_first = 70.75s excludes a 6.31s compression bout at 61.50-67.81s "
-            "that the mode classifier abstained on ('unable_to_determine — epoch too short for cadence variance'). "
-            "The Q-012 denominator carries this open metrics defect."
-        )
+        # H2b: Note early compression bout exclusion (simvideo2 specific audit note)
+        if self.case_id == "simvideo2":
+            lines.append(
+                "Note on t_first Anchor (H2b / Q-012): In validation case simvideo2, t_first = 70.75s excludes a 6.31s "
+                "compression bout at 61.50-67.81s that the mode classifier abstained on "
+                "('unable_to_determine — epoch too short for cadence variance'). The Q-012 denominator carries this open metrics defect."
+            )
+        else:
+            lines.append(
+                f"Note on t_first Anchor (Q-012): t_first = {self.t_first_s:.2f}s is the first detected compression bout "
+                "accepted by the mode classifier."
+            )
         lines.append(
             "Calibration Basis: Thresholds calibrated on n=1 manikin simulation screen-recorded video stack (F-017 / M4). "
             "Performance on real patients is unmeasured."
@@ -295,33 +302,40 @@ class CCFReport:
             lines.append(
                 f"  - Absolute CCF Error: {ccf_err:.4f} (~{round(ccf_err, 2)})"
             )
-            lines.append(
-                "  - Cancelling Error Decomposition: The observed CCF error of 0.09 arises from two large "
-                "structural errors cancelling each other out: +55.8s of false-positive pause duration "
-                "accumulated during S1 detection against 21.5s of missed true pause duration."
-            )
-            lines.append(
-                f"  - Two Independent Measurements: Over the CCF evaluation window, non-CPR duration derived from "
-                f"motion events ({motion_non_cpr_dur:.2f}s) differs from emitted raw CCIs ({raw_cci_dur_in_ccf:.2f}s) "
-                f"by exactly {measurement_gap:.2f}s due to sub-0.5s dropouts and boundary adjustments."
-            )
-            lines.append(
-                "  - False Positive Rate: Under the >=5.0s reporting threshold, 6 of 11 reported intervals "
-                "are false positives under +/-3.0s monotonic tolerance matching (4 coincide with S6-detected "
-                "provider crowding; 2 are unexplained)."
-            )
-            lines.append(
-                "  - Omission of Longest Interruption (F-028): The longest true clinical interruption in this case "
-                "(GT #7, 844.0-874.0s, duration 30.0s, representing 36.6% of all no-flow time) was fragmented by "
-                "optical flow into four sub-5s slivers and does not appear in the reported interval list below, "
-                "with no visual occlusion detected to explain it."
-            )
-            lines.append(
-                "  - Shock Containment vs Ground Truth: The gold standard has 0 of 5 shocks inside a true pause "
-                "(all shocks occur 5-17s after pauses end under continuous mechanical CPR, F-029). "
-                "The 1 of 5 containment reported in Section 2 is an overlap with a transient false-positive optical "
-                "flow fragment (cci_32, 740.92-742.92s, duration 2.00s) below the reporting floor, NOT a true clinical pause."
-            )
+            if self.case_id == "simvideo2":
+                lines.append(
+                    "  - Cancelling Error Decomposition: The observed CCF error of 0.09 arises from two large "
+                    "structural errors cancelling each other out: +55.8s of false-positive pause duration "
+                    "accumulated during S1 detection against 21.5s of missed true pause duration."
+                )
+                lines.append(
+                    f"  - Two Independent Measurements: Over the CCF evaluation window, non-CPR duration derived from "
+                    f"motion events ({motion_non_cpr_dur:.2f}s) differs from emitted raw CCIs ({raw_cci_dur_in_ccf:.2f}s) "
+                    f"by exactly {measurement_gap:.2f}s due to sub-0.5s dropouts and boundary adjustments."
+                )
+                lines.append(
+                    "  - False Positive Rate: Under the >=5.0s reporting threshold, 6 of 11 reported intervals "
+                    "are false positives under +/-3.0s monotonic tolerance matching (4 coincide with S6-detected "
+                    "provider crowding; 2 are unexplained)."
+                )
+                lines.append(
+                    "  - Omission of Longest Interruption (F-028): The longest true clinical interruption in this case "
+                    "(GT #7, 844.0-874.0s, duration 30.0s, representing 36.6% of all no-flow time) was fragmented by "
+                    "optical flow into four sub-5s slivers and does not appear in the reported interval list below, "
+                    "with no visual occlusion detected to explain it."
+                )
+                lines.append(
+                    "  - Shock Containment vs Ground Truth: The gold standard has 0 of 5 shocks inside a true pause "
+                    "(all shocks occur 5-17s after pauses end under continuous mechanical CPR, F-029). "
+                    "The 1 of 5 containment reported in Section 2 is an overlap with a transient false-positive optical "
+                    "flow fragment (cci_32, 740.92-742.92s, duration 2.00s) below the reporting floor, NOT a true clinical pause."
+                )
+            else:
+                lines.append(
+                    f"  - Two Independent Measurements: Over the CCF evaluation window, non-CPR duration derived from "
+                    f"motion events ({motion_non_cpr_dur:.2f}s) differs from emitted raw CCIs ({raw_cci_dur_in_ccf:.2f}s) "
+                    f"by {measurement_gap:.2f}s."
+                )
         else:
             lines.append(
                 "Validation Status: Accuracy not validated for this case (no ground truth supplied)."
