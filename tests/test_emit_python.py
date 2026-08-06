@@ -17,14 +17,16 @@ def test_columns():
     for f in calc_fields:
         assert redcap.FIELDS[f].server_computed
 
+import sys
+
 def test_determinism():
     # Ensure they exist first
-    subprocess.run(["python", "codegen/emit_python.py"], check=True)
+    subprocess.run([sys.executable, "codegen/emit_python.py"], check=True)
     
     redcap_before = Path("generated/redcap_fields.py").read_bytes()
     models_before = Path("generated/models.py").read_bytes()
     
-    subprocess.run(["python", "codegen/emit_python.py"], check=True)
+    subprocess.run([sys.executable, "codegen/emit_python.py"], check=True)
     
     redcap_after = Path("generated/redcap_fields.py").read_bytes()
     models_after = Path("generated/models.py").read_bytes()
