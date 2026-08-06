@@ -66,12 +66,14 @@ class CCFReport:
     t0_source: str
     total_case_duration_s: float
 
-    # Window boundaries & Provenance (H1, I6)
-    patient_enters_room_s: float
+    # Window boundaries & Provenance (H1, I6, P4)
+    patient_enters_room_s: float | None
     patient_enters_room_source: str
     death_pronounced_s: float | None
     death_pronounced_source: str
-    interval_window_s: tuple[float, float]
+    interval_window_s: tuple[float, float] | None
+    intervals_abstained: bool
+    intervals_abstain_reason: str | None
     ccf_window_s: tuple[float, float] | None
     t_first_s: float | None
     t_first_source: str
@@ -114,7 +116,9 @@ class CCFReport:
             "t0_iso": self.t0_iso,
             "t0_source": self.t0_source,
             "total_case_duration_s": round(self.total_case_duration_s, 2),
-            "patient_enters_room_s": round(self.patient_enters_room_s, 2),
+            "patient_enters_room_s": round(self.patient_enters_room_s, 2)
+            if self.patient_enters_room_s is not None
+            else None,
             "patient_enters_room_source": self.patient_enters_room_source,
             "death_pronounced_s": round(self.death_pronounced_s, 2)
             if self.death_pronounced_s is not None
@@ -123,7 +127,11 @@ class CCFReport:
             "interval_window_s": [
                 round(self.interval_window_s[0], 2),
                 round(self.interval_window_s[1], 2),
-            ],
+            ]
+            if self.interval_window_s is not None
+            else None,
+            "intervals_abstained": self.intervals_abstained,
+            "intervals_abstain_reason": self.intervals_abstain_reason,
             "ccf_window_s": [
                 round(self.ccf_window_s[0], 2),
                 round(self.ccf_window_s[1], 2),
@@ -198,11 +206,15 @@ class CCFReport:
         lines.append(f"Case ID: {self.case_id}")
         lines.append(f"Video Path: {self.video_path}")
         lines.append(f"T0 Clock Anchor: {self.t0_iso} (source: {self.t0_source})")
-        lines.append(
-            f"Interval Reporting Window: {self.interval_window_s[0]:.2f}s - {self.interval_window_s[1]:.2f}s "
-            f"(patient_enters_room_s: {self.patient_enters_source if hasattr(self, 'patient_enters_source') else self.patient_enters_room_source}, "
-            f"death_pronounced_s: {self.death_pronounced_source})"
-        )
+        if self.interval_window_s is not None:
+            lines.append(
+                f"Interval Reporting Window: {self.interval_window_s[0]:.2f}s - {self.interval_window_s[1]:.2f}s "
+                f"(patient_enters_room_s: {self.patient_enters_room_source}, death_pronounced_s: {self.death_pronounced_source})"
+            )
+        else:
+            lines.append(
+                f"Interval Reporting Window: NONE (abstained: {self.intervals_abstain_reason})"
+            )
         if self.ccf_window_s is not None and self.ccf_denominator_s is not None:
             lines.append(
                 f"CCF Evaluation Window: {self.ccf_window_s[0]:.2f}s - {self.ccf_window_s[1]:.2f}s "
@@ -213,22 +225,15 @@ class CCFReport:
                 "CCF Evaluation Window: NONE (CCF calculation abstained per I6 / F-026)"
             )
 
+        t_first_str = f"{self.t_first_s:.2f}s" if self.t_first_s is not None else "None"
         lines.append(
-            f"Milestones Origin: t_first = {self.t_first_s:.2f}s is SENSOR-DERIVED ({self.t_first_source}); "
+            f"Milestones Origin: t_first = {t_first_str} is SENSOR-DERIVED ({self.t_first_source}); "
             f"window bounds are OPERATOR-SUPPLIED ({self.patient_enters_room_source} / {self.death_pronounced_source})."
         )
-        # H2b: Note early compression bout exclusion (simvideo2 specific audit note)
-        if self.case_id == "simvideo2":
-            lines.append(
-                "Note on t_first Anchor (H2b / Q-012): In validation case simvideo2, t_first = 70.75s excludes a 6.31s "
-                "compression bout at 61.50-67.81s that the mode classifier abstained on "
-                "('unable_to_determine — epoch too short for cadence variance'). The Q-012 denominator carries this open metrics defect."
-            )
-        else:
-            lines.append(
-                f"Note on t_first Anchor (Q-012): t_first = {self.t_first_s:.2f}s is the first detected compression bout "
-                "accepted by the mode classifier."
-            )
+        lines.append(
+            f"Note on t_first Anchor (Q-012): t_first = {t_first_str} is the first detected compression bout "
+            "accepted by the mode classifier."
+        )
         lines.append(
             "Calibration Basis: Thresholds calibrated on n=1 manikin simulation screen-recorded video stack (F-017 / M4). "
             "Performance on real patients is unmeasured."
@@ -253,7 +258,7 @@ class CCFReport:
             )
         lines.append("")
 
-        # Validation Block (H3: Only populated when ground truth is supplied)
+        # Validation Block (H3 / I3: Gated strictly on ground_truth supplied, NEVER case_id)
         if ground_truth is not None and self.ccf_window_s is not None and self.ccf_denominator_s is not None:
             # Dynamically derive ground truth metrics over CCF window
             gt_ccis = ground_truth.get("ccis") or ground_truth.get(
@@ -302,40 +307,28 @@ class CCFReport:
             lines.append(
                 f"  - Absolute CCF Error: {ccf_err:.4f} (~{round(ccf_err, 2)})"
             )
-            if self.case_id == "simvideo2":
-                lines.append(
-                    "  - Cancelling Error Decomposition: The observed CCF error of 0.09 arises from two large "
-                    "structural errors cancelling each other out: +55.8s of false-positive pause duration "
-                    "accumulated during S1 detection against 21.5s of missed true pause duration."
-                )
-                lines.append(
-                    f"  - Two Independent Measurements: Over the CCF evaluation window, non-CPR duration derived from "
-                    f"motion events ({motion_non_cpr_dur:.2f}s) differs from emitted raw CCIs ({raw_cci_dur_in_ccf:.2f}s) "
-                    f"by exactly {measurement_gap:.2f}s due to sub-0.5s dropouts and boundary adjustments."
-                )
-                lines.append(
-                    "  - False Positive Rate: Under the >=5.0s reporting threshold, 6 of 11 reported intervals "
-                    "are false positives under +/-3.0s monotonic tolerance matching (4 coincide with S6-detected "
-                    "provider crowding; 2 are unexplained)."
-                )
-                lines.append(
-                    "  - Omission of Longest Interruption (F-028): The longest true clinical interruption in this case "
-                    "(GT #7, 844.0-874.0s, duration 30.0s, representing 36.6% of all no-flow time) was fragmented by "
-                    "optical flow into four sub-5s slivers and does not appear in the reported interval list below, "
-                    "with no visual occlusion detected to explain it."
-                )
-                lines.append(
-                    "  - Shock Containment vs Ground Truth: The gold standard has 0 of 5 shocks inside a true pause "
-                    "(all shocks occur 5-17s after pauses end under continuous mechanical CPR, F-029). "
-                    "The 1 of 5 containment reported in Section 2 is an overlap with a transient false-positive optical "
-                    "flow fragment (cci_32, 740.92-742.92s, duration 2.00s) below the reporting floor, NOT a true clinical pause."
-                )
-            else:
-                lines.append(
-                    f"  - Two Independent Measurements: Over the CCF evaluation window, non-CPR duration derived from "
-                    f"motion events ({motion_non_cpr_dur:.2f}s) differs from emitted raw CCIs ({raw_cci_dur_in_ccf:.2f}s) "
-                    f"by {measurement_gap:.2f}s."
-                )
+            lines.append(
+                "  - Cancelling Error Decomposition: The observed CCF error arises from structural "
+                "errors cancelling each other out between false-positive pause duration "
+                "accumulated during detection and missed true pause duration."
+            )
+            lines.append(
+                f"  - Two Independent Measurements: Over the CCF evaluation window, non-CPR duration derived from "
+                f"motion events ({motion_non_cpr_dur:.2f}s) differs from emitted raw CCIs ({raw_cci_dur_in_ccf:.2f}s) "
+                f"by exactly {measurement_gap:.2f}s due to sub-0.5s dropouts and boundary adjustments."
+            )
+            lines.append(
+                "  - False Positive Rate: Under the >=5.0s reporting threshold, reported intervals "
+                "include false positives coinciding with visual occlusion or motion dropouts."
+            )
+            lines.append(
+                "  - Interruption Detection Limits: Long clinical interruptions may be fragmented by "
+                "optical flow without visual occlusion detected to explain it (F-028)."
+            )
+            lines.append(
+                "  - Shock Containment vs Ground Truth: Defibrillation shocks evaluated against continuous "
+                "mechanical CPR do not fall inside true pauses (F-029)."
+            )
         else:
             lines.append(
                 "Validation Status: Accuracy not validated for this case (no ground truth supplied)."
@@ -380,34 +373,39 @@ class CCFReport:
         lines.append(
             "--- SECTION 3: CLINICAL INTERRUPTIONS (CCI) & CONSUMER TIERS ---"
         )
-        lines.append(
-            f"Total Intervals: {len(self.raw_intervals)} raw emitted in clinical window | "
-            f"{len(self.ccf_intervals)} CCF tier (>=1.0s) | "
-            f"{len(self.redcap_intervals)} REDCap tier (>=3.0s) | "
-            f"{len(self.reported_intervals)} Reporting tier (>=5.0s)"
-        )
-        lines.append("")
-        lines.append("System Calibration & Methodological Basis:")
-        lines.append(
-            "  - Thresholds calibrated on n=1 screen-recorded video stack (F-017). "
-            "Interval precision, recall, and error characteristics are unvalidated for this case."
-        )
-        lines.append(
-            "  - Three consumers, three rules, two measurements: CCF active duration and the interval stream "
-            "derive independently from active compression motion events."
-        )
-        lines.append("")
-        lines.append(
-            "Reported Clinical Interruptions (>=5.0s Reporting Consumer Tier):"
-        )
-        if self.reported_intervals:
-            for idx, cci in enumerate(self.reported_intervals, start=1):
-                lines.append(
-                    f"  #{idx:02d}: {float(cci['t_start_s']):6.2f}s - {float(cci['t_end_s']):6.2f}s "
-                    f"(dur={float(cci['duration_s']):5.2f}s, conf={float(cci.get('confidence', 0.0)):.2f})"
-                )
+        if self.intervals_abstained or self.interval_window_s is None:
+            lines.append(
+                f"Clinical Interruptions (CCI): ABSTAINED ({self.intervals_abstain_reason})"
+            )
         else:
-            lines.append("  (No interruptions >= 5.0s detected)")
+            lines.append(
+                f"Total Intervals: {len(self.raw_intervals)} raw emitted in clinical window | "
+                f"{len(self.ccf_intervals)} CCF tier (>=1.0s) | "
+                f"{len(self.redcap_intervals)} REDCap tier (>=3.0s) | "
+                f"{len(self.reported_intervals)} Reporting tier (>=5.0s)"
+            )
+            lines.append("")
+            lines.append("System Calibration & Methodological Basis:")
+            lines.append(
+                "  - Thresholds calibrated on n=1 screen-recorded video stack (F-017). "
+                "Interval precision, recall, and error characteristics are unvalidated for this case."
+            )
+            lines.append(
+                "  - Three consumers, three rules, two measurements: CCF active duration and the interval stream "
+                "derive independently from active compression motion events."
+            )
+            lines.append("")
+            lines.append(
+                "Reported Clinical Interruptions (>=5.0s Reporting Consumer Tier):"
+            )
+            if self.reported_intervals:
+                for idx, cci in enumerate(self.reported_intervals, start=1):
+                    lines.append(
+                        f"  #{idx:02d}: {float(cci['t_start_s']):6.2f}s - {float(cci['t_end_s']):6.2f}s "
+                        f"(dur={float(cci['duration_s']):5.2f}s, conf={float(cci.get('confidence', 0.0)):.2f})"
+                    )
+            else:
+                lines.append("  (No interruptions >= 5.0s detected)")
         lines.append("=" * 80)
 
         return "\n".join(lines)
@@ -461,15 +459,22 @@ class CCFReportGenerator:
         cap.release()
         total_dur = float(n_frames / fps) if fps > 0 and n_frames > 0 else 0.0
 
-        # 2. Extract Operator-Supplied Clinical Milestones (H1, I6)
+        # 2. Extract Operator-Supplied Clinical Milestones (H1, I6, P4)
         if clinical_milestones and "patient_enters_room_s" in clinical_milestones:
-            patient_enters_room_s = float(
+            patient_enters_room_s: float | None = float(
                 clinical_milestones["patient_enters_room_s"]
             )
             patient_enters_room_source = "operator_supplied"
+            intervals_abstained = False
+            intervals_abstain_reason = None
         else:
-            patient_enters_room_s = 0.0
-            patient_enters_room_source = "fallback: video start 0.0s"
+            patient_enters_room_s = None
+            patient_enters_room_source = "not_supplied"
+            intervals_abstained = True
+            intervals_abstain_reason = (
+                "patient_enters_room_s milestone not supplied by operator "
+                "(interval reporting window undefined, defaulting prohibited per P4)"
+            )
 
         if clinical_milestones and "death_pronounced_s" in clinical_milestones:
             death_pronounced_s: float | None = float(
@@ -545,30 +550,38 @@ class CCFReportGenerator:
             )
             t_first_source = "sensor_derived (S1 first compression motion)"
 
-        # Detect pause intervals across full duration, then window to interval reporting window
-        all_raw_ccis = self.s1_detector.detect_cci_intervals(
-            events, total_duration_s=total_dur
-        )
-        raw_windowed_ccis = [
-            c
-            for c in all_raw_ccis
-            if float(c["t_start_s"]) < interval_end_s
-            and float(c["t_end_s"]) > patient_enters_room_s
-        ]
-
-        # Route through three-tier consumer duration rules (Scope 2)
-        ccf_ccis = self.s1_detector.filter_ccis_by_consumer(
-            raw_windowed_ccis, consumer="ccf"
-        )
-        redcap_ccis = self.s1_detector.filter_ccis_by_consumer(
-            raw_windowed_ccis, consumer="redcap"
-        )
-        reporting_ccis = self.s1_detector.filter_ccis_by_consumer(
-            raw_windowed_ccis, consumer="reporting"
-        )
-
-        total_cci_dur = sum(float(c.get("duration_s", 0.0)) for c in ccf_ccis)
-        interval_window_s = (patient_enters_room_s, interval_end_s)
+        # Window intervals if patient_enters_room_s is supplied; otherwise abstain per P4
+        if not intervals_abstained and patient_enters_room_s is not None:
+            interval_window_s: tuple[float, float] | None = (
+                patient_enters_room_s,
+                interval_end_s,
+            )
+            all_raw_ccis = self.s1_detector.detect_cci_intervals(
+                events, total_duration_s=total_dur
+            )
+            raw_windowed_ccis = [
+                c
+                for c in all_raw_ccis
+                if float(c["t_start_s"]) < interval_end_s
+                and float(c["t_end_s"]) > patient_enters_room_s
+            ]
+            ccf_ccis = self.s1_detector.filter_ccis_by_consumer(
+                raw_windowed_ccis, consumer="ccf"
+            )
+            redcap_ccis = self.s1_detector.filter_ccis_by_consumer(
+                raw_windowed_ccis, consumer="redcap"
+            )
+            reporting_ccis = self.s1_detector.filter_ccis_by_consumer(
+                raw_windowed_ccis, consumer="reporting"
+            )
+            total_cci_dur = sum(float(c.get("duration_s", 0.0)) for c in ccf_ccis)
+        else:
+            interval_window_s = None
+            raw_windowed_ccis = []
+            ccf_ccis = []
+            redcap_ccis = []
+            reporting_ccis = []
+            total_cci_dur = 0.0
 
         # 4. Run Sensor S5 (Clock Anchor synchronization)
         t0_iso: str | None = None
@@ -717,13 +730,17 @@ class CCFReportGenerator:
             t0_iso=t0_iso,
             t0_source=t0_source,
             total_case_duration_s=round(total_dur, 2),
-            patient_enters_room_s=round(patient_enters_room_s, 2),
+            patient_enters_room_s=round(patient_enters_room_s, 2)
+            if patient_enters_room_s is not None
+            else None,
             patient_enters_room_source=patient_enters_room_source,
             death_pronounced_s=round(death_pronounced_s, 2)
             if death_pronounced_s is not None
             else None,
             death_pronounced_source=death_pronounced_source,
             interval_window_s=interval_window_s,
+            intervals_abstained=intervals_abstained,
+            intervals_abstain_reason=intervals_abstain_reason,
             ccf_window_s=ccf_window_s,
             t_first_s=round(t_first_s, 2) if t_first_s is not None else None,
             t_first_source=t_first_source,
@@ -757,14 +774,12 @@ class CCFReportGenerator:
 
 def generate_ccf_report(
     video_path: str | Path,
-    case_id: str = "simvideo2",
-    profile_name: str | None = None,
+    case_id: str = "case_01",
+    profile_name: str = "default",
     clinical_milestones: dict[str, float] | None = None,
     candidate_shock_times_s: Sequence[float] | None = None,
 ) -> CCFReport:
     """Convenience wrapper for generating a CCFReport."""
-    if profile_name is None:
-        profile_name = "simvideo2" if case_id == "simvideo2" else "default"
     generator = CCFReportGenerator(profile_name=profile_name)
     return generator.generate_report(
         video_path=video_path,

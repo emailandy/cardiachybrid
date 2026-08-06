@@ -202,3 +202,17 @@ Q-019 — Defibrillator Acoustic Calibration, Simulation Provenance, Ground Trut
   - owner: clinical lead / engineering
   - status: BLOCKED on direct bay audio, real footage gold set, & S7a
   - blocks: S02 / S10 per-device acoustic calibration & clinical deployment
+
+Q-020 — Resuscitation Bay Camera Burned-In Timestamp Geometry & Font Format (Inquiry to Clinician / Handoff Gating).
+  - question: Do the resuscitation bay cameras burn a timestamp into the video image? If so, what format (e.g. `YYYY-MM-DD HH:MM:SS` or `MM/DD/YYYY HH:MM:SS.mmm AM/PM`), and is it in a fixed screen position across bays?
+  - architectural impact: Sensor S5 is currently the ONLY sensor validated against an independent ground truth source. If the clinical cameras do not burn timestamps into pixel frames, S5 cannot run, and the pipeline has zero ground-truth-validated sensors on real footage.
+  - owner: clinical lead / engineering
+  - status: OPEN / INQUIRY TO CLINICIAN
+  - blocks: Handoff package architecture & clock anchor design
+
+Q-021 — Real Bay Video Ingestion Verification Clip (Inquiry to Clinician / Codec & Geometry Verification).
+  - question: Can the institution provide a short, de-identified or synthetic clip from the actual bay camera — no patient, staff only or an empty bay — solely to verify codec, frame rate (CFR vs VFR), resolution, and camera ROI geometry?
+  - architectural impact: Air-gapped handoff cannot be debugged remotely. A blank bay clip proves that OpenCV can decode the container, determines whether presentation timestamps drift over 20 minutes, and allows coordinate validation of `chest_roi` before real resuscitations are processed.
+  - owner: clinical lead / engineering
+  - status: OPEN / INQUIRY TO CLINICIAN
+  - blocks: Handoff package ingestion testing

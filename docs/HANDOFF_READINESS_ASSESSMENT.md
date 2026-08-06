@@ -2,7 +2,10 @@
 
 > **EXECUTIVE CONCLUSION**: The `resus_qc` sensor pipeline is **NOT HANDOFF-READY** for unmonitored execution by clinicians on 25 real resuscitation cases. 
 > 
-> Under the new deployment constraint—where the pipeline executes locally in an air-gapped hospital environment on real Protected Health Information (PHI) without engineering access to video, audio, or transcripts—the existing debug loop disappears. Of 12 calibrated threshold sets across the sensor layer, **6 fail silently (Type b)** without self-detecting violation; the only fully validated sensor (S5) is fragile to the absence of a specific burned-in CCTV overlay; and un-calibrated camera ROIs will produce confident erroneous measurements rather than failing loudly.
+> **CRITICAL DEPENDENCY ON CLINICAL INQUIRY Q1**: The assessment's conclusion that the repository has even one working sensor is **strictly conditional on Q1** (`OPEN_QUESTIONS.md` `Q-020`): *Do the resuscitation bay cameras burn a timestamp into the video image?*
+> - **If NO**: Sensor S5 cannot run at all. S5 is currently the repository's **only sensor validated against an independent ground truth source** ($100\%$ accuracy on `simvideo2`). If the bay cameras do not burn timestamps into video frames, the pipeline has **ZERO sensors validated against an independent source on real footage**.
+> 
+> Under the deployment constraint—where the pipeline executes locally in an air-gapped hospital environment on real Protected Health Information (PHI) without engineering access to video, audio, or transcripts—the existing debug loop disappears. Of 12 calibrated threshold sets across the sensor layer, **7 fail silently (Type b, 58.3%)** without self-detecting violation; uncalibrated camera ROIs will produce confident erroneous measurements rather than failing loudly; and the self-test requires a synthetic video harness to verify decoding and geometry without PHI.
 
 ---
 
@@ -18,10 +21,14 @@ interruption was not detected. Accuracy on this case is unmeasured.
 ================================================================================
 ```
 
-### Audit of Report Face Numbers:
+### Audit of Report Face Numbers & Gating Discipline (P1):
 1. **Banner Scoping**: Explicitly attributes precision (`0.36`) and longest-interruption omission to the single manikin validation case (`simvideo2`).
-2. **t_first Note Scoping**: Case-specific notes regarding the 6.31s bout exclusion at 61.50–67.81s are strictly gated behind `if self.case_id == "simvideo2"`. For unvalidated clinical cases, the report notes only that `t_first` is the first detected compression bout accepted by the mode classifier.
-3. **Validation & Error Decomposition Block**: Detailed cancelling error metrics (+55.8s false positive / 21.5s missed pause duration, 6 of 11 false positives, GT #7 omission, and shock containment) are strictly scoped to `self.case_id == "simvideo2"` when ground truth is supplied. When evaluating clinical cases without ground truth, the report emits: `Validation Status: Accuracy not validated for this case (no ground truth supplied).`
+2. **Elimination of `case_id` Comparison Gating (P1 / Invariant I3)**:
+   - All `if self.case_id == "simvideo2"` string comparisons have been **permanently deleted from report generation logic**.
+   - Ground truth error decompositions and validation statements are gated **strictly on whether ground truth was supplied** (`if ground_truth is not None and self.ccf_window_s is not None`).
+   - Running a case named `"simvideo2"` without ground truth produces the unvalidated report and never leaks simulation decompositions (verified in `tests/test_ccf.py`).
+3. **Unvalidated Mode**: When evaluating clinical cases without ground truth, the report emits:
+   `Validation Status: Accuracy not validated for this case (no ground truth supplied).`
 
 ---
 
@@ -66,33 +73,27 @@ Even with a complete telemetry payload, the following failure mechanisms are **f
 
 ## N2. Known-Answer Self-Test & Verifiable Artifact Distribution
 
-### 1. The Requirement for a Known-Answer Self-Test
+### 1. The Requirement for a Known-Answer Self-Test (P2)
 On an air-gapped clinical machine, environmental discrepancies (OS differences, OpenCV backend builds, NumPy BLAS/LAPACK floating-point rounding, corrupted configuration files) can silently alter detection boundaries.
 
-Without a local self-test, an engineer triaging a remote issue cannot distinguish:
-- **Case A**: The installation or environment is broken on the clinician's workstation.
-- **Case B**: The installation is bit-identical, but real clinical footage behaves differently from simulation footage.
+Furthermore, **bypassing video decoding with pre-extracted numpy arrays alone does not test the failure modes most likely to occur in the field** (unsupported codecs, variable frame rate decoding, presentation timestamp drift, or incorrect pixel color conversions).
 
-**Proposed Implementation**:
-The pipeline must include a CLI self-test command:
-```bash
-python -m resus_qc.self_test
-```
-This command runs before any clinical cases are processed. It executes the entire detection and reporting pipeline on a reference fixture, computes a cryptographic SHA-256 hash over the resulting structured report JSON, and compares it against a hardcoded, signed `self_test_manifest.json`.
-- **Match**: `✓ SELF-TEST PASSED: Pipeline is deterministic and verified against reference fixture.` (Exit code 0).
-- **Mismatch**: `✗ SELF-TEST FAILED: Computed hash [abc...] does not match manifest [def...]. Pipeline execution aborted.` (Exit code 1, refuses to run clinical cases).
+### 2. Two-Layer Self-Test Architecture (P2 Proposal)
+To exercise the full execution stack without transmitting PHI:
 
-### 2. Artifact Distribution: Video vs. Intermediate Arrays
-- **Manikin Video (`simvideo2.mp4`) Redistribution**:
-  - *Assessment*: `simvideo2.mp4` contains identifiable faces of clinical simulation staff. Unless institutionally de-identified and legally cleared for software redistribution, the raw MP4 cannot be bundled into a portable distribution package.
-- **Smallest Verifiable Intermediate Artifact**:
-  If the raw video cannot be distributed, the self-test can run against **intermediate pre-extracted numerical arrays**:
-  1. `simvideo2_vy.npy`: Pre-extracted vertical optical flow signal ($21,821$ float64 values, $\approx 87\text{ KB}$).
-  2. `simvideo2_audio_stft.npy`: Pre-extracted STFT spectral matrix ($\approx 2.5\text{ MB}$).
-  3. `timecode_crops.npz`: Pre-extracted bounding box digit crops for OCR verification ($\approx 150\text{ KB}$).
-  4. `expected_report_simvideo2.json`: Expected golden report structure and metrics.
+1. **Layer 1: Deterministic Synthetically Generated Reference Video (`generate_synthetic_selftest_video.py`)**:
+   - A committed, deterministic Python script generates a purely synthetic video fixture (`synthetic_reference.mp4`):
+     * A rendered geometric rectangle oscillating vertically at an exact 102 CPM cadence ($1.7\text{ Hz}$) with calibrated pixel displacement.
+     * Controlled pauses of known durations (e.g. exactly 8.0s, 15.0s, 30.0s).
+     * A synthetic burned-in clock overlay in the upper-left S5 ROI (`2026-01-01 12:00:00.000`).
+   - **Zero PHI**: Contains no patient, staff, hospital, or bay images.
+   - **Full-Stack Execution**: Exercises `cv2.VideoCapture decode → container FPS read → ROI cropping → optical flow → S1 segmentation → S5 OCR → CCF computation → report generation` to a known, exact mathematical answer.
+2. **Layer 2: Intermediate Numeric Arrays (`.npy` / `.npz`)**:
+   - Pre-extracted numeric arrays (`synthetic_vy.npy`, `synthetic_stft.npy`) isolate floating-point numerical drift from video decoding drift.
 
-Running S1 segmentation, S3 adjudication, S5 OCR parsing, and report assembly on these intermediate arrays validates $100\%$ of mathematical filters, threshold equations, consumer routing logic, and report formatting across platforms with zero PHI risk and $< 3\text{ MB}$ total payload.
+### 3. PHI Assessment of Timecode Crops
+- **Risk**: Any `timecode_crops.npz` extracted from real patient video or simulation video contains actual date/time stamps and camera DVR branding that is potentially identifying.
+- **Rule**: Any artifact extracted from clinical video must undergo institutional PHI review and de-identification approval. A purely synthetically rendered video and OCR crop set avoids this legal barrier entirely.
 
 ---
 
@@ -119,12 +120,20 @@ Every calibrated parameter in `roi_config.yaml` was evaluated against its failur
 | **S6 Occlusion** | `occlusion_entry_spike_px` / `still_px` | 20.0 px / 1.5 px | **(b) SILENT WRONG** | Clinician leaning over chest for carotid pulse check generates identical signature, causing S6 to falsely label real pauses as visual occlusions. |
 | **S3 Defib** | `profile: "default"` / `UNKNOWN` | Uncalibrated | **(a) Fail-Loud / Abstain** | Explicitly emits `adjudication_status="UNAVAILABLE"` and notes "no calibrated profile for this device (Q-019)" (Invariant I5). |
 
-### Summary Counts:
+### Summary Counts (P3 Corrected):
 - **Total Parameter Sets Evaluated**: 12
-- **Self-Detecting / Fail-Loud (Type a)**: 6
-- **Silent Wrong Answer (Type b)**: **6 (50.0% of threshold sets)**
+- **Self-Detecting / Fail-Loud (Type a)**: 5
+- **Self-Detecting Abstention Gate (Type a)**: 1 (S3 device profile)
+- **Silent Wrong Answer (Type b)**: **7 (58.3% of threshold sets)**:
+  1. Mode classifier mechanical std threshold (`3.0 CPM`)
+  2. Mode classifier manual std threshold (`8.0 CPM`)
+  3. Rolling RMS envelope window (`1.6s`)
+  4. Compression gap merge duration (`0.5s`)
+  5. CCF consumer floor (`1.0s`)
+  6. Reporting consumer floor (`5.0s`)
+  7. S6 temporal occlusion bounding diff spike/stillness pair (`20.0 px / 1.5 px`)
 
-**Critical Defect**: Every Type (b) parameter represents a failure mode that will execute cleanly and produce plausible-looking but incorrect clinical data on real resuscitation footage without raising warnings.
+**Critical Defect**: 7 out of 12 parameter sets will execute cleanly and produce plausible-looking but incorrect clinical numbers on real resuscitation footage without raising warnings.
 
 ---
 
@@ -134,9 +143,9 @@ Every calibrated parameter in `roi_config.yaml` was evaluated against its failur
 | :--- | :--- | :--- | :--- |
 | **Dependency / Environment Drift** | If OpenCV, SciPy, or PyTorch versions differ, optical flow or filter rounding drifts by centiseconds; if libraries fail to import, execution aborts. | **Fail-Loud on crash; Silent Drift on version skew**. | Add strict pip pin file (`requirements-frozen.txt`) and mandatory `self_test` pre-run. |
 | **Unsupported Video Codec (HEVC/H.265, ProRes, VFR)** | `cv2.VideoCapture.isOpened()` returns `False` $\to$ raises `RuntimeError("Failed to open video file")`. If container opens but frames decode black $\to$ raises `NoPeriodicMotion`. | **Fail-Loud**. | Add explicit pre-flight codec inspection via `ffprobe` verifying container compatibility and constant frame rate (CFR). |
-| **Timecode Overlay Absent or Shifted** | S5 OCR template matching returns `None` on all frames $\to$ `t0_iso` set to `None` $\to$ report prints `T0 Clock Anchor: None (source: unavailable)`. | **Silent Degradation**: Absolute clock synchronization collapses; relative offsets continue without clock validation. | Require explicit operator confirmation of $T_0$ if S5 returns `None`. |
+| **Timecode Overlay Absent or Shifted (Q1)** | S5 OCR template matching returns `None` on all frames $\to$ `t0_iso` set to `None` $\to$ report prints `T0 Clock Anchor: None (source: unavailable)`. | **Silent Degradation**: Absolute clock synchronization collapses; relative offsets continue without clock validation. | Require explicit operator confirmation of $T_0$ if S5 returns `None`. |
 | **ROI Configuration Mismatch (New Camera / Bay Angle)** | Hardcoded `chest_roi` points to wrong pixel coordinates. If region is static wall $\to$ raises `NoPeriodicMotion`. If region contains moving staff $\to$ **detects false CPR over empty bed**. | **Catastrophic Silent Wrong Answer** if non-patient motion occurs in ROI. | Require interactive or configuration-validated ROI bounding box per camera bay. |
-| **Missing Operator Milestones** | If `death_pronounced_s` is omitted $\to$ CCF is ABSTAINED (`ccf_abstained=True`, Invariant I6). If `patient_enters_room_s` omitted $\to$ defaults to 0.0s. | **Fail-Loud / Abstain for CCF; Defaulting for arrival window**. | Require explicit milestone input or fail report generation. |
+| **Missing Operator Milestones (P4)** | If `death_pronounced_s` is omitted $\to$ CCF is ABSTAINED (`ccf_abstained=True`, Invariant I6). If `patient_enters_room_s` is omitted $\to$ interval reporting is ABSTAINED (`intervals_abstained=True`, P4). | **Fail-Loud / Abstain for both CCF and Interval Reporting** (Defaulting prohibited). | Require explicit operator milestones or abstain from all windowed calculations. |
 
 ---
 
@@ -150,8 +159,8 @@ case_id: "BAY01_CASE2026_08"
 video_path: "/secure/phi/bay01_case08.mp4"
 camera_id: "bay01_overhead_dome"
 clinical_milestones:
-  patient_enters_room_s: 42.50       # Optional (defaults to 0.0s with explicit annotation)
-  death_pronounced_s: 1145.00        # MANDATORY for CCF calculation (omission forces CCF abstention)
+  patient_enters_room_s: 42.50       # MANDATORY for interval reporting (omission forces interval abstention, P4)
+  death_pronounced_s: 1145.00        # MANDATORY for CCF calculation (omission forces CCF abstention, I6)
 candidate_shocks_s:                  # Optional (omission sets shock status to NO_CANDIDATES)
   - 182.40
   - 410.15
@@ -160,27 +169,28 @@ camera_roi:
   chest_roi: {x: 720, y: 380, width: 220, height: 220}  # MANDATORY per camera/bed position
 ```
 
-### 2. Absence Paths and Defaulting Rules
-- **Missing `death_pronounced_s`**: The pipeline MUST ABSTAIN from computing CCF (`ccf = None`, `ccf_abstained = True`, reason: `"death_pronounced_s not supplied by operator"`, Invariant I6).
+### 2. Absence Paths and Abstention Rules (P4)
+- **Missing `death_pronounced_s`**: The pipeline MUST ABSTAIN from computing CCF (`ccf = None`, `ccf_abstained = True`, reason: `"death_pronounced_s milestone not supplied by operator"`, Invariant I6 / `F-026`).
+- **Missing `patient_enters_room_s` (P4)**: The pipeline MUST ABSTAIN from interval reporting (`interval_window_s = None`, `intervals_abstained = True`, reason: `"patient_enters_room_s milestone not supplied by operator"`, defaulting to 0.0s prohibited).
 - **Missing `candidate_shocks_s`**: The pipeline MUST emit `(No candidate shock timestamps supplied by operator)` and evaluate 0 shocks without attempting full-track audio scanning (Invariant I4 / `F-013`).
 - **Missing or Uncalibrated `chest_roi`**: The pipeline MUST NOT fall back to `default` ($600, 400, 720, 480$) or `simvideo2` coordinates. It must raise `ConfigurationError("No camera ROI calibration defined for camera_id")` and halt.
 
-### 3. The Sensor S5 Vulnerability (The Single-Working-Sensor Trap)
+### 3. The Sensor S5 Vulnerability (The Single-Working-Sensor Trap & Q1)
 - **The Finding**: Sensor S5 is currently the **only sensor in the repository that achieved $100\%$ validation against external ground truth**.
 - **The Trap**: S5 functions strictly by template-matching OCR against burned-in digital clock overlays (`'MM/D/YYYY HH:MM:SS.mmm AM/PM'`) embedded by a specific CCTV DVR in the upper-left corner of `simvideo2.mp4`.
 - **The Clinical Reality**: Real hospital resuscitation bay cameras (e.g. Axis, Panasonic, Hanwha IP cameras, or overhead surgical domes) frequently:
   1. Do not burn digital timecode overlays into video pixels at all (relying on RTSP/MP4 container timestamps).
   2. Use different font geometries, anti-aliasing, font sizes, or background contrasts.
   3. Place timestamps in different screen locations (bottom-right, header band, or metadata tracks).
-- **Consequence**: When handed to real resuscitation bays, **S5 will immediately fail on cases lacking this exact burned-in overlay**. Without S5, the pipeline has **zero working sensors confirmed against external ground truth**, and all interval measurements degrade to unanchored relative seconds.
+- **Consequence**: When handed to real resuscitation bays, **S5 will immediately fail on cases lacking this exact burned-in overlay**. Without S5, the pipeline has **zero working sensors confirmed against external ground truth**, and all interval measurements degrade to unanchored relative seconds. This makes **Inquiry Q1** the single gating question for the entire sensor deployment strategy.
 
 ---
 
 ## Synthesis & Actionable Roadmap
 
-The pipeline cannot be handed off for unassisted clinical execution in its current state. To prepare for the 25-case clinical dataset, the following engineering gates must be executed:
+The pipeline cannot be handed off for unassisted clinical execution in its current state. Before any implementation begins, **Questions Q1 and Q2 must be answered by the clinical team**. If confirmed feasible, the following engineering gates must be executed:
 
-1. **Gate 1: Pre-Flight Self-Test (`resus_qc.self_test`)**: Ship a self-test harness with pre-extracted numerical intermediate arrays (`simvideo2_vy.npy`, `timecode_crops.npz`) and an expected-output manifest to verify runtime determinism locally on the clinical machine.
+1. **Gate 1: Synthetic Video Self-Test (`resus_qc.self_test`)**: Ship a self-test harness with a synthetically rendered reference video and intermediate arrays to verify end-to-end decoding, optical flow, OCR, and report determinism locally on the clinical machine without PHI.
 2. **Gate 2: Camera ROI Calibration Tool**: Build an interactive or coordinate-validated ROI onboarding script to prevent running hardcoded manikin ROIs on real patient beds.
 3. **Gate 3: Telemetry Export Package (`telemetry.json`)**: Implement automated serialization of PHI-free confidence distributions, mode classifier variance logs, duration histograms, and abstention tables for remote diagnosis.
 4. **Gate 4: Timecode Ingestion Fallback**: Implement container-level presentation timestamp (PTS) decoding and manual $T_0$ operator entry to decouple the pipeline from burned-in CCTV text overlays.

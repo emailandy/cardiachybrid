@@ -41,6 +41,8 @@ def test_ccf_report_serialization() -> None:
         death_pronounced_s=922.0,
         death_pronounced_source="operator_supplied",
         interval_window_s=(36.0, 922.0),
+        intervals_abstained=False,
+        intervals_abstain_reason=None,
         ccf_window_s=(70.75, 922.0),
         t_first_s=70.75,
         t_first_source="sensor_derived (S1 first compression motion)",
@@ -169,6 +171,8 @@ def test_ccf_report_abstains_when_death_pronounced_missing() -> None:
         death_pronounced_s=None,
         death_pronounced_source="not_supplied",
         interval_window_s=(36.0, 1363.78),
+        intervals_abstained=False,
+        intervals_abstain_reason=None,
         ccf_window_s=None,
         t_first_s=70.75,
         t_first_source="sensor_derived (S1 first compression motion)",
@@ -223,6 +227,8 @@ def test_ccf_report_text_formatting_unvalidated_vs_validated() -> None:
         death_pronounced_s=922.0,
         death_pronounced_source="operator_supplied",
         interval_window_s=(36.0, 922.0),
+        intervals_abstained=False,
+        intervals_abstain_reason=None,
         ccf_window_s=(70.75, 922.0),
         t_first_s=70.75,
         t_first_source="sensor_derived (S1 first compression motion)",
@@ -270,13 +276,13 @@ def test_ccf_report_text_formatting_unvalidated_vs_validated() -> None:
         compression_intervals=[],
     )
 
-    # 1. Unvalidated mode
+    # 1. Unvalidated mode (P1: Gated strictly on ground_truth is None, regardless of case_id)
     unval_text = report.format_text_report(ground_truth=None)
     assert "NOT FOR CLINICAL OR PERFORMANCE ASSESSMENT." in unval_text
     assert "Accuracy not validated for this case (no ground truth supplied)." in unval_text
-    # Proves case-specific GT statements are NOT in unvalidated text (I3)
-    assert "6 of 11 reported intervals are false positives" not in unval_text
-    assert "GT #7" not in unval_text
+    # Proves case-specific GT statements are NOT in unvalidated text (I3 / P1)
+    assert "Cancelling Error Decomposition" not in unval_text
+    assert "Ground Truth CCF" not in unval_text
     assert "Shock Containment (0 of 1 shocks fall inside detected intervals)" in unval_text
 
     # 2. Validated mode
@@ -289,6 +295,91 @@ def test_ccf_report_text_formatting_unvalidated_vs_validated() -> None:
     assert "Validation & Error Decomposition (Computed vs Ground Truth):" in val_text
     assert "Ground Truth CCF" in val_text
     assert "Cancelling Error Decomposition" in val_text
+
+
+def test_simvideo2_without_ground_truth_produces_unvalidated_report() -> None:
+    """
+    P1 regression test: A case named 'simvideo2' without ground truth (ground_truth=None)
+    MUST produce the unvalidated report and NEVER leak ground truth error decompositions (I3).
+    A name check is not a data check.
+    """
+    report = CCFReport(
+        case_id="simvideo2",
+        video_path="tests/video/vidsim2.mp4",
+        t0_iso="2023-11-07T07:55:57",
+        t0_source="burned_in",
+        total_case_duration_s=1363.78,
+        patient_enters_room_s=36.0,
+        patient_enters_room_source="operator_supplied",
+        death_pronounced_s=922.0,
+        death_pronounced_source="operator_supplied",
+        interval_window_s=(36.0, 922.0),
+        intervals_abstained=False,
+        intervals_abstain_reason=None,
+        ccf_window_s=(70.75, 922.0),
+        t_first_s=70.75,
+        t_first_source="sensor_derived (S1 first compression motion)",
+        ccf_denominator_s=851.25,
+        total_cpr_duration_s=695.29,
+        total_cci_duration_s=137.82,
+        cpr_active_duration_s=695.29,
+        cpr_active_fraction=0.8168,
+        ccf=0.8170,
+        ccf_percent=81.70,
+        ccf_by_2min_epoch=[0.9615, 0.9036, 0.7182, 0.736, 0.7777, 0.7649, 0.8385],
+        ccf_abstained=False,
+        ccf_abstain_reason=None,
+        n_cci_over_10s=0,
+        longest_cci_s=9.62,
+        median_cci_s=2.83,
+        shocks=[],
+        raw_intervals=[],
+        ccf_intervals=[],
+        redcap_intervals=[],
+        reported_intervals=[],
+        compression_intervals=[],
+    )
+
+    text = report.format_text_report(ground_truth=None)
+    assert "Validation Status: Accuracy not validated for this case (no ground truth supplied)." in text
+    assert "Cancelling Error Decomposition" not in text
+    assert "Ground Truth CCF" not in text
+
+
+@pytest.mark.integration
+def test_generate_ccf_report_abstains_intervals_when_patient_enters_room_omitted() -> None:
+    """
+    P4 regression test: When patient_enters_room_s is omitted from clinical_milestones,
+    the pipeline MUST abstain from interval reporting rather than silently defaulting to 0.0s.
+    """
+    video_path = Path("tests/video/vidsim2.mp4")
+    if not video_path.exists():
+        pytest.skip(f"Video file not found: {video_path}")
+
+    # Only supply death_pronounced_s, omit patient_enters_room_s
+    milestones = {
+        "death_pronounced_s": 922.0,
+    }
+
+    report = generate_ccf_report(
+        video_path=video_path,
+        case_id="simvideo2",
+        profile_name="simvideo2",
+        clinical_milestones=milestones,
+    )
+
+    assert report.patient_enters_room_s is None
+    assert report.patient_enters_room_source == "not_supplied"
+    assert report.interval_window_s is None
+    assert report.intervals_abstained is True
+    assert "patient_enters_room_s milestone not supplied by operator" in (report.intervals_abstain_reason or "")
+    assert len(report.raw_intervals) == 0
+    assert len(report.ccf_intervals) == 0
+    assert len(report.reported_intervals) == 0
+
+    text = report.format_text_report(ground_truth=None)
+    assert "Interval Reporting Window: NONE (abstained:" in text
+    assert "Clinical Interruptions (CCI): ABSTAINED" in text
 
 
 @pytest.mark.integration
@@ -321,6 +412,7 @@ def test_generate_ccf_report_vidsim2() -> None:
     report = generate_ccf_report(
         video_path=video_path,
         case_id="simvideo2",
+        profile_name="simvideo2",
         clinical_milestones=milestones,
         candidate_shock_times_s=candidate_shocks,
     )
