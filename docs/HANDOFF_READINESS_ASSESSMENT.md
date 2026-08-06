@@ -206,16 +206,35 @@ This presents a critical handoff barrier: **the current development environment 
   * S5 OCR relies on: `cv2.imread`, `cv2.IMREAD_GRAYSCALE`, and `cv2.matchTemplate(..., cv2.TM_CCOEFF_NORMED)`.
   * **Result**: None of these calls are OpenCV 5-exclusive; all exist identically across OpenCV 3.x, 4.x, and 5.x.
 - **Numerical Drift in Farnebäck Optical Flow**:
-  * While the API is identical, C++ implementation details, SIMD vectorization (AVX2 vs AVX-512 vs NEON), and underlying BLAS libraries differ across OpenCV versions and compiler flags.
-  * Farnebäck optical flow velocities ($v_y$) can drift by $10^{-4}$ to $10^{-3}\text{ px}$. Near sharp threshold boundaries (`min_modulation: 0.010`, `rms_threshold: 0.25`), this drift can flip frame-level classifications, shifting pause boundaries by fractions of a second.
-  * **Self-Test Refusal Rule**: The known-answer self-test (`python -m resus_qc.self_test`) in N2 must perform a strict cryptographic hash comparison against the manifest and **REFUSE TO RUN (exit code 1)** upon any numerical mismatch, rather than issuing a soft warning.
+  * While the API is identical across OpenCV versions, C++ implementation details, SIMD vectorization (AVX2 vs AVX-512 vs Apple Silicon NEON), and underlying BLAS libraries differ across architectures and compiler flags.
+  * Containers encapsulate userspace binaries, but OpenCV and BLAS dispatch dynamically to host CPU vector extensions at runtime. Consequently, **containers do NOT guarantee bit-identical floating-point results across different host CPU architectures** (e.g. development on `darwin-arm64` vs hospital deployment on `linux-x86_64`).
+  * Farnebäck optical flow velocities ($v_y$) can drift by $10^{-4}$ to $10^{-3}\text{ px}$. 
 
-### 3. Air-Gapped Hospital Delivery Options
+### 3. Cross-Architecture Manifest Failure & Verification Strategy (S1)
+If a cryptographic hash manifest is generated on a development machine (`darwin-arm64`) and checked strictly on a hospital workstation (`linux-x86_64`), bit-level checksums will fail 100% of the time, permanently halting the pipeline on arrival.
+
+#### Manifest Options Evaluated:
+1. **Option 1: In-Container Reference Generation on Target Hardware (First-Run Step)**: The delivered container generates the synthetic video and computes its baseline hashes locally on the target hardware during first-run initialization. *Drawback*: Verifies internal reproducibility, but cannot detect hardware-specific numerical drift against the development baseline.
+2. **Option 2: Per-Architecture Manifests**: Ship separate signed manifests for `darwin-arm64`, `linux-x86_64-avx2`, and `linux-x86_64-avx512`. *Drawback*: Requires maintaining a matrix of hardware build targets.
+3. **Option 3: Derived Analytical Tolerance Bands on Clinical Metrics (Recommended)**: Replace raw floating-point array byte hashing with strict, mathematically derived tolerance bands on end-to-end report metrics:
+   * **Timecode OCR**: Exact string equality (`YYYY-MM-DDTHH:MM:SS`, zero tolerance).
+   * **Synthetic Cadence / Dominant FFT Frequency**: $\pm 0.01\text{ Hz}$ ($\pm 0.6\text{ CPM}$, derived from the discrete FFT bin resolution $\Delta f = \frac{f_s}{N} = \frac{30\text{ fps}}{1024} \approx 0.029\text{ Hz}$).
+   * **Synthetic Optical Flow Velocity $v_y$**: $\pm 1.0 \times 10^{-3}\text{ px}$ (derived from Farnebäck quadratic polynomial fit convergence).
+   * **CCF**: $\pm 0.0001$ (derived from single-frame temporal discretization: $\frac{1/30\text{ s}}{851.25\text{ s}} \approx 3.9 \times 10^{-5}$).
+
+#### The Vulnerability Tolerance Bands Cannot Protect:
+Even with tolerance bands on synthetic self-tests, **threshold-adjacent clinical outputs** on real footage remain vulnerable to $10^{-4}\text{ px}$ floating-point drift:
+1. `min_modulation: 0.010 px` (S1 Stage 1 active motion gate).
+2. `rms_threshold: 0.25` (S1 Stage 2 pause segmentation).
+3. Mode classifier cadence standard deviation gates (`3.0 CPM` mechanical / `8.0 CPM` manual).
+On borderline cases, a sub-millipixel shift flips frame classifications across thresholds, causing pause splits or boundary changes on real patients.
+
+### 4. Air-Gapped Hospital Delivery Options
 
 | Delivery Mode | Mechanism | Air-Gap Viability | Feasibility Assessment |
 | :--- | :--- | :--- | :--- |
 | **Option A: Outbound `pip install`** | Clinician runs `pip install -r requirements.txt` on hospital network. | **ZERO (Infeasible)** | Blocked by hospital firewall and lack of outbound internet access. |
-| **Option B: Standalone OCI Container Image** | Docker / Podman / Apptainer / Singularity tarball containing exact Linux base, Python 3.11/3.14, pinned OpenCV 5.0, NumPy, and code. | **HIGH (Recommended)** | **Survives air-gapped networks**. Single signed image transferred via secure USB; eliminates all host dependency skew and ensures bit-identical C-runtime math. |
+| **Option B: Standalone OCI Container Image** | Docker / Podman / Apptainer / Singularity tarball containing Linux userspace, Python $\ge 3.10$, pinned OpenCV, NumPy, and code. | **HIGH (Recommended)** | **Survives air-gapped networks**. Single signed image transferred via secure USB; eliminates host package skew (though host CPU vector dispatch remains). |
 | **Option C: Pinned Offline Wheelhouse** | Pre-downloaded `.whl` bundle (`manylinux_2_28_x86_64`) installed via `pip install --no-index --find-links=wheels/`. | **MEDIUM (Fallback)** | Survives air-gap, but requires matching host Python minor version ($\ge 3.10$) and compatible host C-libraries (glibc). |
 
 ---
@@ -224,7 +243,7 @@ This presents a critical handoff barrier: **the current development environment 
 
 The pipeline cannot be handed off for unassisted clinical execution in its current state. Before any implementation begins, **Questions Q1 and Q2 must be answered by the clinical team**. If confirmed feasible, the following engineering gates must be executed:
 
-1. **Gate 1: Synthetic Video Self-Test (`resus_qc.self_test`)**: Ship a self-test harness with a synthetically rendered reference video and intermediate arrays to verify end-to-end decoding, optical flow, OCR, and report determinism locally on the clinical machine without PHI.
+1. **Gate 1: Synthetic Video Self-Test (`resus_qc.self_test`)**: Ship a self-test harness with a synthetically rendered reference video and derived analytical tolerance checks (Timecode exact, Frequency $\pm 0.01\text{ Hz}$, CCF $\pm 0.0001$) to verify end-to-end decoding, optical flow, OCR, and report determinism locally on the clinical machine without PHI.
 2. **Gate 2: Containerized / Offline Delivery Package**: Build an air-gapped container image (or offline wheelhouse) pinning Python $\ge 3.10$, OpenCV, and SciPy to eliminate host dependency skew.
 3. **Gate 3: Camera ROI Calibration Tool**: Build an interactive or coordinate-validated ROI onboarding script to prevent running hardcoded manikin ROIs on real patient beds.
 4. **Gate 4: Telemetry Export Package (`telemetry.json`)**: Implement automated serialization of PHI-free confidence distributions, mode classifier variance logs, duration histograms, and abstention tables for remote diagnosis.

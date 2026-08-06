@@ -137,14 +137,16 @@ def test_transcribe_abstains_on_silent_audio(tmp_path: Path) -> None:
 def test_s7a_integration_vidsim2() -> None:
     """
     Integration test: verifies S7aTranscriber returns structured abstention
-    on tests/video/vidsim2.mp4 because no ASR model is implemented.
+    on tests/video/vidsim2.mp4 due to soundfile container demux failure.
 
-    PINNING COMMENT (R3 / F-016):
+    PINNING COMMENT (S3 / F-032):
     vidsim2.mp4 contains audible speech (including team directives and the 922s
     death pronouncement). S7a currently returns abstained=True (confidence=0.0)
-    strictly because S7a is an architectural shell without an ASR model.
+    because soundfile.read() cannot demux audio from an MP4 video container directly,
+    which is caught by a broad `except Exception:` block returning an abstention utterance.
+    This is an environmental demux failure masked as a sensor abstention.
     A future test failure here (returning non-abstained transcriptions) indicates
-    that S7a has started working, NOT that a regression occurred.
+    that an audio demuxing and ASR pipeline has been connected, NOT that a regression occurred.
     """
     vp = Path("tests/video/vidsim2.mp4")
     if not vp.exists():
