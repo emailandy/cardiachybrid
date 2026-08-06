@@ -602,8 +602,9 @@ class CCFReportGenerator:
             else:
                 t0_source = "no timecode overlay found in ROI"
         except Exception as e:
+            logging.warning("S5 timecode extraction exception on %s: %s", path, e, exc_info=True)
             t0_iso = None
-            t0_source = f"timecode extraction failed: {type(e).__name__}: {e}"
+            t0_source = f"timecode extraction failed: {type(e).__name__}"
 
         # 5. Run Sensor S3 (Defibrillation Shocks & Adjudication, I1 & I4)
         shocks_detail: list[CCFShockDetail] = []
