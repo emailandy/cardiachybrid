@@ -51,7 +51,7 @@ Owner: clinical lead.  Status: OPEN.
 Q-012 CCF denominator definition
   - options: (a) first compression -> last compression, (b) patient arrival -> termination or ROSC, (c) first compression -> termination, excluding sustained-ROSC periods
   - default: candidate (c) first compression -> termination excluding sustained ROSC (configured in config/metrics.yaml)
-  - note: Evaluated across simvideo2, Candidate (b) patient arrival window (36.0-922.0s, denom 886.0s) yields GT CCF 0.9074 vs S1 CCF 0.7919, whereas Candidate (c) first compression window (70.75-922.0s, denom 851.25s) yields GT CCF 0.9037 vs S1 CCF 0.8170. Candidate (c) is the comparable evaluation pair; comparing S1 under Candidate (c) against GT under Candidate (b) represents an invalid cross-window mismatch.
+  - note: Evaluated across simvideo2, Candidate (b) patient arrival window (36.0-922.0s, denom 886.0s) yields GT CCF 0.9074 vs S1 CCF 0.7919, whereas Candidate (c) first compression window (70.75-922.0s, denom 851.25s) yields GT CCF 0.9037 vs S1 CCF 0.8170. Candidate (c) is the comparable evaluation pair; comparing S1 under Candidate (c) against GT under Candidate (b) represents an invalid cross-window mismatch. Additionally, an early compression motion event occurs at 61.50-67.81s (dur=6.31s, cadence=114.1 cpm); because its duration is shorter than the rolling cadence variance requirement, its mode is classified as unable_to_determine. In code, t_first anchors exclusively to mechanical or manual mode events, bypassing this early 6.31s compression event and establishing t_first at 70.75s—a metrics-layer denominator defect under Q-012 candidate (c).
   - owner: clinical lead
   - status: OPEN
   - blocks: D10 clinical sign-off

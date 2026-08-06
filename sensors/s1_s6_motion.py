@@ -819,7 +819,7 @@ class S1ChestMotionDetector:
         - 'ccf': counts all unoccluded no-flow physical pauses >= min_pause_duration_s.
         - 'redcap' / 'repeating_group': enforces the >= 3.0s dictionary rule required by the clinical extraction registry.
         - 'reporting': applies the calibrated reporting floor (cci_reporting_floor_s) from roi_config.yaml.
-        Three consumers, three rules, one measurement.
+        Three consumers, three rules, two measurements (the interval stream and an independently-derived CPR duration, which differ by 15.96s over the CCF window).
         """
         if consumer == "ccf":
             floor_s = float(self.s1_config.get("min_pause_duration_s") or 1.0)

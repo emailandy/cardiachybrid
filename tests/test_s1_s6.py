@@ -375,7 +375,7 @@ def test_rms_window_spans_two_compression_cycles() -> None:
         assert win / fps >= 2.0 / 1.3, f"{fps} fps -> {win/fps:.2f}s"
 
 
-def test_three_consumers_three_rules_one_measurement(
+def test_three_consumers_three_rules_two_measurements(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """
@@ -384,7 +384,7 @@ def test_three_consumers_three_rules_one_measurement(
     1. changing the YAML value changes the count of reported intervals;
     2. changing the YAML value does not change the interval set handed to CCF;
     3. the REDCap/repeating-group path still uses the dictionary >= 3.0s rule.
-    Three consumers, three rules, one measurement.
+    Three consumers, three rules, two measurements (interval stream and independently-derived CPR duration).
     """
     from typing import Any, Sequence
     from sensors.s1_s6_motion import S1ChestMotionDetector

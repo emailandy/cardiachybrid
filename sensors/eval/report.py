@@ -87,10 +87,12 @@ def evaluate_s1_consumers(gt_data: dict[str, Any], video_path: Path, gt_path_str
     s1_floor = detector.filter_ccis_by_consumer(s1_clin, "reporting")
 
     gt_ccis = gt_data.get("ccis", [])
-    gt_ccf = float(gt_data.get("ccf_summary", {}).get("ccf", gt_data.get("ccf", 0.0)))
-
     ccf_res = detector.compute_ccf(events, death_pronounced_s=t_end)
     pred_ccf = float(ccf_res.get("ccf") or 0.0)
+    t_first = float(ccf_res.get("t_first_s") or 70.75)
+    denom_gt = max(t_end - t_first, 1e-6)
+    gt_pauses = sum(max(0.0, min(t_end, float(g["end_s"])) - max(t_first, float(g["start_s"]))) for g in gt_ccis if float(g["start_s"]) < t_end and float(g["end_s"]) > t_first)
+    gt_ccf = round((denom_gt - gt_pauses) / denom_gt, 4)
     ccf_err = abs(pred_ccf - gt_ccf)
 
     # Consistent tolerance matching metrics across both columns (+/- 3.0s default, +/- 2.0s shown)
@@ -113,7 +115,7 @@ def evaluate_s1_consumers(gt_data: dict[str, Any], video_path: Path, gt_path_str
     print(f"  - Video FPS: 16.0")
     print(f"  - Profile: {profile_name}")
     print(f"  - Interval Reporting Window: {t_start}s - {t_end}s (patient_enters_room to death_pronounced_s, denom 886.0s)")
-    print(f"  - CCF Evaluation Window (Q-012): 70.75s - {t_end}s (first compression event to death_pronounced_s, denom 851.25s)")
+    print(f"  - CCF Evaluation Window (Q-012): {t_first}s - {t_end}s (first compression event to death_pronounced_s, denom {denom_gt}s)")
     print(f"  - Total Duration: {total_dur}s")
     print("  - Tolerance: +/- 3.0s (default matcher tolerance; +/- 2.0s shown for strict comparisons)")
     print(f"  - Sample Size: n=1 case ({len(gt_ccis)} human-adjudicated CCIs, provenance: human_adjudicated)")
@@ -125,7 +127,7 @@ def evaluate_s1_consumers(gt_data: dict[str, Any], video_path: Path, gt_path_str
     print(f"False Positives (+/-3s) {fp_raw:6d}          {fp_fl:6d}")
     print(f"CCI F1 (+/-2.0s)        {f1_2s_raw:6.2f}          {f1_2s_fl:6.2f}")
     print(f"Boundary MAE            {mae_raw:5.2f}s          {mae_fl:5.2f}s")
-    print(f"CCF error (all pauses)  {ccf_err:6.2f}          {ccf_err:6.2f}")
+    print(f"CCF error (70.75-922s)  {ccf_err:6.2f}          {ccf_err:6.2f}")
     print(f"intervals reported      {len(s1_raw):6d}          {len(s1_floor):6d}")
 
     # E5: Print per-interval TP/FP/S6 audit table from committed matcher
