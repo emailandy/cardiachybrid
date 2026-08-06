@@ -325,13 +325,13 @@ class CCFReport:
             )
         lines.append("")
 
-        # Section 2: Defibrillation Shocks (I1, I2, J3)
+        # Section 2: Defibrillation Shocks (I1, I2, J3, K1)
         lines.append("--- SECTION 2: DEFIBRILLATION SHOCKS ---")
         if self.shocks:
             contained_count = sum(1 for s in self.shocks if s.shock_inside_cci)
             lines.append(
                 f"Shock Containment ({contained_count} of {len(self.shocks)} shocks fall inside detected intervals): "
-                "Evaluated against raw optical flow intervals (>=0.5s) to avoid missing short per-shock dropouts. "
+                "Evaluated against CCF consumer tier intervals (>=1.0s, min_pause_duration_s). "
                 "Under continuous mechanical CPR, true clinical pauses do not contain defibrillation shocks (F-029)."
             )
             for s in self.shocks:

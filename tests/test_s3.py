@@ -113,9 +113,12 @@ def test_s3_adjudicator_vidsim2() -> None:
     detector = S3DefibDetector("default")
 
     # 1. Check candidate shocks under windowed adjudication
+    # Under uncalibrated default profile, detector does not confirm shocks on re-encoded audio (F-030 / Q-019)
     for t in [167.94, 385.07, 621.34, 742.21]:
         verdict = detector.adjudicate(video_path, t, window_s=30.0)
-        assert verdict is not None
+        assert not verdict.confirmed, (
+            f"Expected candidate at {t}s to not confirm under uncalibrated default profile (F-030)"
+        )
 
     # 2. 2/2 negative controls (F-013) must REJECT
     for t in [861.0, 884.5]:
