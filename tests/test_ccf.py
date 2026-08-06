@@ -100,9 +100,12 @@ def test_ccf_report_does_not_import_or_read_ground_truth_fixture(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """
-    Self-comparison guard (H1, I5):
+    Self-comparison guard (H1, I5, J4):
     Proves that sensors/ccf_report.py does NOT import, reference, or open any ground-truth fixture.
+    Hardened to intercept builtins.open, io.open, and Path.open (J4).
     """
+    import io
+
     # 1. Source code check
     ccf_code = Path("sensors/ccf_report.py").read_text()
     assert "ground_truth_simvideo2.json" not in ccf_code
@@ -110,21 +113,42 @@ def test_ccf_report_does_not_import_or_read_ground_truth_fixture(
     assert "import fixtures" not in ccf_code
 
     # 2. Runtime filesystem interception check during execution
-    orig_open = builtins.open
-    opened_files: list[str] = []
+    orig_builtin_open = builtins.open
+    orig_io_open = io.open
+    orig_path_open = Path.open
 
-    def mock_open(file: Any, *args: Any, **kwargs: Any) -> Any:
-        file_str = str(file)
+    def guard_file(f: Any) -> None:
+        file_str = str(f)
         if "ground_truth" in file_str or "fixtures" in file_str:
             raise AssertionError(
-                f"Self-comparison violation: ccf_report opened {file_str}"
+                f"Self-comparison violation: ccf_report accessed {file_str}"
             )
-        opened_files.append(file_str)
-        return orig_open(file, *args, **kwargs)
 
-    monkeypatch.setattr(builtins, "open", mock_open)
+    def mock_builtin_open(file: Any, *args: Any, **kwargs: Any) -> Any:
+        guard_file(file)
+        return orig_builtin_open(file, *args, **kwargs)
 
-    # Instantiate generator and verify no fixture opened during initialization
+    def mock_io_open(file: Any, *args: Any, **kwargs: Any) -> Any:
+        guard_file(file)
+        return orig_io_open(file, *args, **kwargs)
+
+    def mock_path_open(self: Any, *args: Any, **kwargs: Any) -> Any:
+        guard_file(self)
+        return orig_path_open(self, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "open", mock_builtin_open)
+    monkeypatch.setattr(io, "open", mock_io_open)
+    monkeypatch.setattr(Path, "open", mock_path_open)
+
+    # 3. Positive proof: verify that Path.read_text and Path.open ARE caught and raise
+    with pytest.raises(AssertionError, match="Self-comparison violation"):
+        Path("fixtures/ground_truth_simvideo2.json").read_text()
+
+    with pytest.raises(AssertionError, match="Self-comparison violation"):
+        with Path("fixtures/ground_truth_simvideo2.json").open() as f:
+            pass
+
+    # 4. Instantiate generator under intercepted context and verify no fixture accessed
     gen = CCFReportGenerator(profile_name="default")
     assert gen is not None
 

@@ -313,18 +313,25 @@ class CCFReport:
                 "optical flow into four sub-5s slivers and does not appear in the reported interval list below, "
                 "with no visual occlusion detected to explain it."
             )
+            lines.append(
+                "  - Shock Containment vs Ground Truth: The gold standard has 0 of 5 shocks inside a true pause "
+                "(all shocks occur 5-17s after pauses end under continuous mechanical CPR, F-029). "
+                "The 1 of 5 containment reported in Section 2 is an overlap with a transient false-positive optical "
+                "flow fragment (cci_32, 740.92-742.92s, duration 2.00s) below the reporting floor, NOT a true clinical pause."
+            )
         else:
             lines.append(
                 "Validation Status: Accuracy not validated for this case (no ground truth supplied)."
             )
         lines.append("")
 
-        # Section 2: Defibrillation Shocks (I1, I2)
+        # Section 2: Defibrillation Shocks (I1, I2, J3)
         lines.append("--- SECTION 2: DEFIBRILLATION SHOCKS ---")
         if self.shocks:
             contained_count = sum(1 for s in self.shocks if s.shock_inside_cci)
             lines.append(
                 f"Shock Containment ({contained_count} of {len(self.shocks)} shocks fall inside detected intervals): "
+                "Evaluated against raw optical flow intervals (>=0.5s) to avoid missing short per-shock dropouts. "
                 "Under continuous mechanical CPR, true clinical pauses do not contain defibrillation shocks (F-029)."
             )
             for s in self.shocks:
