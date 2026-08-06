@@ -13,11 +13,12 @@ This standalone technical synthesis consolidates empirical findings, architectur
 
 * **Sensor S1 (Chest-ROI Optical Flow Motion + Three-Tier Consumer Duration Rules)**:
   * **Status**: Functional and deterministic ($100\%$ repeatable across independent runs on current build).
-  * **Performance (Current Build under $\pm 3.0\text{s}$ Monotonic Tolerance Matching)**: Captures clinical interruptions with **Interval Recall ($\pm 3.0\text{s}$) = `0.71`** ($5/7$) on un-floored CCF consumer detections ($\ge 1.0\text{s}$) and **`0.57`** ($4/7$) under the calibrated reporting floor ($\ge 5.0\text{s}$). Achieves boundary precision of **$\text{MAE} = 1.02\text{s}$** and active CPR fraction estimation with a **$\text{CCF error} = 0.09$** against human gold standard observation on the active clinical window ($36.0\text{–}922.0\text{s}$). (Note: all historical evaluation figures predating F-021 envelope smoothing and three-tier consumer gating are formally superseded by commits `769269f`, `5017dbc`, and `9da9e74`).
-  * **The Three-Tier Consumer Architecture (Three Consumers, Three Rules, One Measurement)**:
-    1. **CCF Computation**: Retains all unoccluded physical pauses $\ge 1.0\text{s}$ (`min_pause_duration_s`), capturing true no-flow physical resuscitation intervals without omission ($40$ intervals reported in clinical window after filtering out 4 sub-$1.0\text{s}$ de-identification mask splittings from the 44 raw emitted detections).
+  * **Performance (Current Build under $\pm 3.0\text{s}$ Monotonic Tolerance Matching)**: Captures clinical interruptions with **Interval Recall ($\pm 3.0\text{s}$) = `0.71`** ($5/7$) on un-floored CCF consumer detections ($\ge 1.0\text{s}$) and **`0.57`** ($4/7$) under the calibrated reporting floor ($\ge 5.0\text{s}$). Achieves boundary precision of **$\text{MAE} = 1.02\text{s}$** and active CPR fraction estimation on the active clinical window. (Note: all historical evaluation figures predating F-021 envelope smoothing and three-tier consumer gating are formally superseded by commits `769269f`, `5017dbc`, and `9da9e74`).
+  * **The Three-Tier Consumer Architecture & Measurement Decoupling**:
+    1. **CCF Computation**: Retains all unoccluded physical pauses $\ge 1.0\text{s}$ (`min_pause_duration_s`), emitting $40$ pause intervals in the clinical window (after filtering out 4 sub-$1.0\text{s}$ de-identification mask splittings from the 44 raw emitted detections).
     2. **REDCap Payload / Repeating Group**: Enforces the dictionary $\ge 3.0\text{s}$ rule required by data specifications (`num_cci_v2`).
     3. **Reporting & UI Summary**: Applies the calibrated reporting floor (`cci_reporting_floor_s: 5.0` in `roi_config.yaml`), eliminating $80\%$ of visual occlusion false positives ($35 \to 7$ under $\pm 3.0\text{s}$ tolerance matching) to insulate human review from transient motion dropouts.
+    4. **Architectural Correction on "One Measurement" Claim**: In `compute_ccf()`, active CPR time is derived independently by summing active compression motion events (`cpr_duration_s = sum(motion_events)`), rather than as `denominator - sum(pause_intervals)`. Consequently, the interval stream and the CCF represent **two separate measurements, not one**, contradicting earlier claims of "three consumers, one measurement." Across $[70.75, 922.0\text{s}]$, there are 50 physical inter-event gaps totaling $155.96\text{s}$ of non-CPR time; the emitted interval stream accumulates $140.00\text{s}$ across 44 raw intervals ($137.82\text{s}$ across 40 CCF intervals $\ge 1.0\text{s}$), with the difference accounted for by short inter-event dropouts $< 0.5\text{s}$ and mask splittings $< 1.0\text{s}$ not emitted as formal pauses.
 
 ---
 
@@ -86,7 +87,7 @@ This standalone technical synthesis consolidates empirical findings, architectur
 
 ## 4. The Methodological Result & Silent-Pass Defects
 
-Across this phase of engineering, we discovered **fourteen silent-pass defects** where code executed without errors and passed automated test suites while failing catastrophically on real clinical data or executing against incorrect analytical boundaries:
+Across this phase of engineering, we discovered **fifteen silent-pass and reporting defects** where code executed without errors, passed automated test suites while failing catastrophically on real clinical data, executed against incorrect analytical boundaries, or masked underlying verification errors:
 
 1. **`F-013` / `F-014`**: Standalone audio scanning claiming functionality on synthetic tests while generating $100\%$ false positive rates on room speech.
 2. **`F-015` / `F-016`**: Vacuous self-comparison evaluation fixtures where test predictions and ground truth originated from identical mock objects (`F-016`), artificially inflating reported F1 and WER metrics to `1.0` and `0.0`.
@@ -100,16 +101,17 @@ Across this phase of engineering, we discovered **fourteen silent-pass defects**
 10. **`F-027` / GT #1 Reporting Floor Recall Cost**: S1 optical flow truncated the true 8.0s pause at $147\text{–}155\text{s}$ into a $4.62\text{s}$ detection, which was discarded by the $\ge 5.0\text{s}$ floor (dropping recall $5/7 \to 4/7$).
 11. **`F-028` / GT #7 Pause Fragmentation**: S1 optical flow fragmented the longest 30.0s clinical pause ($844\text{–}874\text{s}$) into 4 sub-$5\text{s}$ slivers ($1.19\text{s}$, $2.25\text{s}$, $1.25\text{s}$, $3.82\text{s}$) without detected S6 visual occlusion, missing $71.6\%$ ($21.49\text{s}$) of no-flow duration.
 12. **`F-029` / Shock Containment Inversion**: Assuming defibrillation shocks fall inside pauses during mechanical CPR; in reality, 0 of 5 shocks fall inside pauses (landing 5–17s after pauses end).
-13. **`F-026` / Ungated CCF Report Disagreement**: `test_ccf.py::test_generate_ccf_report_vidsim2` passes cleanly while `ccf_report.py` runs over the full un-truncated video duration ($1,363.78\text{s}$), ungated on `death_pronounced_s` ($922.0\text{s}$) and without consumer floor filtering (`filter_ccis_by_consumer`), directly contradicting Decision 027 / Q-012. A green test running against the wrong window produces **$\text{CCF} = 0.8766$**, which directly disagrees with the validated evaluation path's **$\text{CCF} = 0.8170$**.
-14. **Silent Error Suppression & Untracked File Persistence**: Suppressing command exit codes with `2>/dev/null || true` led to asserting that `.DS_Store` was untracked when it remained tracked in the index until explicitly removed.
+13. **`F-026` / Ungated CCF Report Disagreement & Assertion Mismatch**: `test_ccf.py::test_generate_ccf_report_vidsim2` passes cleanly while `ccf_report.py` runs over the full un-truncated video duration ($1,363.78\text{s}$), ungated on `death_pronounced_s` ($922.0\text{s}$) and without consumer floor filtering (`filter_ccis_by_consumer`), directly contradicting Decision 027 / Q-012. A green test running against the wrong window produces **$\text{CCF} = 0.8766$**, which directly disagrees with the validated evaluation path's **$\text{CCF} = 0.8170$**. Furthermore, existing assertions in `test_generate_ccf_report_vidsim2` (`assert report.total_case_duration_s == pytest.approx(1363.78, abs=0.5)` and `assert len(report.cci_intervals) >= 40`) actively encode this ungated full-track behavior and will fail when gating is implemented; they must be updated alongside the fix so a correct failure is not mistaken for a regression.
+14. **Silent Error Suppression & Untracked File Persistence**: Suppressing command exit codes with `2>/dev/null || true` led to asserting that `.DS_Store` was untracked when it remained tracked in the index until explicitly removed in D4.
+15. **Fabricated Commit Identifiers & Stale Verification Reports**: Reporting a fabricated commit hash (`a858a7732...333`) and re-reporting stale, byte-identical wall-clock test execution results in a closeout verification report rather than inspecting actual git logs and executing genuine verification runs.
 
-**The Transferable Core**: Automated test passage is not scientific validation. The permanent value of this architecture lies in its **fail-loudly discipline**: zero hardcoded literals, strict byte-identical determinism, explicit abstention on degraded channels, data-derived calibration profiles from config files, and the absolute requirement to score against real human ground truth before asserting functional validity.
+**The Transferable Core**: Automated test passage is not scientific validation. The permanent value of this architecture lies in its **fail-loudly discipline**: zero hardcoded literals, strict byte-identical determinism, explicit abstention on degraded channels, data-derived calibration profiles from config files, and the absolute requirement to score against real human ground truth and real terminal output before asserting functional validity.
 
 ---
 
 ## 5. Summary Scorecard (S1 Standalone on Current Build, `simvideo2.mp4`)
 
-Evaluated against human-adjudicated gold standard observations ($T_0 = \text{2023-11-07T07:55:57}$, $n=1$ case, $7$ true interruptions summing to $82.0\text{s}$, $\text{GT CCF} = 0.9074$, active clinical window $36.0\text{–}922.0\text{s}$) through reproducible command `python -m sensors.eval.report --sensor s1 --ground-truth fixtures/ground_truth_simvideo2.json --consumer compare`:
+Evaluated against human-adjudicated gold standard observations ($T_0 = \text{2023-11-07T07:55:57}$, $n=1$ case, $7$ true interruptions summing to $82.0\text{s}$, $\text{GT CCF} = 0.9037$ over active CPR window $70.75\text{–}922.0\text{s}$) through reproducible command `python -m sensors.eval.report --sensor s1 --ground-truth fixtures/ground_truth_simvideo2.json --consumer compare`:
 
 | Metric | S1 (>=1.0s CCF consumer) | S1 (>=5.0s Reporting consumer) | Clinical Interpretation & Status |
 | :--- | :--- | :--- | :--- |
@@ -119,7 +121,17 @@ Evaluated against human-adjudicated gold standard observations ($T_0 = \text{202
 | **False Positives ($\pm 3.0\text{s}$)** | `35` | **`7`** | Consistently defined under $\pm 3.0\text{s}$ tolerance matching ($6$ under any-overlap matching). |
 | **CCI F1 ($\pm 2.0\text{s}$)** | `0.13` | **`0.33`** | $\pm 2.0\text{s}$ tolerance is stricter than human clock precision ($\approx \pm 3\text{s}$). |
 | **Boundary MAE ($\pm 2.0\text{s}$)** | `1.02s` | **`1.02s`** | Sub-second boundary precision on matched interruptions. |
-| **CCF Error (All Pauses)** | `0.09` | **`0.09`** | Evaluated via `compute_ccf()` as $\text{CPR Duration} / (\text{death\_pronounced\_s} - \text{t\_first}) = 695.29\text{s} / 851.25\text{s} = \mathbf{0.8170}$ (error $0.09$ vs GT $0.9074$). Note: ungated report path produces $\mathbf{0.8766}$ (`F-026`). |
-| **Reported Intervals** | $40 \text{ total}$ | **$11 \text{ total}$** | Raw emitted set is 44 intervals; CCF tier excludes 4 sub-1.0s de-identification mask splittings. |
+| **CCF Error (All Pauses)** | `0.09` | **`0.09`** | Evaluated via `compute_ccf()` as $\text{CPR Duration} / (\text{death\_pronounced\_s} - \text{t\_first}) = 695.29\text{s} / 851.25\text{s} = \mathbf{0.8170}$ (error $\mathbf{0.09}$ vs comparable GT CCF $0.9037$ over $70.75\text{–}922.0\text{s}$). Note: ungated report path produces $\mathbf{0.8766}$ (`F-026`). |
+| **Reported Intervals** | $40 \text{ total}$ | **$11 \text{ total}$** | Raw emitted set in clinical window ($36\text{–}922\text{s}$) is 44 intervals; CCF tier excludes 4 sub-1.0s mask splittings. |
+
+#### Detailed CCF Window Reconciliation & Decomposition (Four Numbers)
+Because `compute_ccf()` bounds calculations per Q-012 default candidate (c) from the first compression event to termination ($70.75\text{–}922.0\text{s}$), whereas the clinical room entry timestamp occurs at $36.0\text{s}$, CCF evaluated across both windows yields four distinct numbers:
+1. **Window 1 ($36.0\text{–}922.0\text{s}$, Denominator $886.0\text{s}$ — Patient Enters Room)**:
+   - **$\text{GT CCF} = \mathbf{0.9074}$** ($82.0\text{s}$ pause duration).
+   - **$\text{S1 CCF} = \mathbf{0.7919}$** ($184.40\text{s}$ total non-CPR time).
+2. **Window 2 ($70.75\text{–}922.0\text{s}$, Denominator $851.25\text{s}$ — Active CPR Window per Q-012)**:
+   - **$\text{GT CCF} = \mathbf{0.9037}$** ($82.0\text{s}$ pause duration).
+   - **$\text{S1 CCF} = \mathbf{0.8170}$** ($155.96\text{s}$ total non-CPR time, derived as $695.29\text{s}$ active CPR motion).
+   - **Comparable Pair**: Window 2 ($70.75\text{–}922.0\text{s}$, $\text{GT} = 0.9037$ vs $\text{S1} = 0.8170$) is the accurate, comparable evaluation pair per Q-012 default candidate (c). The resulting CCF error of $0.09$ is produced by **cancelling errors**: S1 accumulates $+55.8\text{s}$ of false positive provider dropouts while simultaneously missing $21.49\text{s}$ of true no-flow duration during GT #7 (`F-028`).
 
 *(Note: All earlier baselines from prior builds are officially superseded by commits `769269f`, `5017dbc`, and `9da9e74` and replaced by this reproducible measurement on current code).*

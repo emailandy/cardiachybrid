@@ -111,7 +111,7 @@ def test_generate_ccf_report_vidsim2() -> None:
     """
     Integration test: runs generate_ccf_report on simvideo2.mp4.
     Verifies deterministic execution, zero LLM calls, S5 timecode anchor,
-    S3 shock containment in CCIs, and valid CCF quality metrics.
+    and valid CCF quality metrics (Note: shock containment is invalid per F-029).
     """
     vp = Path("tests/video/vidsim2.mp4")
     if not vp.exists():
