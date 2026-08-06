@@ -178,20 +178,27 @@ Q-015 Three TEAM calibration anchor cases at consensus global 2, 6, 9 require hu
 
 Q-018 — The ground truth fixture `fixtures/ground_truth_simvideo2.json` contains a `"$schema"` key pointing to the JSON Schema Draft 2020-12 meta-schema (`"https://json-schema.org/draft/2020-12/schema"`). The file contains instance data rather than schema definitions; this key is instance metadata and must not be mistaken for a JSON schema validation contract. Status: DOCUMENTED.
 
-Q-019 — Defibrillator Acoustic Calibration Profile for simvideo2, Acoustic Ground Truth Provenance, & Verbal Candidate Source Design.
-  - options: (a) Attempt parameter fitting on two audible charge tones from re-encoded footage, (b) Block defibrillator profile creation on uncompressed direct resuscitation bay audio captures with known device models.
-  - default: Option (b). Re-encoding plausibly destroyed continuous charge tones on 2 of 5 shocks (F-013, F-015, F-017), making footage-level calibration fitted rather than validated. Defibrillator equipment model for simvideo2 is unknown.
-  - provenance & discrimination note (L1 / F-030): The four `acoustic_measured` timestamps in `fixtures/ground_truth_simvideo2.json` (167.94s, 385.07s, 621.34s, 742.21s) represent manual spectrogram inspection readings rather than automated S3 detector confirmations. The automated detector under the uncalibrated profile yielded 6 false positives on the full track and confirms zero shocks. S3's negative control at 861.0s and 884.5s returning `(0.0, 0.0)` is a vacuous pass: a detector returning `(0.0, 0.0)` for every input cannot distinguish "correctly rejects negatives" from "rejects everything." A valid negative control requires the detector to first confirm a true positive. The default defib profile currently has zero discrimination evidence in either direction. Do not attempt to construct one from this footage.
-  - three candidate hypotheses for missing tones (L3): (1) method failure in acoustic detection, (2) lossy audio re-encoding artifacts (F-017), or (3) simulated shocks where no physical charge tone was generated (the gold standard is titled "ACLS Sim Video Review"; an encode chain degrades uniformly, whereas 165s and 742s retain tones while 388s and 622s have none — inconsistent presence fits inconsistent generation better than inconsistent compression). Manual slope figures are measurements of a phenomenon whose physical generation remains unconfirmed.
-  - verbal candidate source design (L5): Verbal announcement is a candidate SOURCE for S3's windowed adjudicator, not a fallback detector.
+Q-019 — Defibrillator Acoustic Calibration, Simulation Provenance, Ground Truth Announcement Semantics, & Verbal Candidate Source Design.
+  - case nature (M0 / M4): `simvideo2.mp4` is CONFIRMED as a manikin simulation for an educational training program; the defibrillator was in a training configuration; the system's intended deployment is real human resuscitation.
+  - s3 reclassification (M1): S3 acoustic charge-tone detection is UNTESTED on real charge tones, not failed. A training-configuration defibrillator most likely never charged, so no physical charge tone was generated to detect. F-013 stands as a valid method finding on full-track speech formant false positives in the 400-1000 Hz passband, but automated charge-tone detection recall is unmeasured in both directions.
+  - inquiry to clinical lead (M1): Did the training-configuration defibrillator deliver energy into a test load or did it not charge at all? Status: UNCONFIRMED until answered.
+  - shock times are announcement times (M0 / M2): Gold standard `timestamp_s` values are confirmed to be marked from the resuscitation team's verbal call-out, not physical energy delivery.
+    * Any peri-shock pause computed against these measures pause-around-announcement, a distinct clinical quantity — flagged to the D10 metrics layer before those fields are populated.
+    * The cross-modal spread up to 2.9s noted in the fixture reflects genuine temporal separation between verbal announcement and physical intervention.
+    * The four `acoustic_measured` timestamps (167.94s, 385.07s, 621.34s, 742.21s) are manual spectrogram readings of unattributed acoustic transients given no confirmed electrical discharge.
+  - inquiry to clinical lead (M2): Should future ground truth fixtures carry distinct fields separating announcement time from physical energy delivery time? Status: UNCONFIRMED until answered.
+  - negative control validity (L1 / F-030): S3's negative control at 861.0s and 884.5s returning `(0.0, 0.0)` is a vacuous pass: a detector confirming zero true positives cannot distinguish "correctly rejects negatives" from "rejects everything." A valid negative control requires the detector to first confirm a true positive. Discrimination evidence for the default defib profile is void until direct bay calibration is available.
+  - verbal candidate source design (M0 / L5): Verbal announcement is a candidate SOURCE for S3's windowed adjudicator, not a fallback detector.
     * Announcement is intent rather than delivery; shocks are sometimes aborted.
-    * Verbal and acoustic timestamps are not interchangeable (gold standard records cross-modal differences up to 2.9s, which spans most of the peri-shock pause metric).
+    * Verbal and acoustic timestamps are not interchangeable.
     * A verbally derived shock must occupy a different field from an acoustically confirmed one and must NEVER populate peri-shock pause.
     * Absence of verbal announcement is UNAVAILABLE, not zero shocks (Invariant I5).
     * Blocked on S7a (speech-to-text), currently a shell.
-    * If gold standard shock times were annotated from team speech and behavior, scoring a speech detector against them constitutes same-modality comparison (F-016 family defect) and must be explicitly declared before reporting accuracy numbers.
+    * Because gold standard shock times were annotated from team verbal call-outs, scoring a speech detector against them constitutes same-modality comparison (F-016 family defect) and must be explicitly declared before reporting accuracy numbers.
     * Trigger phrase vocabulary is a clinical question and must not be engineered without clinical input.
     * Roadmap note: S7a is the precondition for both the shock-candidate channel and the S2 retest (F-023), making it the highest-leverage remaining sensor.
+  - mode classifier calibration-transfer risk (M3): `mechanical_cadence_max_std_cpm` (3.0) and `manual_cadence_min_std_cpm` (8.0) are fitted to a manikin with spring-loaded uniform recoil, short scenario, no provider fatigue, and no chest deformation feedback. The cadence variability gap may narrow or invert on real human compressions. (Cross-reference Q-012 / G3 abstention).
+  - roadmap dependency (M5): Gold set expansion (n=25) must include real resuscitation bay footage. A simulation gold set generalises only to simulation. Thresholds validated on simulation must be re-derived against real clinical cases before clinical use. Real bay footage validation is the gating dependency for the entire system.
   - owner: clinical lead / engineering
-  - status: BLOCKED on direct bay audio & S7a
-  - blocks: S02 / S10 per-device acoustic calibration
+  - status: BLOCKED on direct bay audio, real footage gold set, & S7a
+  - blocks: S02 / S10 per-device acoustic calibration & clinical deployment

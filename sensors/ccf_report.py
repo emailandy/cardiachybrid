@@ -181,13 +181,15 @@ class CCFReport:
         """
         lines: list[str] = []
 
-        # H4: Prominent Clinician Readership Banner
+        # H4: Prominent Clinician Readership Banner (M4)
         lines.append("=" * 80)
         lines.append("NOT FOR CLINICAL OR PERFORMANCE ASSESSMENT.")
         lines.append(
-            "n=1 validation output. Interval precision 0.36. The longest interruption in"
+            "Validation output from n=1 manikin simulation. Performance on real patients is unmeasured."
         )
-        lines.append("the validation case was not detected.")
+        lines.append(
+            "Interval precision 0.36. The longest interruption in the validation case was not detected."
+        )
         lines.append("=" * 80)
         lines.append("")
 
@@ -221,7 +223,8 @@ class CCFReport:
             "The Q-012 denominator carries this open metrics defect."
         )
         lines.append(
-            "Calibration Basis: Thresholds calibrated on n=1 screen-recorded video stack (F-017)."
+            "Calibration Basis: Thresholds calibrated on n=1 manikin simulation screen-recorded video stack (F-017 / M4). "
+            "Performance on real patients is unmeasured."
         )
         lines.append("")
 
