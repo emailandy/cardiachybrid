@@ -585,7 +585,7 @@ class CCFReportGenerator:
 
         # 4. Run Sensor S5 (Clock Anchor synchronization)
         t0_iso: str | None = None
-        t0_source = "none"
+        t0_source = "no timecode overlay found in ROI"
         try:
             samples = read_video_timecode_samples(
                 str(path), sample_times_s=(10.0, 300.0, 600.0)
@@ -597,9 +597,13 @@ class CCFReportGenerator:
                 if anchor.source != "none" and anchor.t0_iso:
                     t0_iso = anchor.t0_iso
                     t0_source = anchor.source
-        except Exception:
+                else:
+                    t0_source = "no timecode overlay found in ROI"
+            else:
+                t0_source = "no timecode overlay found in ROI"
+        except Exception as e:
             t0_iso = None
-            t0_source = "none"
+            t0_source = f"timecode extraction failed: {type(e).__name__}: {e}"
 
         # 5. Run Sensor S3 (Defibrillation Shocks & Adjudication, I1 & I4)
         shocks_detail: list[CCFShockDetail] = []
