@@ -239,7 +239,7 @@
         </div>
         <div class="meta-item">
           <span class="meta-label">Validation Status</span>
-          <span class="meta-val" style="color: ${data.validation_status && data.validation_status.includes('VALIDATED') ? 'var(--accent-emerald)' : 'var(--accent-amber)'};">
+          <span class="meta-val" style="color: ${data.validation_status && (data.validation_status.includes('COMPARED') || data.validation_status.includes('VALIDATED')) ? 'var(--accent-cyan)' : 'var(--accent-amber)'};">
             ${data.validation_status || 'Unvalidated'}
           </span>
         </div>

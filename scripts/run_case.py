@@ -269,8 +269,9 @@ def get_model_for_pass(pass_name: str) -> str:
 def run_live(args: argparse.Namespace, duration_s: float) -> None:
     """Executes live DEMO-1 pipeline against Vertex AI."""
     run_id_val = getattr(args, "run_id", None) or "run_01"
-    cache_dir = Path(f"generated/cache_{run_id_val}") if run_id_val != "run_01" else Path("generated/cache")
-    cache_dir.mkdir(parents=True, exist_ok=True)
+    cache_dir = Path(f".resus_qc_tmp/cache_{run_id_val}") if getattr(args, "use_cache", False) else None
+    if cache_dir:
+        cache_dir.mkdir(parents=True, exist_ok=True)
     print(f"=== DEMO-1 LIVE RUN (case_id: {args.case_id}, t0: {args.t0}, run_id: {run_id_val}) ===")
     print("[VITALS ABSTENTION PREDICTION (STATED BEFORE LIVE RUN)]")
     print("  - Prediction: ~100 ROSC vital columns (hr/sbp/dbp/spo2/etco2 x 20) and ~60 a-line columns (aline_sbp/dbp x 30 CCIs)")
@@ -520,7 +521,7 @@ def run_live(args: argparse.Namespace, duration_s: float) -> None:
         write_run(case_id=args.case_id, run_id=run_id_to_write, stream=combined_stream, field_values=fvs, raw_dataset="resus_raw")
         print(f"✓ Successfully loaded run {run_id_to_write} to nodepeel.resus_raw in BigQuery.")
 
-    out_path = Path(args.out) if getattr(args, "out", None) else (Path("generated") / "case.json")
+    out_path = Path(args.out) if getattr(args, "out", None) else (Path(".resus_qc_tmp") / "case.json")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(case_meta, indent=2), encoding="utf-8")
     print(f"\nWritten metadata to {out_path}")

@@ -64,7 +64,7 @@ MUTATIONS = [
         "name": "7. Transient Workspace Residual File (.resus_qc_tmp/ left on disk)",
         "file": ".resus_qc_tmp/probe_residual_artifact.wav",
         "is_file_touch": True,
-        "expected_check": "[7/7] Checking transient workspace integrity",
+        "expected_check": "[7/9] Checking transient workspace integrity",
     },
     {
         "name": "8. Demo Pure-Renderer Contract Violation (embedded defaultReport in demo/ccf_viewer.html)",
@@ -76,10 +76,10 @@ MUTATIONS = [
     {
         "name": "9. Unvalidated Report Carrying Leaked Ground Truth Metrics",
         "file": "demo/sample_simvideo2_ccf_report.json",
-        "target": '"validation_status": "VALIDATED (against human ground truth)"',
+        "target": '"validation_status": "COMPARED (against human-adjudicated ground truth for this case, Q-017)"',
         "replacement": '"validation_status": "Accuracy not validated for this case (no ground truth supplied)"',
         "is_literal": True,
-        "expected_check": "[9/9] Checking unvalidated report integrity",
+        "expected_check": "[9/9] Checking report contract bidirectional integrity",
     },
 ]
 

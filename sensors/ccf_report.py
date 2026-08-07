@@ -22,9 +22,11 @@ from typing import Any, Sequence
 import cv2
 import numpy as np
 
+from sensors.eval.metrics import _match_intervals
 from sensors.s1_s6_motion import (
     CompressionMotionEvent,
     S1ChestMotionDetector,
+    S6CoverageDetector,
 )
 from sensors.s3_defib import DefibEvent, S3DefibDetector
 from sensors.s5_timecode import (
@@ -110,7 +112,37 @@ class CCFReport:
         return self.ccf_intervals
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert report to JSON-serializable dictionary."""
+        # Unconditional sensor-derived two-measurement gap (N3)
+        two_meas_caveat: str | None = None
+        motion_non_cpr_dur: float = 0.0
+        raw_cci_dur_in_ccf: float = 0.0
+        measurement_gap: float = 0.0
+
+        if self.ccf_window_s is not None and self.ccf_denominator_s is not None:
+            raw_in_ccf_win = [
+                c
+                for c in self.raw_intervals
+                if float(c["t_start_s"]) < self.ccf_window_s[1]
+                and float(c["t_end_s"]) > self.ccf_window_s[0]
+            ]
+            raw_cci_dur_in_ccf = sum(
+                max(
+                    0.0,
+                    min(self.ccf_window_s[1], float(c["t_end_s"]))
+                    - max(self.ccf_window_s[0], float(c["t_start_s"])),
+                )
+                for c in raw_in_ccf_win
+            )
+            motion_non_cpr_dur = max(
+                0.0, self.ccf_denominator_s - (self.cpr_active_duration_s or 0.0)
+            )
+            measurement_gap = abs(motion_non_cpr_dur - raw_cci_dur_in_ccf)
+            two_meas_caveat = (
+                f"Two-Measurement Gap: Non-CPR motion duration derived from compute_ccf ({motion_non_cpr_dur:.2f}s) "
+                f"and emitted interval stream pause duration ({raw_cci_dur_in_ccf:.2f}s) differ by exactly {measurement_gap:.2f}s "
+                f"over the {self.ccf_denominator_s:.2f}s CCF evaluation window."
+            )
+
         # Derive validation metrics and caveats dynamically from ground truth
         if (
             self.ground_truth is not None
@@ -136,45 +168,79 @@ class CCFReport:
             )
             ccf_err = abs((self.ccf or 0.0) - gt_ccf)
 
-            raw_in_ccf_win = [
-                c
-                for c in self.raw_intervals
-                if float(c["t_start_s"]) < self.ccf_window_s[1]
-                and float(c["t_end_s"]) > self.ccf_window_s[0]
-            ]
-            raw_cci_dur_in_ccf = sum(
-                max(
-                    0.0,
-                    min(self.ccf_window_s[1], float(c["t_end_s"]))
-                    - max(self.ccf_window_s[0], float(c["t_start_s"])),
-                )
-                for c in raw_in_ccf_win
-            )
-            motion_non_cpr_dur = max(
-                0.0, self.ccf_denominator_s - (self.cpr_active_duration_s or 0.0)
-            )
-            measurement_gap = abs(motion_non_cpr_dur - raw_cci_dur_in_ccf)
+            # Match reporting intervals (>=5.0s) against ground truth (M1)
+            matched_rep = _match_intervals(self.reported_intervals, gt_ccis, tol_s=3.0)
+            rep_matched_preds = [p for p, _, _, _ in matched_rep]
+            tp_count = len(rep_matched_preds)
+            fp_count = len(self.reported_intervals) - tp_count
 
-            val_status = "VALIDATED (against human ground truth)"
+            # S6 provider crowding breakdown on FP intervals
+            s6_fp_count = 0
+            s6_events = []
+            if self.video_path and Path(self.video_path).exists():
+                try:
+                    s6_events = S6CoverageDetector(profile_name=getattr(self, "profile_name", "simvideo2")).detect_occlusion_from_video(self.video_path)
+                except Exception:
+                    s6_events = []
+
+            for c in self.reported_intervals:
+                if c not in rep_matched_preds:
+                    cs, ce = float(c["t_start_s"]), float(c["t_end_s"])
+                    has_s6 = bool(c.get("s6_crowding")) or any(max(cs, o.t_start_s) < min(ce, o.t_end_s) for o in s6_events)
+                    if has_s6:
+                        s6_fp_count += 1
+            unexplained_fp_count = fp_count - s6_fp_count
+
+            # Cancelling error magnitudes in CCF active window (M4)
+            matched_ccf = _match_intervals(self.raw_intervals, gt_ccis, tol_s=3.0)
+            ccf_matched_preds = [p for p, _, _, _ in matched_ccf]
+            fp_pause_dur = sum(
+                max(0.0, min(self.ccf_window_s[1], float(c["t_end_s"])) - max(self.ccf_window_s[0], float(c["t_start_s"])))
+                for c in self.raw_intervals
+                if c not in ccf_matched_preds
+                and float(c["t_start_s"]) < self.ccf_window_s[1]
+                and float(c["t_end_s"]) > self.ccf_window_s[0]
+            )
+            matched_gt_indices = set(gt_ccis.index(g) for _, g, _, _ in matched_ccf if g in gt_ccis)
+            fn_pause_dur = sum(
+                max(0.0, min(self.ccf_window_s[1], float(g.get("end_s", g.get("t_end_s", 0.0)))) - max(self.ccf_window_s[0], float(g.get("start_s", g.get("t_start_s", 0.0)))))
+                for idx, g in enumerate(gt_ccis)
+                if idx not in matched_gt_indices
+                and float(g.get("start_s", g.get("t_start_s", 0.0))) < self.ccf_window_s[1]
+                and float(g.get("end_s", g.get("t_end_s", 0.0))) > self.ccf_window_s[0]
+            )
+
+            # M3: Label accurately without claiming generic endorsement
+            val_status = "COMPARED (against human-adjudicated ground truth for this case, Q-017)"
             val_dict: dict[str, Any] | None = {
                 "gt_ccf_active": round(gt_ccf, 4),
                 "ccf_error_active": round(ccf_err, 4),
                 "non_cpr_motion_duration_s": round(motion_non_cpr_dur, 2),
                 "interval_stream_pause_duration_s": round(raw_cci_dur_in_ccf, 2),
                 "two_measurement_gap_s": round(measurement_gap, 2),
+                "fp_pause_duration_active_s": round(fp_pause_dur, 2),
+                "fn_missed_pause_duration_active_s": round(fn_pause_dur, 2),
+                "reporting_reported_count": len(self.reported_intervals),
+                "reporting_true_positives": tp_count,
+                "reporting_false_positives": fp_count,
+                "reporting_s6_explained_fps": s6_fp_count,
+                "reporting_unexplained_fps": unexplained_fp_count,
             }
             caveats_list = [
-                f"CCF Error is {ccf_err:.2f} across active window {self.ccf_window_s[0]:.2f}-{self.ccf_window_s[1]:.2f}s: S1 active CPR {self.cpr_active_duration_s or 0.0:.2f}s vs GT active CPR {gt_cpr_s:.2f}s (error reflects cancelling errors: false-positive pause duration accumulated during detection vs missed true pause duration).",
-                f"Two-Measurement Gap: Non-CPR motion duration derived from compute_ccf ({motion_non_cpr_dur:.2f}s) and emitted interval stream pause duration ({raw_cci_dur_in_ccf:.2f}s) differ by exactly {measurement_gap:.2f}s over the {self.ccf_denominator_s:.2f}s CCF evaluation window.",
-                "7 of 11 reported intervals are false positives under +/-3.0s monotonic tolerance matching (5 coincide with S6-detected provider crowding; 2 are unexplained).",
-                "Single manikin case (n=1) validation basis. Device and bay calibration required before production.",
+                f"Cancelling Errors ({self.ccf_window_s[0]:.2f}-{self.ccf_window_s[1]:.2f}s): Observed CCF error {ccf_err:.2f} (S1 {self.ccf or 0.0:.4f} vs GT {gt_ccf:.4f}) reflects cancelling errors: +{fp_pause_dur:.1f}s of false-positive pause duration accumulated during detection vs -{fn_pause_dur:.1f}s of missed true pause duration.",
+                two_meas_caveat or "",
+                f"False Positive Rate: Under the >=5.0s reporting threshold, {fp_count} of {len(self.reported_intervals)} reported intervals are false positives under +/-3.0s monotonic tolerance matching ({s6_fp_count} coincide with S6-detected provider crowding; {unexplained_fp_count} unexplained).",
+                "Single manikin case (n=1) validation basis. Device and bay calibration required before production (Q-017).",
             ]
         else:
             val_status = "Accuracy not validated for this case (no ground truth supplied)"
             val_dict = None
-            caveats_list = [
-                "Single manikin case (n=1) validation basis. Device and bay calibration required before production."
-            ]
+            caveats_list = []
+            if two_meas_caveat:
+                caveats_list.append(two_meas_caveat)
+            caveats_list.append(
+                "Single manikin case (n=1) validation basis. Device and bay calibration required before production (Q-017)."
+            )
 
         return {
             "case_id": self.case_id,
@@ -373,7 +439,46 @@ class CCFReport:
             )
             measurement_gap = abs(motion_non_cpr_dur - raw_cci_dur_in_ccf)
 
-            lines.append("Validation & Error Decomposition (Computed vs Ground Truth):")
+            matched_rep = _match_intervals(self.reported_intervals, gt_ccis, tol_s=3.0)
+            rep_matched_preds = [p for p, _, _, _ in matched_rep]
+            tp_count = len(rep_matched_preds)
+            fp_count = len(self.reported_intervals) - tp_count
+
+            s6_fp_count = 0
+            s6_events = []
+            if self.video_path and Path(self.video_path).exists():
+                try:
+                    s6_events = S6CoverageDetector(profile_name=getattr(self, "profile_name", "simvideo2")).detect_occlusion_from_video(self.video_path)
+                except Exception:
+                    s6_events = []
+
+            for c in self.reported_intervals:
+                if c not in rep_matched_preds:
+                    cs, ce = float(c["t_start_s"]), float(c["t_end_s"])
+                    has_s6 = bool(c.get("s6_crowding")) or any(max(cs, o.t_start_s) < min(ce, o.t_end_s) for o in s6_events)
+                    if has_s6:
+                        s6_fp_count += 1
+            unexplained_fp_count = fp_count - s6_fp_count
+
+            matched_ccf = _match_intervals(self.raw_intervals, gt_ccis, tol_s=3.0)
+            ccf_matched_preds = [p for p, _, _, _ in matched_ccf]
+            fp_pause_dur = sum(
+                max(0.0, min(self.ccf_window_s[1], float(c["t_end_s"])) - max(self.ccf_window_s[0], float(c["t_start_s"])))
+                for c in self.raw_intervals
+                if c not in ccf_matched_preds
+                and float(c["t_start_s"]) < self.ccf_window_s[1]
+                and float(c["t_end_s"]) > self.ccf_window_s[0]
+            )
+            matched_gt_indices = set(gt_ccis.index(g) for _, g, _, _ in matched_ccf if g in gt_ccis)
+            fn_pause_dur = sum(
+                max(0.0, min(self.ccf_window_s[1], float(g.get("end_s", g.get("t_end_s", 0.0)))) - max(self.ccf_window_s[0], float(g.get("start_s", g.get("t_start_s", 0.0)))))
+                for idx, g in enumerate(gt_ccis)
+                if idx not in matched_gt_indices
+                and float(g.get("start_s", g.get("t_start_s", 0.0))) < self.ccf_window_s[1]
+                and float(g.get("end_s", g.get("t_end_s", 0.0))) > self.ccf_window_s[0]
+            )
+
+            lines.append("Validation & Error Decomposition (Computed vs Ground Truth, Q-017):")
             lines.append(
                 f"  - Ground Truth CCF ({self.ccf_window_s[0]:.2f}-{self.ccf_window_s[1]:.2f}s): {gt_ccf:.4f}"
             )
@@ -381,9 +486,8 @@ class CCFReport:
                 f"  - Absolute CCF Error: {ccf_err:.4f} (~{round(ccf_err, 2)})"
             )
             lines.append(
-                "  - Cancelling Error Decomposition: The observed CCF error arises from structural "
-                "errors cancelling each other out between false-positive pause duration "
-                "accumulated during detection and missed true pause duration."
+                f"  - Cancelling Error Decomposition: Observed CCF error {ccf_err:.2f} reflects cancelling errors: "
+                f"+{fp_pause_dur:.1f}s of false-positive pause duration accumulated during detection vs -{fn_pause_dur:.1f}s of missed true pause duration."
             )
             lines.append(
                 f"  - Two Independent Measurements: Over the CCF evaluation window, non-CPR duration derived from "
@@ -391,8 +495,8 @@ class CCFReport:
                 f"by exactly {measurement_gap:.2f}s due to sub-0.5s dropouts and boundary adjustments."
             )
             lines.append(
-                "  - False Positive Rate: Under the >=5.0s reporting threshold, 7 of 11 reported intervals "
-                "are false positives under +/-3.0s monotonic matching (5 coincide with S6 provider crowding; 2 unexplained)."
+                f"  - False Positive Rate: Under the >=5.0s reporting threshold, {fp_count} of {len(self.reported_intervals)} reported intervals "
+                f"are false positives under +/-3.0s monotonic matching ({s6_fp_count} coincide with S6 provider crowding; {unexplained_fp_count} unexplained)."
             )
             lines.append(
                 "  - Interruption Detection Limits: Long clinical interruptions may be fragmented by "

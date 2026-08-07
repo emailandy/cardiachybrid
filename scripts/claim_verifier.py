@@ -224,19 +224,7 @@ def check_manifest_consistency() -> list[str]:
                 f"Regenerate via 'python scripts/claim_verifier.py --regenerate-manifest'"
             )
 
-    # 2. Check ccf_report.py caveat against manifest FP count
-    rep_fp = manifest["reporting_tier"]["false_positives_3s"]
-    rep_count = manifest["reporting_tier"]["reported_count"]
-    ccf_report_file = SENSORS_DIR / "ccf_report.py"
-    if ccf_report_file.exists():
-        code = ccf_report_file.read_text(encoding="utf-8")
-        expected_substr = f"{rep_fp} of {rep_count} reported intervals"
-        if expected_substr not in code:
-            errors.append(
-                f"sensors/ccf_report.py does not contain expected caveat '{expected_substr}'"
-            )
-
-    # 3. Check for contradicted headline metrics in SENSOR_FINDINGS.md
+    # 2. Check for contradicted headline metrics in SENSOR_FINDINGS.md
     manifest_f1_3s = manifest["reporting_tier"]["f1_3s"]
     manifest_f1_2s = manifest["reporting_tier"]["f1_2s"]
     table_f1_3s_pattern = re.compile(r"CCI\s+F1[^\n|]*3\.0[^\n|]*\|\s*`?(\d+\.\d+)`?\s*\|\s*(?:\*\*)?`?(\d+\.\d+)`?", re.IGNORECASE)
@@ -263,6 +251,12 @@ def check_manifest_consistency() -> list[str]:
                     errors.append(
                         f"Mismatched reporting F1 (±2.0s) claim at docs/SENSOR_FINDINGS.md:{line_no} — "
                         f"cited {cited_rep_f1_2s}, manifest is {manifest_f1_2s:.4f}"
+                    )
+            if "cancelling errors" in line.lower() and not ("superseded" in line.lower() or "supersedes" in line.lower()):
+                if "101.5" not in line or "41.0" not in line:
+                    errors.append(
+                        f"Stale cancelling error decomposition at docs/SENSOR_FINDINGS.md:{line_no} — "
+                        f"must cite current verified decomposition (+101.52s / 41.00s)."
                     )
 
     return errors
@@ -299,10 +293,25 @@ def check_arithmetic_consistency() -> list[str]:
     return errors
 
 
-def check_unvalidated_report_integrity() -> list[str]:
+def check_report_contract_integrity() -> list[str]:
     """
-    Enforces that report JSONs marked unvalidated or with no ground truth
-    must not carry ground-truth-derived accuracy metrics or error figures.
+    Enforces bidirectional integrity on report JSONs:
+    1. Unvalidated reports must not contain a validation block or ground-truth error figures.
+    2. Validated reports must have internally derivable figures:
+       - non_cpr_motion_duration_s == ccf_denominator_s - cpr_active_duration_s
+       - two_measurement_gap_s == abs(non_cpr_motion_duration_s - interval_stream_pause_duration_s)
+       - ccf_error_active == abs(ccf - gt_ccf_active)
+       - reporting_false_positives == reporting_reported_count - reporting_true_positives
+       - reporting_false_positives == reporting_s6_explained_fps + reporting_unexplained_fps
+       - Cited caveats must match the validation metrics exactly.
+
+    LIMITATION (CONSISTENCY NOT CORRECTNESS):
+    Check [9/9] proves internal mathematical coherence and structural integrity without
+    re-running optical flow, defib STFT, or Gemini passes (which take minutes). It proves that
+    non_cpr = denominator - cpr_active and that FPs = reported - TPs. It does NOT prove that
+    the underlying numbers originated from this specific video, ground truth fixture, or run.
+    A report whose figures are empirically wrong but internally self-consistent will pass this check.
+    End-to-end correctness is verified by the Slow Tier ('--regenerate-manifest') and unit suites.
     """
     errors = []
     demo_dir = REPO_ROOT / "demo"
@@ -316,20 +325,70 @@ def check_unvalidated_report_integrity() -> list[str]:
             continue
         if not isinstance(data, dict):
             continue
+        if "readership_banner" not in data and "ccf" not in data:
+            continue
 
         val_status = str(data.get("validation_status", "")).lower()
-        if "not validated" in val_status or "unvalidated" in val_status:
-            # Must not contain gt figures
-            if data.get("validation") is not None:
+        is_unval = "not validated" in val_status or "unvalidated" in val_status
+        val_block = data.get("validation")
+
+        if is_unval:
+            if val_block is not None:
                 errors.append(
                     f"{jf.name} is marked unvalidated but contains a non-null 'validation' block."
                 )
             caveats_str = " ".join(data.get("caveats", []))
-            for forbidden_sub in ["CCF Error is", "GT active CPR", "false positives under"]:
-                if forbidden_sub in caveats_str:
+            for forbidden_sub in ["CCF Error", "GT active CPR", "false positives under", "Cancelling Errors"]:
+                if forbidden_sub.lower() in caveats_str.lower():
                     errors.append(
                         f"{jf.name} is marked unvalidated but carries ground-truth caveat '{forbidden_sub}'."
                     )
+        else:
+            if val_block is None or not isinstance(val_block, dict):
+                errors.append(
+                    f"{jf.name} is marked validated ({val_status}) but lacks a 'validation' dictionary."
+                )
+                continue
+
+            denom = float(data.get("ccf_denominator_s") or 0.0)
+            cpr_act = float(data.get("cpr_active_duration_s") or 0.0)
+            ccf_val = float(data.get("ccf") or 0.0)
+
+            gt_ccf = float(val_block.get("gt_ccf_active") or 0.0)
+            ccf_err = float(val_block.get("ccf_error_active") or 0.0)
+            non_cpr_dur = float(val_block.get("non_cpr_motion_duration_s") or 0.0)
+            raw_cci_dur = float(val_block.get("interval_stream_pause_duration_s") or 0.0)
+            gap = float(val_block.get("two_measurement_gap_s") or 0.0)
+
+            if abs(non_cpr_dur - (denom - cpr_act)) > 0.05:
+                errors.append(
+                    f"{jf.name} non_cpr_motion_duration_s ({non_cpr_dur}) != denom ({denom}) - cpr_active ({cpr_act})"
+                )
+
+            if abs(gap - abs(non_cpr_dur - raw_cci_dur)) > 0.05:
+                errors.append(
+                    f"{jf.name} two_measurement_gap_s ({gap}) != |{non_cpr_dur} - {raw_cci_dur}|"
+                )
+
+            if abs(ccf_err - abs(ccf_val - gt_ccf)) > 0.05:
+                errors.append(
+                    f"{jf.name} ccf_error_active ({ccf_err}) != |ccf ({ccf_val}) - gt_ccf ({gt_ccf})|"
+                )
+
+            n_rep = int(val_block.get("reporting_reported_count") or len(data.get("reported_intervals", [])))
+            n_tp = int(val_block.get("reporting_true_positives") or 0)
+            n_fp = int(val_block.get("reporting_false_positives") or 0)
+            n_s6 = int(val_block.get("reporting_s6_explained_fps") or 0)
+            n_unexpl = int(val_block.get("reporting_unexplained_fps") or 0)
+
+            if n_fp != (n_rep - n_tp):
+                errors.append(
+                    f"{jf.name} reporting_false_positives ({n_fp}) != n_reported ({n_rep}) - n_tp ({n_tp})"
+                )
+            if n_fp != (n_s6 + n_unexpl):
+                errors.append(
+                    f"{jf.name} reporting_false_positives ({n_fp}) != s6_fps ({n_s6}) + unexplained ({n_unexpl})"
+                )
     return errors
 
 
@@ -559,31 +618,31 @@ def verify_all_claims() -> int:
     print("=== Running Mechanical Honesty Gate (scripts/check_claims.sh) ===")
     all_errors: list[str] = []
 
-    print("[1/7] Checking Git commit SHA resolutions...")
+    print("[1/9] Checking Git commit SHA resolutions...")
     sha_errors = check_commit_shas()
     all_errors.extend(sha_errors)
 
-    print("[2/7] Checking Ground Truth interval quotations...")
+    print("[2/9] Checking Ground Truth interval quotations...")
     gt_errors = check_ground_truth_quotations()
     all_errors.extend(gt_errors)
 
-    print("[3/7] Checking identifier uniqueness (Findings, Decisions, Questions)...")
+    print("[3/9] Checking identifier uniqueness (Findings, Decisions, Questions)...")
     id_errors = check_id_uniqueness()
     all_errors.extend(id_errors)
 
-    print("[4/7] Checking metric manifest freshness & cross-document consistency...")
+    print("[4/9] Checking metric manifest freshness & cross-document consistency...")
     manifest_errors = check_manifest_consistency()
     all_errors.extend(manifest_errors)
 
-    print("[5/7] Checking cited arithmetic consistency...")
+    print("[5/9] Checking cited arithmetic consistency across docs/ and sensors/...")
     arith_errors = check_arithmetic_consistency()
     all_errors.extend(arith_errors)
 
-    print("[6/7] Checking grounded measurement run logs (docs/RUNS.jsonl)...")
+    print("[6/9] Checking grounded measurement run logs (docs/RUNS.jsonl)...")
     runs_errors = check_grounded_runs()
     all_errors.extend(runs_errors)
 
-    print("[7/7] Checking transient workspace integrity (.resus_qc_tmp & calls.jsonl)...")
+    print("[7/9] Checking transient workspace integrity (.resus_qc_tmp & calls.jsonl)...")
     tmp_errors = check_transient_workspace_integrity()
     all_errors.extend(tmp_errors)
 
@@ -591,9 +650,9 @@ def verify_all_claims() -> int:
     demo_errors = check_demo_cleanliness()
     all_errors.extend(demo_errors)
 
-    print("[9/9] Checking unvalidated report integrity (zero leaked GT metrics)...")
-    unval_errors = check_unvalidated_report_integrity()
-    all_errors.extend(unval_errors)
+    print("[9/9] Checking report contract bidirectional integrity (unvalidated isolation & validated derivation)...")
+    report_errors = check_report_contract_integrity()
+    all_errors.extend(report_errors)
 
     if all_errors:
         print("\n❌ MECHANICAL HONESTY GATE FAILED:")

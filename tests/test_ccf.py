@@ -292,7 +292,7 @@ def test_ccf_report_text_formatting_unvalidated_vs_validated() -> None:
         ]
     }
     val_text = report.format_text_report(ground_truth=gt_mock)
-    assert "Validation & Error Decomposition (Computed vs Ground Truth):" in val_text
+    assert "Validation & Error Decomposition (Computed vs Ground Truth" in val_text
     assert "Ground Truth CCF" in val_text
     assert "Cancelling Error Decomposition" in val_text
 

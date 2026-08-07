@@ -207,6 +207,9 @@ class S2CompressionAudioDetector:
                 )
             ]
 
+        hop_s = float(self.config.get("stft_hop_s", 0.1))
+        win_s = float(self.config.get("stft_window_s", 4.0))
+
         hop_samples = max(1, int(sr * hop_s))
         n_frames = len(data) // hop_samples
         if n_frames < 20:

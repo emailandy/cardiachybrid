@@ -45,10 +45,16 @@
     "f1_3s": 0.4444,
     "precision_3s": 0.3636,
     "recall_3s": 0.5714,
+    "duration_recall": 0.5,
     "false_positives_3s": 7,
     "s6_explained_fps": 5,
     "unexplained_fps": 2,
     "f1_2s": 0.3333,
     "mae_2s": 1.0183
+  },
+  "cancelling_errors": {
+    "fp_pause_duration_active_s": 101.52,
+    "fn_missed_pause_duration_active_s": 41.0,
+    "duration_recall": 0.5
   }
 }
