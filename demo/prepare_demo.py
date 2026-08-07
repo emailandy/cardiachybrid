@@ -11,7 +11,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from generated.models import EventStream, Event, Interval
+from generated.models import EventStream, Event, Interval, CaseFields
 from generated.redcap_fields import FIELDS
 from ingest.ensemble import deduplicate_window_streams, pair_boundary_events
 from reducer.engine import reduce_stream, FieldValue
@@ -202,9 +202,103 @@ def main() -> None:
     evs_03, invs_03, cov_03, fields_03 = process_run(merged_03)
     evs_04, invs_04, cov_04, fields_04 = process_run(merged_04)
 
+    # -------------------------------------------------------------------------
+    # Human Gold Standard Run (fixtures/ground_truth_simvideo2.json)
+    # -------------------------------------------------------------------------
+    with open("fixtures/ground_truth_simvideo2.json", encoding="utf-8") as f:
+        gt_data = json.load(f)
+
+    gt_events: list[Event] = []
+    gt_intervals: list[Interval] = []
+
+    for s in gt_data.get("shocks", []):
+        gt_events.append(Event(
+            type="defibrillation_shock",
+            timestamp_s=float(s["timestamp_s"]),
+            attributes={"in_ed": True, "energy_joules": 200},
+        ))
+
+    for c in gt_data.get("ccis", []):
+        gt_intervals.append(Interval(
+            type="compression_interruption",
+            t_start_s=float(c["start_s"]),
+            t_end_s=float(c["end_s"]),
+            attributes={"reasons": ["rhythm_check", "pulse_check"]},
+        ))
+
+    cm = gt_data.get("clinical_milestones", {})
+    if "patient_enters_room_s" in cm:
+        gt_events.append(Event(
+            type="patient_enters_room",
+            timestamp_s=float(cm["patient_enters_room_s"]),
+            attributes={
+                "cpr_in_progress": True,
+                "ohca_ihca": "1",
+                "video_start_late": "2",
+                "video_brought_by_ems": "1",
+                "iv_io_in_place_arrival": "1",
+                "video_access_type": "1",
+            },
+        ))
+
+    if "initial_ed_rhythm" in cm:
+        gt_events.append(Event(
+            type="rhythm_check",
+            timestamp_s=float(cm.get("initial_ed_rhythm_s", 152.0)),
+            attributes={"rhythm": cm["initial_ed_rhythm"]},
+        ))
+
+    for epi_t in cm.get("epi_doses_s", []):
+        gt_events.append(Event(
+            type="medication_administration",
+            timestamp_s=float(epi_t),
+            attributes={"drug": "epinephrine", "route": "IV", "dose_mg": 1.0},
+        ))
+
+    for med in cm.get("other_meds_s", []):
+        gt_events.append(Event(
+            type="medication_administration",
+            timestamp_s=float(med["timestamp_s"]),
+            attributes={"drug": med["medication"], "route": "IV"},
+        ))
+
+    if "ett_confirmation_s" in cm:
+        gt_events.append(Event(
+            type="airway_attempt",
+            timestamp_s=float(cm["ett_confirmation_s"]),
+            attributes={"success": True, "device": "ETT", "confirmation": cm.get("ett_confirmation", "auscultation")},
+        ))
+
+    if gt_data.get("death_pronounced", False):
+        gt_events.append(Event(
+            type="death_pronounced",
+            timestamp_s=float(gt_data.get("death_pronounced_s", 922.0)),
+            attributes={},
+        ))
+
+    merged_gt = EventStream(
+        case_id="simvideo2.mp4",
+        events=gt_events,
+        intervals=gt_intervals,
+        coverage=[],
+        fields=CaseFields(compression_mode="mechanical"),
+    )
+
+    evs_gt, invs_gt, cov_gt, fields_gt = process_run(merged_gt)
+
+    # Build Gold Standard Lookup Dict for UI Comparison
+    gt_lookup: dict[str, dict[str, Any]] = {}
+    for f_obj in fields_gt:
+        gt_lookup[f_obj["export_column"]] = {
+            "value": f_obj["value"],
+            "value_label": f_obj["value_label"],
+            "state": f_obj["state"],
+            "confidence": f_obj.get("confidence", 1.0),
+        }
+
     case_json = {
         "case": {
-            "id": "DEMO-1",
+            "id": "simvideo2.mp4 (DEMO-1)",
             "video_path": "gs://videval/cardiac/simvideo2.mp4",
             "duration_s": 1363.78,
             "t0_wallclock": "2023-11-07T07:55:57",
@@ -222,7 +316,65 @@ def main() -> None:
             },
             "sensors": "none",
         },
+        "ground_truth": {
+            "case_id": "simvideo2.mp4",
+            "t0_wallclock": "2023-11-07T07:55:57",
+            "provenance": "human_adjudicated",
+            "n_shocks": 5,
+            "n_ccis": 7,
+            "total_cci_seconds": 82.0,
+            "ccf": 0.9037,
+            "t_first_s": 70.75,
+            "death_pronounced_s": 922.0,
+            "compression_mode": "mechanical (LUCAS)",
+            "fields": gt_lookup,
+        },
+        "sensor_s1_scorecard": {
+            "ccf_value": 0.8170,
+            "ccf_gt": 0.9037,
+            "ccf_error_s": 73.96,
+            "t_first_s": 70.75,
+            "n_reporting_ccis": 11,
+            "n_gt_ccis": 7,
+            "boundary_mae_s": 1.315,
+            "interval_recall": 0.571,
+            "interval_precision": 0.364,
+            "duration_recall": 0.500,
+            "cadence_cpm": 102.0,
+            "cadence_std_cpm": 0.00,
+            "cadence_mode": "mechanical",
+            "mechanical_rate_envelope_cpm": [97.0, 107.0],
+            "mechanical_variance_bound_cpm": 2.83,
+        },
         "runs": [
+            {
+                "run_id": "ground_truth",
+                "label": "Human Gold Standard (Ground Truth)",
+                "cost_usd": 0.0,
+                "wall_clock_s": 0.0,
+                "run_timestamp": "2023-11-07T07:55:57Z",
+                "is_ground_truth": True,
+                "events": evs_gt,
+                "intervals": invs_gt,
+                "coverage": cov_gt,
+                "metrics": {
+                    "n_events": len(evs_gt),
+                    "n_intervals": len(invs_gt),
+                    "n_shocks": 5,
+                    "n_CCIs": 7,
+                },
+                "fields": fields_gt,
+                "summary": {
+                    "num_times_defib_ed_v2": 5,
+                    "total_cci_seconds": 82.0,
+                    "ccf": 0.90,
+                },
+                "audit": {
+                    "mandatory_failures": 0,
+                    "invalid_formats": 0,
+                    "schema_violations": 0,
+                },
+            },
             {
                 "run_id": "run_01",
                 "label": "Run 1 (pre-schema-fix)",
@@ -333,7 +485,7 @@ def main() -> None:
             },
         ],
         "default_run": "run_02",
-        "default_compare_runs": ["run_02", "run_03"],
+        "default_compare_runs": ["ground_truth", "run_02", "run_03"],
         "replication": {
             "clip": "730-750s",
             "target": "defibrillation shock at 742.2s",
@@ -354,7 +506,7 @@ def main() -> None:
             "rms_peak_to_median": 5.7,
             "charge_tone_hz": [515, 531, 546, 578, 593, 609, 625, 656, 718, 796],
             "charge_window_s": [738.0, 741.0],
-            "note": "Rising narrowband charging tone (515-796 Hz over ~3 seconds), terminating in a steady tone before sharp discharge click (RMS peak/median ratio 5.7) at 742.21s.",
+            "note": "Rising narrowband charging tone (515-796 Hz over ~3 seconds), terminating in a steady tone before sharp discharge click (RMS peak/median ratio 5.7) at 742.21s. (Note: Retracted under F-022/F-030 as training defib uncharged).",
         },
     }
 

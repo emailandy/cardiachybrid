@@ -532,6 +532,83 @@
       color: var(--text-muted);
     }
 
+    /* Golden Ground Truth & Comparison Badges */
+    .gold-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      line-height: 1.25;
+      white-space: nowrap;
+    }
+    .gold-match {
+      background: rgba(16, 185, 129, 0.14);
+      color: #059669;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    .gold-mismatch {
+      background: rgba(244, 63, 94, 0.14);
+      color: #e11d48;
+      border: 1px solid rgba(244, 63, 94, 0.45);
+    }
+    .gold-missed {
+      background: rgba(245, 158, 11, 0.14);
+      color: #d97706;
+      border: 1px solid rgba(245, 158, 11, 0.45);
+    }
+    .gold-na {
+      background: rgba(100, 116, 139, 0.1);
+      color: var(--text-dim);
+      border: 1px solid var(--border-color);
+    }
+    .row-track.gold-track {
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      border-left: 4px solid #f59e0b;
+    }
+    .row-label.gold-label {
+      color: #d97706;
+      font-weight: 700;
+    }
+    .shock-marker.gold-shock {
+      background: #f59e0b;
+      border: 1px solid #d97706;
+      color: #000;
+      box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
+    }
+    .interval-bar.gold-interval {
+      background: rgba(245, 158, 11, 0.35);
+      border: 1px solid rgba(245, 158, 11, 0.7);
+    }
+    .milestone-marker {
+      position: absolute;
+      top: 6px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      white-space: nowrap;
+      transform: translateX(-50%);
+      z-index: 8;
+      pointer-events: auto;
+      cursor: help;
+    }
+    .milestone-arrival {
+      background: #0284c7;
+      color: #ffffff;
+    }
+    .milestone-med {
+      background: #8b5cf6;
+      color: #ffffff;
+    }
+    .milestone-death {
+      background: #e11d48;
+      color: #ffffff;
+    }
+
     /* DEMO-3 Part 2 Timeline Compare Panel */
     .timeline-card {
       background: var(--bg-card);
@@ -1098,6 +1175,67 @@
 
       </div>
 
+      <!-- SENSOR LAYER & CLINICAL GROUND TRUTH SCORECARD (F-013 through F-041) -->
+      <div class="card" id="sensor-scorecard-section" style="margin-bottom: 2rem; border-left: 4px solid var(--accent-cyan); background: var(--bg-card); padding: 1.75rem; border-radius: 10px; border-top: 1px solid var(--border-color); border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.75rem;">
+          <h2 style="font-size: 1.15rem; color: var(--text-main); margin: 0;">Sensor Layer Performance vs. Human Gold Standard (F-013 through F-041)</h2>
+          <span class="gold-header-badge">★ Adjudicated Gold Set (n=1 Case, 7 Pauses, 5 Shocks)</span>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.25rem;">
+          Quantitative evaluation of deterministic sensors against clinical ground truth. S1 evaluates optical flow CPR kinematics; S5 anchors burned-in wall-clock time; S3 provides acoustic shock detection (adjudication unvalidated).
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+          <!-- Card 1: CCF Scorecard -->
+          <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.15rem;">
+            <div style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: bold; margin-bottom: 0.4rem;">Chest Compression Fraction (CCF)</div>
+            <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+              <span style="font-size: 1.6rem; font-weight: 800; color: var(--accent-cyan);">0.817</span>
+              <span style="font-size: 0.85rem; color: var(--text-dim);">vs. Gold <strong>0.904</strong> (Error: 0.09)</span>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; line-height: 1.4;">
+              Active resuscitation window: 70.75s–922.0s (851.25s denominator). CPR delivered: 695.29s (misses ~41s pause duration).
+            </div>
+          </div>
+
+          <!-- Card 2: Mechanical Cadence Discrimination -->
+          <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.15rem;">
+            <div style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: bold; margin-bottom: 0.4rem;">Mechanical CPR Discrimination</div>
+            <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+              <span style="font-size: 1.6rem; font-weight: 800; color: var(--accent-emerald);">102.0 CPM</span>
+              <span style="font-size: 0.85rem; color: var(--text-dim);">LUCAS (&sigma; = 0.00)</span>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; line-height: 1.4;">
+              Derived 3-bin span threshold &sigma; &le; 2.83 CPM with forward rate envelope [97.0, 107.0] CPM. Confirmed on Patient 1.
+            </div>
+          </div>
+
+          <!-- Card 3: Boundary Precision & Intervals -->
+          <div style="background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.15rem;">
+            <div style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; font-weight: bold; margin-bottom: 0.4rem;">Pause Interval Precision</div>
+            <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+              <span style="font-size: 1.6rem; font-weight: 800; color: var(--accent-amber);">1.315s</span>
+              <span style="font-size: 0.85rem; color: var(--text-dim);">Boundary MAE</span>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem; line-height: 1.4;">
+              11 reporting-tier pauses (&ge;5s). Interval Recall: 0.571 (4/7 pauses matched within &plusmn;3s). Precision: 0.364 (7 visual provider dropouts).
+            </div>
+          </div>
+        </div>
+
+        <!-- Findings Summary Callout -->
+        <div style="background: rgba(2, 132, 199, 0.08); border: 1px solid rgba(2, 132, 199, 0.3); border-radius: 8px; padding: 1rem 1.25rem; font-size: 0.88rem; line-height: 1.5; color: var(--text-main);">
+          <strong style="color: var(--brand-blue); display: block; margin-bottom: 0.25rem;">Key Architecture Findings &amp; Known Sensor Boundaries:</strong>
+          <ul style="margin-left: 1.25rem; margin-top: 0.25rem; display: flex; flex-direction: column; gap: 0.25rem;">
+            <li><strong>F-038 / Room 2 Chest Geometry</strong>: Corrected Bed ROI to y=650 retiring airway provider misplacements.</li>
+            <li><strong>F-039 / Manual CPR Variance Rule</strong>: Falsified on n=1 testable interval due to provider pacing stability; manual classification returns UTD pending manikin calibration.</li>
+            <li><strong>F-040 / Peak Selection Discipline</strong>: Raw argmax admits equipment noise; Patient 2 mechanical detection requalified to n=1 (whole-track production abstention).</li>
+            <li><strong>F-041 / Butterworth Filter Rolloff</strong>: 1.3–3.0 Hz bandpass filter makes S1 LUCAS-specific by physical design (AutoPulse at 80 CPM attenuated by -3 dB).</li>
+            <li><strong>Next Prerequisite</strong>: Sensor layer frozen pending external delivery of the <strong>continuous unspliced &ge;60s manikin calibration clip</strong>.</li>
+          </ul>
+        </div>
+      </div>
+
       <!-- DEMO-3 Part 4: Recall/Precision Table & 5-Call Replication Panel -->
       <div class="card" id="part4-summary-section" style="margin-bottom: 2rem;">
         <h2>Multi-Draw Performance &amp; Replication Ground Truth (DEMO-3 Part 4)</h2>
@@ -1230,7 +1368,10 @@
         <div class="table-controls">
           <input type="text" id="filter-input" placeholder="Filter fields by label or export column..." oninput="renderExtractionTable()">
           <select id="state-filter" onchange="renderExtractionTable()">
-            <option value="all">All States (1,879)</option>
+            <option value="all">All States (1,879 Fields)</option>
+            <option value="gold_mismatch" style="color: #e11d48; font-weight: bold;">✕ Show Discrepancies vs Gold Standard</option>
+            <option value="gold_match" style="color: #059669; font-weight: bold;">✓ Show Matches vs Gold Standard</option>
+            <option value="gold_missed" style="color: #d97706; font-weight: bold;">⚠ Show Missed Fields (Gold Populated, Run UTD)</option>
             <option value="auto_accepted">Auto-Accepted (Populated / Confident)</option>
             <option value="utd">Unable to Determine (White Rows — Honest Abstentions)</option>
             <option value="routed">Routed to HITL (TEAM Q-006 / Subjective)</option>
@@ -1448,18 +1589,26 @@
       const duration = (data.case && data.case.duration_s) ? Number(data.case.duration_s) : 1363.8;
       const mode = appState.compareMode || 'default';
 
-      // Select runs to compare
+      // Select runs to compare (exclude ground_truth from normal run list since it gets its own pinned header row)
       let compRuns = [];
+      const modelRuns = data.runs.filter(r => r.run_id !== 'ground_truth');
       if (mode === 'default') {
-        compRuns = data.runs.filter(r => r.run_id === 'run_02' || r.run_id === 'run_03');
-        if (compRuns.length === 0) compRuns = data.runs.slice(1, 3);
+        compRuns = modelRuns.filter(r => r.run_id === 'run_02' || r.run_id === 'run_03');
+        if (compRuns.length === 0) compRuns = modelRuns.slice(0, 2);
       } else {
-        compRuns = data.runs;
+        compRuns = modelRuns;
       }
 
       // Render count strip
       const stripEl = document.getElementById('compare-count-strip');
       stripEl.innerHTML = '';
+      
+      // Pinned Gold Standard in Strip
+      const gtItem = document.createElement('div');
+      gtItem.className = 'count-strip-item';
+      gtItem.innerHTML = '<strong style="color:#d97706;">★ Human Gold Standard:</strong> 5 true shocks · 7 pauses (82.0s) · CCF 0.904';
+      stripEl.appendChild(gtItem);
+
       compRuns.forEach(r => {
         const item = document.createElement('div');
         item.className = 'count-strip-item';
@@ -1468,6 +1617,7 @@
         item.innerHTML = '<strong>' + (r.label || r.run_id) + ':</strong> ' + nSh + ' shocks · ' + nPa + ' pauses';
         stripEl.appendChild(item);
       });
+
       // Add Acoustic Reference to strip
       const acItem = document.createElement('div');
       acItem.className = 'count-strip-item';
@@ -1489,7 +1639,65 @@
       const rowsEl = document.getElementById('timeline-rows-container');
       rowsEl.innerHTML = '';
 
-      // 1. Acoustic Reference Row
+      // 1. PINNED HUMAN GOLD STANDARD ROW
+      const gtRow = document.createElement('div');
+      gtRow.className = 'timeline-row';
+      const gtLbl = document.createElement('div');
+      gtLbl.className = 'row-label gold-label';
+      gtLbl.textContent = '★ Gold Standard (Human)';
+      const gtTrk = document.createElement('div');
+      gtTrk.className = 'row-track gold-track';
+
+      // Gold Standard Intervals (7 true pauses)
+      const gtCCIs = [
+        { s: 147.0, e: 155.0, label: 'rhythm check (8s)' },
+        { s: 245.0, e: 256.0, label: 'pulse check (11s)' },
+        { s: 363.0, e: 371.0, label: 'rhythm check (8s)' },
+        { s: 484.0, e: 490.0, label: 'rhythm check (6s)' },
+        { s: 607.0, e: 617.0, label: 'rhythm check (10s)' },
+        { s: 727.0, e: 736.0, label: 'rhythm check (9s)' },
+        { s: 844.0, e: 874.0, label: 'airway / pause (30s)' }
+      ];
+      gtCCIs.forEach(inv => {
+        const bar = document.createElement('div');
+        bar.className = 'interval-bar gold-interval';
+        bar.style.left = ((inv.s / duration) * 100) + '%';
+        bar.style.width = (((inv.e - inv.s) / duration) * 100) + '%';
+        bar.title = 'Human Gold Pause: ' + inv.s + 's - ' + inv.e + 's (' + inv.label + ')';
+        gtTrk.appendChild(bar);
+      });
+
+      // Gold Standard Shocks (5 true shocks)
+      const gtShocks = [165.0, 388.0, 622.0, 742.0, 879.0];
+      gtShocks.forEach((t, sIdx) => {
+        const mk = document.createElement('div');
+        mk.className = 'shock-marker gold-shock';
+        mk.style.left = ((t / duration) * 100) + '%';
+        mk.title = 'True Shock #' + (sIdx + 1) + ' — human-adjudicated ground truth (' + t.toFixed(1) + 's)';
+        mk.textContent = '⚡';
+        gtTrk.appendChild(mk);
+      });
+
+      // Gold Clinical Milestones
+      const milestones = [
+        { t: 36.0, label: 'Entry 36s', cls: 'milestone-arrival' },
+        { t: 188.0, label: 'Epi #1 188s', cls: 'milestone-med' },
+        { t: 922.0, label: 'Death 922s', cls: 'milestone-death' }
+      ];
+      milestones.forEach(m => {
+        const ms = document.createElement('div');
+        ms.className = 'milestone-marker ' + m.cls;
+        ms.style.left = ((m.t / duration) * 100) + '%';
+        ms.title = 'Clinical Milestone: ' + m.label;
+        ms.textContent = m.label;
+        gtTrk.appendChild(ms);
+      });
+
+      gtRow.appendChild(gtLbl);
+      gtRow.appendChild(gtTrk);
+      rowsEl.appendChild(gtRow);
+
+      // 2. Acoustic Reference Row
       const acRow = document.createElement('div');
       acRow.className = 'timeline-row';
       const acLbl = document.createElement('div');
@@ -1510,7 +1718,7 @@
       acRow.appendChild(acTrk);
       rowsEl.appendChild(acRow);
 
-      // 2. Model Draw Rows
+      // 3. Model Draw Rows
       compRuns.forEach(r => {
         const row = document.createElement('div');
         row.className = 'timeline-row';
@@ -1571,12 +1779,36 @@
       renderExtractionTable();
     }
 
+    function getGoldStatus(field, gtLookup) {
+      if (!gtLookup) return { type: 'na', label: '--', class: 'gold-na' };
+      const gt = gtLookup[field.export_column];
+      if (!gt) return { type: 'na', label: '--', class: 'gold-na' };
+
+      const runVal = field.value !== null && field.value !== undefined ? String(field.value) : null;
+      const gtVal = gt.value !== null && gt.value !== undefined ? String(gt.value) : null;
+      const gtDisplay = gt.value_label || gtVal || 'None';
+
+      if (field.state === 'utd' || runVal === null) {
+        if (gtVal !== null && gtVal !== 'UTD' && gtVal !== 'not_applicable') {
+          return { type: 'missed', label: '⚠ Gold: ' + gtDisplay, class: 'gold-missed', gtVal: gtVal };
+        }
+        return { type: 'na', label: '--', class: 'gold-na', gtVal: gtVal };
+      }
+
+      if (runVal === gtVal) {
+        return { type: 'match', label: '✓ Match (' + gtDisplay + ')', class: 'gold-match', gtVal: gtVal };
+      } else {
+        return { type: 'mismatch', label: '✕ Discrepancy (Gold: ' + gtDisplay + ')', class: 'gold-mismatch', gtVal: gtVal };
+      }
+    }
+
     function renderExtractionTable() {
       if (!appState.data || !appState.data.runs) return;
       const activeRun = appState.data.runs[appState.activeRunIndex];
       const fields = activeRun.fields || [];
       const filterTxt = (document.getElementById('filter-input').value || '').toLowerCase().trim();
       const stateFltr = document.getElementById('state-filter').value || 'all';
+      const gtLookup = (appState.data.ground_truth && appState.data.ground_truth.fields) ? appState.data.ground_truth.fields : null;
 
       // Group fields by section
       const secMap = {};
@@ -1597,7 +1829,12 @@
 
         // Filter for display
         const visibleFields = secFields.filter(f => {
-          if (stateFltr !== 'all' && f.state !== stateFltr) return false;
+          const goldInfo = getGoldStatus(f, gtLookup);
+          if (stateFltr === 'gold_mismatch' && goldInfo.type !== 'mismatch') return false;
+          if (stateFltr === 'gold_match' && goldInfo.type !== 'match') return false;
+          if (stateFltr === 'gold_missed' && goldInfo.type !== 'missed') return false;
+          if (stateFltr !== 'all' && !stateFltr.startsWith('gold_') && f.state !== stateFltr) return false;
+
           if (filterTxt) {
             const matchLbl = (f.label || '').toLowerCase().includes(filterTxt);
             const matchCol = (f.export_column || '').toLowerCase().includes(filterTxt);
@@ -1626,7 +1863,7 @@
         if (!isCollapsed) {
           const tbl = document.createElement('table');
           tbl.className = 'extraction-table';
-          tbl.innerHTML = '<thead><tr><th>Field Label &amp; Column</th><th>Extracted Value</th><th>Contract State</th><th>Modality / Sensor</th></tr></thead>';
+          tbl.innerHTML = '<thead><tr><th>Field Label &amp; Column</th><th>Extracted Value</th><th>Gold Standard (Human Truth)</th><th>Contract State</th><th>Modality / Sensor</th></tr></thead>';
           const tbody = document.createElement('tbody');
           visibleFields.forEach(f => {
             const tr = document.createElement('tr');
@@ -1646,6 +1883,11 @@
             } else {
               tdVal.textContent = f.value_label || (f.value !== null && f.value !== undefined ? String(f.value) : '--');
             }
+
+            // Gold Standard Column
+            const tdGold = document.createElement('td');
+            const goldInfo = getGoldStatus(f, gtLookup);
+            tdGold.innerHTML = '<span class="gold-badge ' + goldInfo.class + '">' + goldInfo.label + '</span>';
 
             const tdSt = document.createElement('td');
             tdSt.innerHTML = '<span class="state-tag">' + (f.state || 'not_applicable') + '</span>';
@@ -1675,6 +1917,7 @@
 
             tr.appendChild(tdLbl);
             tr.appendChild(tdVal);
+            tr.appendChild(tdGold);
             tr.appendChild(tdSt);
             tr.appendChild(tdMod);
             tbody.appendChild(tr);
@@ -1690,12 +1933,28 @@
       const body = document.getElementById('modal-body-content');
       body.innerHTML = '';
 
-      // Meta grid info
+      const gtLookup = (data.ground_truth && data.ground_truth.fields) ? data.ground_truth.fields : null;
+      const goldInfo = getGoldStatus(field, gtLookup);
+      const gt = gtLookup ? gtLookup[field.export_column] : null;
+
+      // Meta grid info with side-by-side Gold Standard comparison
       const infoBox = document.createElement('div');
       infoBox.style.marginBottom = '1.25rem';
-      infoBox.innerHTML = '<div><strong>Export Column:</strong> ' + field.export_column + '</div>' +
-        '<div><strong>Contract State:</strong> ' + field.state + '</div>' +
-        '<div><strong>Extracted Value:</strong> ' + (field.value_label || field.value || '--') + '</div>';
+      infoBox.innerHTML = '<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; background: var(--bg-main); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">' +
+        '<div>' +
+          '<div style="font-size:0.75rem; color:var(--text-dim); text-transform:uppercase; font-weight:bold;">Active Run Extracted</div>' +
+          '<div style="font-size:1.1rem; font-weight:bold; margin-top:4px;">' + (field.value_label || (field.value !== null ? field.value : 'Unable to determine')) + '</div>' +
+          '<div style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">State: ' + field.state + '</div>' +
+        '</div>' +
+        '<div>' +
+          '<div style="font-size:0.75rem; color:var(--text-dim); text-transform:uppercase; font-weight:bold;">Human Gold Standard</div>' +
+          '<div style="font-size:1.1rem; font-weight:bold; color:#d97706; margin-top:4px;">' + (gt ? (gt.value_label || (gt.value !== null ? gt.value : 'Unpopulated / UTD')) : 'Not in gold set') + '</div>' +
+          '<div style="margin-top:4px;"><span class="gold-badge ' + goldInfo.class + '">' + goldInfo.label + '</span></div>' +
+        '</div>' +
+      '</div>' +
+      '<div style="margin-top: 0.85rem; font-size:0.85rem; color:var(--text-muted);">' +
+        '<strong>Export Column:</strong> <code>' + field.export_column + '</code>' +
+      '</div>';
       body.appendChild(infoBox);
 
       // If UTD, highlight specific Abstain Reason
