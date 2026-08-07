@@ -1,0 +1,15 @@
+[32m✓ I1 dictionary hash current[0m
+[32m✓ I2 no field-name literals[0m
+[32m✓ I3 yesno fields are 1/0[0m
+[32m✓ I4 checkbox emission pattern ok[0m
+[32m✓ I5 gate_3way calls coverage-aware[0m
+[32m✓ I6 no coercion in validators[0m
+cp: /tmp/_inv_before_fields.py: Operation not permitted
+cp: /tmp/_inv_before_models.py: Operation not permitted
+diff: /tmp/_inv_before_fields.py: Operation not permitted
+[31m✗ codegen emit_python NOT deterministic — generated/ differs on rebuild[0m
+cp: /tmp/_inv_before_br.py: Operation not permitted
+diff: /tmp/_inv_before_br.py: Operation not permitted
+[31m✗ codegen branching NOT deterministic[0m
+
+[31m✗ INVARIANT VIOLATION — do not proceed[0m

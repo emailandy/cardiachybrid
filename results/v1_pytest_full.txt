@@ -1,0 +1,21 @@
+........................................................................ [ 30%]
+........................................................................ [ 60%]
+...........ssssss...................................x................... [ 91%]
+.....................                                                    [100%]
+============================= slowest 15 durations =============================
+651.44s call     tests/test_pipeline.py::test_pipeline_integration_full_track
+240.91s call     tests/test_ccf.py::test_generate_ccf_report_vidsim2
+166.52s call     tests/test_ccf.py::test_generate_ccf_report_abstains_intervals_when_patient_enters_room_omitted
+136.10s call     tests/test_s1_s6.py::test_s1_vidsim2_percentiles_and_shock_containment
+106.36s call     tests/test_s3.py::test_s3_adjudicator_vidsim2
+92.56s call     tests/test_s3.py::test_s3_defib_detector_full_track_simvideo2
+40.44s call     tests/test_pipeline.py::test_pipeline_runner_returns_all_seven_sensors
+18.41s call     tests/test_prompt_builder.py::test_builder_determinism_100x_all_four
+18.37s call     tests/test_prompt_builder.py::test_builder_determinism_100x
+15.58s call     tests/test_audit_views_integration.py::test_audit_views_integration_defects_and_negative_control
+15.09s call     tests/test_s1_s6.py::test_s1_s6_deterministic_5_runs
+12.70s call     tests/test_pipeline.py::test_verify_p1_placeholder_wiring
+12.61s call     tests/test_pipeline.py::test_run_replication_experiment_reports_empirical_findings
+11.81s call     tests/test_pipeline.py::test_get_p1_sensor_placeholders_returns_exact_five_keys
+4.92s setup    tests/test_audit_views_integration.py::test_audit_views_integration_defects_and_negative_control
+230 passed, 6 skipped, 1 xfailed in 1560.32s (0:26:00)

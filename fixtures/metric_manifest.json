@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "case_id": "simvideo2.mp4",
+  "generated_at_utc": "2026-08-06T20:00:17Z",
+  "source_hashes": {
+    "sensors/s1_s6_motion.py": "c2c80f65ec380c7c6c1f60a4d203b8b164fdaead70eb35d7db9c9f19d36d97dc",
+    "sensors/eval/metrics.py": "c9fea7d00f3d5087562b52f2411c1d1022dc907bc1fbaeb726d68286db604744",
+    "sensors/eval/report.py": "b74d57b571220721df8a744a56ca33495260f0d7277f1f56f52ae8d189d7dbc2",
+    "sensors/calibration/roi_config.yaml": "a88d176431794b5270fa58362cd03fb680d3d88afd6af5a53bd7d7b49974ee7a",
+    "fixtures/ground_truth_simvideo2.json": "7b564a498c1f87ee03d1ca16370572295dfef8e0fa087cc2b88ce6a229b36525"
+  },
+  "provenance": "human_adjudicated",
+  "gt_interruptions_count": 7,
+  "gt_pauses_total_s": 82.0,
+  "active_cpr_window_s": [
+    70.75,
+    922.0
+  ],
+  "active_window_duration_s": 851.25,
+  "clinical_window_s": [
+    36.0,
+    922.0
+  ],
+  "clinical_window_duration_s": 886.0,
+  "active_cpr_duration_s": 695.29,
+  "ccf_active": 0.817,
+  "gt_ccf_active": 0.9037,
+  "ccf_error_active": 0.09,
+  "measurement_gap_s": 15.96,
+  "ccf_tier": {
+    "min_duration_s": 1.0,
+    "reported_count": 40,
+    "matched_3s_count": 5,
+    "f1_3s": 0.2128,
+    "precision_3s": 0.125,
+    "recall_3s": 0.7143,
+    "false_positives_3s": 35,
+    "f1_2s": 0.1277,
+    "mae_2s": 1.0183
+  },
+  "reporting_tier": {
+    "min_duration_s": 5.0,
+    "reported_count": 11,
+    "matched_3s_count": 4,
+    "f1_3s": 0.4444,
+    "precision_3s": 0.3636,
+    "recall_3s": 0.5714,
+    "false_positives_3s": 7,
+    "s6_explained_fps": 5,
+    "unexplained_fps": 2,
+    "f1_2s": 0.3333,
+    "mae_2s": 1.0183
+  }
+}

@@ -180,7 +180,11 @@ Q-018 — The ground truth fixture `fixtures/ground_truth_simvideo2.json` contai
 
 Q-019 — Defibrillator Acoustic Calibration, Simulation Provenance, Ground Truth Announcement Semantics, & Verbal Candidate Source Design.
   - case nature (M0 / M4): `simvideo2.mp4` is CONFIRMED as a manikin simulation for an educational training program; the defibrillator was in a training configuration; the system's intended deployment is real human resuscitation.
-  - s3 reclassification (M1): S3 acoustic charge-tone detection is UNTESTED on real charge tones, not failed. A training-configuration defibrillator most likely never charged, so no physical charge tone was generated to detect. F-013 stands as a valid method finding on full-track speech formant false positives in the 400-1000 Hz passband, but automated charge-tone detection recall is unmeasured in both directions.
+  - s3 reclassification (M1): S3 acoustic charge-tone detection is UNTESTED on real charge tones, not failed. Four candidate hypotheses for missing charge tones in reference audio are ranked by empirical evidence:
+    1. *Candidate 1 (Hardware / Simulation Mode - Strongest)*: Training-configuration defibrillator never charged high-voltage capacitors or emitted physical acoustic charge tones.
+    2. *Candidate 2 (Acoustic Masking & Codec Loss)*: Ambient resuscitation noise ($>-40\text{ dBFS}$) and low-bitrate AAC compression masked weak tonal components below SNR detection thresholds.
+    3. *Candidate 3 (DVR Hardware Noise Gating)*: Direct DVR audio analysis (`blankbayvideop1.mp4`) revealed digital noise gating active at $\le -89.8\text{ dBFS}$ with instantaneous attack ($<0.06\text{ ms}$), closing on quiet intervals but opening immediately on signal onset.
+    4. *Candidate 4 (Sample-Rate Decimation - Weakest / Disproven)*: Disproven by direct capture analysis showing native DVR audio is identical 16 kHz mono.
   - inquiry to clinical lead (M1): Did the training-configuration defibrillator deliver energy into a test load or did it not charge at all? Status: UNCONFIRMED until answered.
   - shock times are announcement times (M0 / M2): Gold standard `timestamp_s` values are confirmed to be marked from the resuscitation team's verbal call-out, not physical energy delivery.
     * Any peri-shock pause computed against these measures pause-around-announcement, a distinct clinical quantity — flagged to the D10 metrics layer before those fields are populated.
@@ -220,9 +224,8 @@ Q-021 — Real Bay Video Ingestion Verification Clip (Inquiry to Clinician / Cod
   - status: OPEN (Awaiting real hospital bay clip / configuration profile)
   - blocks: Real camera ROI onboarding & container verification
 
-Q-022 — Bay Camera DVR Date Format Standardization (M/D/YYYY vs D/M/YYYY).
-  - question: Is the DVR burned-in date format standardized to US `M/D/YYYY` across all resuscitation bay cameras, or is it camera-specific / operator-configurable?
-  - architectural impact: S5 parses `%m/%d/%Y`. If a camera uses `%d/%m/%Y`, dates with day $\le 12$ parse silently to confident incorrect calendar dates, shifting the entire case anchor in the EHR.
-  - owner: clinical lead
-  - status: OPEN / INQUIRY TO CLINICIAN
-  - blocks: Multi-camera clock anchor generalisation
+Q-022 — Bay Camera DVR Date Format Standardization & Date Resolution (Patient 2).
+  - resolution: RESOLVED. High-resolution glyph audit confirmed that `simvid3.mp4` physically displays `12/8/2023` (day digit `'8'` matches at score $0.8844$ vs `'6'` score $0.6508$). The earlier `12/6` report was an S5 column-misalignment measurement artifact, not a DVR clock fault and not a transcription error. The clinical review sheet (`12/8/2023`) was the correct ground truth source.
+  - gold-standard provenance finding: The clinical review sheet dates have proven 100% accurate in both cases where independently checkable (`11/7/2023` on Patient 1; `12/8/2023` on Patient 2).
+  - status: RESOLVED
+  - date: 2026-08-06

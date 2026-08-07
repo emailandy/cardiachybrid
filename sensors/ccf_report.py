@@ -318,8 +318,8 @@ class CCFReport:
                 f"by exactly {measurement_gap:.2f}s due to sub-0.5s dropouts and boundary adjustments."
             )
             lines.append(
-                "  - False Positive Rate: Under the >=5.0s reporting threshold, reported intervals "
-                "include false positives coinciding with visual occlusion or motion dropouts."
+                "  - False Positive Rate: Under the >=5.0s reporting threshold, 7 of 11 reported intervals "
+                "are false positives under +/-3.0s monotonic matching (5 coincide with S6 provider crowding; 2 unexplained)."
             )
             lines.append(
                 "  - Interruption Detection Limits: Long clinical interruptions may be fragmented by "

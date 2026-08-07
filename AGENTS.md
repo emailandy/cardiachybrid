@@ -61,7 +61,9 @@ A fabricated specific is more damaging than an admitted gap, because it
 looks answered. This applies with full force to TODO items and open
 questions, which are read by clinicians who cannot easily tell invention
 from grounding.
-Before reporting any experimental conclusion, state the model, fps, prompt, and window used in each cell, and confirm they match the pipeline configuration under test. An experiment that varies an unintended parameter measures the wrong thing, and a conclusion drawn from it is worse than no conclusion because it will be acted on.
+## GROUNDED MEASUREMENT LOGGING
+Any experimental metric, scorecard value, accuracy figure, or runtime reported in deliverables or documentation must originate from a verified execution recorded in `docs/RUNS.jsonl` with an explicit timestamp and exit code 0.
+A number that exists only in prose or chat output is not a valid result. Re-emitting stale execution logs across sessions without a live execution entry in `docs/RUNS.jsonl` is strictly prohibited.
 
 ## ANTI-PATTERNS — you will be tempted by all five
 | Tempting | Why it's wrong | Instead |
