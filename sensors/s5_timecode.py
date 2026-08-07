@@ -96,6 +96,15 @@ def read_timecode(
         base_x = tc_cfg.get("x", 80)
         base_y = tc_cfg.get("y", 120)
         base_h = tc_cfg.get("height", 24)
+        if min_confidence is None:
+            min_confidence = float(tc_cfg.get("min_confidence", 0.60))
+        if min_margin is None:
+            min_margin = float(tc_cfg.get("min_margin", 0.0070))
+
+    if min_confidence is None:
+        min_confidence = 0.60
+    if min_margin is None:
+        min_margin = 0.0070
 
     # Search horizontal band: y=120..144, x=60..380 (covers Room 1 x~80 and Room 2 x~178)
     y0, y1 = max(0, base_y), min(frame.shape[0], base_y + base_h)
@@ -243,13 +252,59 @@ def read_timecode(
 
             min_s = min(scores) if scores else 0.0
             if min_s >= min_confidence and min_s > best_score:
-                best_score = min_s
                 date_str = "".join(chars[: s2_idx + 5])
                 time_str = "".join(chars[s2_idx + 5 : -2])
                 period_str = "".join(chars[-2:])
+                
+                # Grammar & Domain Range Validation (W2)
+                is_valid, err_msg = validate_timecode_fields(date_str, time_str, period_str)
+                if not is_valid:
+                    logger.warning(
+                        "S5 OCR grammar validation failed: %s (decoded %s %s %s)",
+                        err_msg, date_str, time_str, period_str
+                    )
+                    continue
+
+                best_score = min_s
                 best_decoded = f"{date_str} {time_str} {period_str}"
 
     return best_decoded
+
+
+def validate_timecode_fields(date_str: str, time_str: str, period_str: str) -> tuple[bool, str | None]:
+    """Validates calendar and clock domain ranges for 12-hour AM/PM timecode format."""
+    try:
+        month_s, day_s, year_s = date_str.split("/")
+        month, day, year = int(month_s), int(day_s), int(year_s)
+        if not (1 <= month <= 12):
+            return False, f"month={month} outside [1, 12]"
+        if not (1 <= day <= 31):
+            return False, f"day={day} outside [1, 31]"
+        if not (2000 <= year <= 2099):
+            return False, f"year={year} outside [2000, 2099]"
+
+        time_toks = time_str.split(":")
+        if len(time_toks) != 3:
+            return False, f"time token count={len(time_toks)} != 3"
+        hour_s, min_s = time_toks[0], time_toks[1]
+        sec_toks = time_toks[2].split(".")
+        sec_s = sec_toks[0]
+        ms_s = sec_toks[1] if len(sec_toks) > 1 else "0"
+
+        hour, minute, second, ms = int(hour_s), int(min_s), int(sec_s), int(ms_s)
+        if not (1 <= hour <= 12):
+            return False, f"hour={hour} outside [1, 12] for 12-hour format"
+        if not (0 <= minute <= 59):
+            return False, f"minute={minute} outside [0, 59]"
+        if not (0 <= second <= 59):
+            return False, f"second={second} outside [0, 59]"
+        if not (0 <= ms <= 999):
+            return False, f"millisecond={ms} outside [0, 999]"
+        if period_str not in ("AM", "PM"):
+            return False, f"period={period_str!r} not in ('AM', 'PM')"
+        return True, None
+    except Exception as e:
+        return False, str(e)
 
 
 def parse_timecode_to_iso(timecode_str: str) -> str:
@@ -343,6 +398,8 @@ def read_video_timecode_samples(
 def synchronize_clock_anchor(
     video_path: str,
     roi_config_path: str | None = None,
+    t_start: float | None = None,
+    t_end: float | None = None,
     max_drift_tolerance_s: float = 0.50,
     sample_stride_s: float = 30.0,
 ) -> ClockAnchor:
@@ -370,13 +427,16 @@ def synchronize_clock_anchor(
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     duration_s = total_frames / fps if total_frames > 0 else 0.0
 
+    win_start = float(t_start) if t_start is not None else (5.0 if duration_s <= 35.0 else 10.0)
+    win_end = float(t_end) if t_end is not None else duration_s
+
     # 1. Dense monotonic sampling (every sample_stride_s, plus bounds)
-    fallback_log.append(f"Attempting dense burned_in timecode verification across {duration_s:.1f}s video...")
+    fallback_log.append(f"Attempting dense burned_in timecode verification across {win_start:.1f}s..{win_end:.1f}s window (video duration {duration_s:.1f}s)...")
     
-    if duration_s <= 35.0:
-        sample_times = [float(s) for s in range(5, int(duration_s), 5)]
+    if (win_end - win_start) <= 35.0:
+        sample_times = [float(s) for s in range(int(win_start), int(win_end), 5)]
     else:
-        sample_times = [float(s) for s in range(10, int(duration_s), int(sample_stride_s))]
+        sample_times = [float(s) for s in range(int(win_start), int(win_end), int(sample_stride_s))]
 
     samples: list[dict[str, Any]] = []
     implied_t0_timestamps: list[float] = []

@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "case_id": "simvideo2.mp4",
-  "generated_at_utc": "2026-08-06T20:00:17Z",
+  "generated_at_utc": "2026-08-07T14:55:21Z",
   "source_hashes": {
-    "sensors/s1_s6_motion.py": "c2c80f65ec380c7c6c1f60a4d203b8b164fdaead70eb35d7db9c9f19d36d97dc",
+    "sensors/s1_s6_motion.py": "19a7ced156f38e00bc8d521d06ba84eb3fad8d7d8dd26c0e0f584662e344f9d9",
     "sensors/eval/metrics.py": "c9fea7d00f3d5087562b52f2411c1d1022dc907bc1fbaeb726d68286db604744",
     "sensors/eval/report.py": "b74d57b571220721df8a744a56ca33495260f0d7277f1f56f52ae8d189d7dbc2",
-    "sensors/calibration/roi_config.yaml": "a88d176431794b5270fa58362cd03fb680d3d88afd6af5a53bd7d7b49974ee7a",
+    "sensors/calibration/roi_config.yaml": "4ee68d46be88d15cca3456d4c050080c1af892aadbefa976127506f4096c6780",
     "fixtures/ground_truth_simvideo2.json": "7b564a498c1f87ee03d1ca16370572295dfef8e0fa087cc2b88ce6a229b36525"
   },
   "provenance": "human_adjudicated",
@@ -45,20 +45,10 @@
     "f1_3s": 0.4444,
     "precision_3s": 0.3636,
     "recall_3s": 0.5714,
-    "duration_recall": 0.5,
     "false_positives_3s": 7,
     "s6_explained_fps": 5,
     "unexplained_fps": 2,
     "f1_2s": 0.3333,
     "mae_2s": 1.0183
-  },
-  "cancelling_errors": {
-    "net_interval_excess_s": 58.0,
-    "fp_pause_duration_active_s": 101.52,
-    "fn_missed_pause_duration_active_s": 41.0,
-    "boundary_double_count_s": 2.52,
-    "two_measurement_gap_s": 15.96,
-    "total_ccf_error_s": 73.96,
-    "duration_recall": 0.5
   }
 }

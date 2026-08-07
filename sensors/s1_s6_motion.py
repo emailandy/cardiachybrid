@@ -200,8 +200,20 @@ class S1ChestMotionDetector:
             cad = self._estimate_cadence_cpm(seg_filtered, fps)
             return cad, None, "unable_to_determine — epoch too short for cadence variance"
 
+        # Signal Quality Gate (Y1/Y2): abstain on sub-floor noise
+        min_mod = float(self.s1_config.get("min_modulation", 0.010))
+        rms_win = min(len(seg_filtered), self._frames(1.6, fps, "rms window"))
+        if rms_win > 0 and len(seg_filtered) >= rms_win:
+            rms_sig = np.sqrt(np.convolve(seg_filtered**2, np.ones(rms_win) / rms_win, mode="valid"))
+            median_mod = float(np.median(rms_sig)) if len(rms_sig) > 0 else 0.0
+        else:
+            median_mod = float(np.sqrt(np.mean(seg_filtered**2)))
+
+        if median_mod < min_mod:
+            return 0.0, None, "unable_to_determine — sub-floor modulation (unmeasured noise)"
+
         mech_max_std = float(
-            self.s1_config.get("mechanical_cadence_max_std_cpm", 3.0)
+            self.s1_config.get("mechanical_cadence_max_std_cpm", 2.83)
         )
         man_min_std = float(
             self.s1_config.get("manual_cadence_min_std_cpm", 8.0)
@@ -232,9 +244,16 @@ class S1ChestMotionDetector:
         sub_stds = [float(np.std(cadences[i : i + 3])) for i in range(len(cadences) - 2)]
         min_sub_std = min(sub_stds)
 
+        mech_min_cpm = float(self.s1_config.get("mechanical_cadence_min_cpm", 96.0))
+        mech_max_cpm = float(self.s1_config.get("mechanical_cadence_max_cpm", 108.0))
+
         if min_sub_std < mech_max_std:
-            mode = "mechanical"
-            std_cad = round(min_sub_std, 1)
+            if mech_min_cpm <= med_cad <= mech_max_cpm:
+                mode = "mechanical"
+                std_cad = round(min_sub_std, 1)
+            else:
+                mode = "unable_to_determine — steady cadence outside mechanical device specification"
+                std_cad = round(min_sub_std, 1)
         elif std_cad_overall > man_min_std and all(s > man_min_std for s in sub_stds):
             mode = "manual"
             std_cad = round(std_cad_overall, 1)

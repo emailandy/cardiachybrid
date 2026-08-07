@@ -176,6 +176,17 @@ Date: 2026-08-06  Session: S09  Decided by: human, agent
 2. **Context-Free Template Bootstrapping**: Script `scripts/extract_timecode_templates.py` extracts clean, edge-uncontaminated grayscale glyph templates (`0-9`, `/`, `:`, `.`, `A`, `M`) directly from reference frames with background margin verification on both lateral borders. No synthetic `P.png` is created; S5 operates strictly in morning envelope (`AM`) and cleanly abstains on afternoon footage under Invariant I5.
 3. **Acceptance & Validation**: Successfully decodes Patient 2 / Room 2 (`simvid3.mp4`) as `12/8/2023 07:54:26.840 AM` (resolving day digit `8` without manual x-offset) and Patient 1 / Room 1 (`vidsim2.mp4`) as `11/7/2023 07:55:57.072 AM` ($T_0 = \text{2023-11-07T07:55:57}$, matching human clock logs at $t=300\text{s}$) with 5-run bit-identical determinism.
 
+## 036 — Mechanical Cadence Cross-Case Validation (n=2) & Frame-Rate Transferability
+Date: 2026-08-07  Session: S09  Decided by: human, agent
+1. **Mechanical Classifier Validation on Second Case ($n=2$)**: Evaluated S1 optical flow across Patient 2 (`simvid3.mp4`, Room 2, 30 fps) at the corrected epigastric bed zone ($x=850, y=650, 100\times 100\text{ px}$). During mechanical Interval #5 ($t=483.2\text{–}591.2\text{s}$), the S1 classifier output was **`mechanical`** with cadence **$103.4\text{ CPM}$** and standard deviation **$\sigma = 2.40\text{ CPM} \le 3.0\text{ CPM}$**, successfully matching Patient 1's measured $102\text{ CPM}$ ($\sigma = 0.00$) and confirming the mechanical branch across two rooms, two camera geometries, and two frame rates ($16\text{ fps}$ and $30\text{ fps}$).
+2. **Frame-Rate Parameter Scaling (AA9 Partial Resolution)**: 30 fps transfer confirmed mathematical scaling for:
+   - Bandpass filter normalization ($f / (f_s / 2)$)
+   - Rolling RMS window length (`int(1.6 * fps)`)
+   - Cadence variance window length (`int(20.0 * fps)`)
+   - Farneback frame time normalization.
+   *(Note: Spatial pixel thresholds such as `impulse_min_spike_px: 2.0` remain unscaled across camera resolutions).*
+3. **Manual Branch Untested & Patient 2 Status**: The manual classifier branch remains untested across rooms because Patient 2's manual phase is sub-floor at the bed ROI due to compressor occlusion and the static torso window breaks under two-minute provider rotations. For Patient 2, the manual phase ($t=13\text{–}483\text{s}$) is **`unable_to_determine` (UTD)**, while the mechanical phase ($t=483\text{–}591\text{s}$) is measurable with verified mechanical CPR.
+
 
 
 
