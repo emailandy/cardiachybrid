@@ -141,26 +141,39 @@ fi
 
 # ── codegen determinism ─────────────────────────────────────────────────────
 if [[ -f generated/redcap_fields.py && -f generated/models.py && -f codegen/emit_python.py ]]; then
-  cp generated/redcap_fields.py /tmp/_inv_before_fields.py
-  cp generated/models.py /tmp/_inv_before_models.py
-  "$PY" -m codegen.emit_python >/dev/null 2>&1 || true
-  if diff -q /tmp/_inv_before_fields.py generated/redcap_fields.py >/dev/null && \
-     diff -q /tmp/_inv_before_models.py generated/models.py >/dev/null; then
-    green "codegen emit_python deterministic"
+  TMP_FIELDS=$(mktemp 2>/dev/null || true)
+  TMP_MODELS=$(mktemp 2>/dev/null || true)
+  if [[ -z "$TMP_FIELDS" || -z "$TMP_MODELS" ]] || ! cp generated/redcap_fields.py "$TMP_FIELDS" 2>/dev/null || ! cp generated/models.py "$TMP_MODELS" 2>/dev/null; then
+    err "codegen emit_python check COULD NOT RUN: failed to create temporary files"
+    [[ -n "$TMP_FIELDS" ]] && rm -f "$TMP_FIELDS"
+    [[ -n "$TMP_MODELS" ]] && rm -f "$TMP_MODELS"
   else
-    red "codegen emit_python NOT deterministic — generated/ differs on rebuild"
+    "$PY" -m codegen.emit_python >/dev/null 2>&1 || true
+    if diff -q "$TMP_FIELDS" generated/redcap_fields.py >/dev/null && \
+       diff -q "$TMP_MODELS" generated/models.py >/dev/null; then
+      green "codegen emit_python deterministic"
+    else
+      red "codegen emit_python NOT deterministic — generated/ differs on rebuild"
+    fi
+    rm -f "$TMP_FIELDS" "$TMP_MODELS"
   fi
 else
   skip "determinism check requires D04"
 fi
 
 if [[ -f generated/branching_compiled.py && -f codegen/emit_branching.py ]]; then
-  cp generated/branching_compiled.py /tmp/_inv_before_br.py
-  "$PY" -m codegen.emit_branching >/dev/null 2>&1 || true
-  if diff -q /tmp/_inv_before_br.py generated/branching_compiled.py >/dev/null; then
-    green "codegen branching deterministic"
+  TMP_BR=$(mktemp 2>/dev/null || true)
+  if [[ -z "$TMP_BR" ]] || ! cp generated/branching_compiled.py "$TMP_BR" 2>/dev/null; then
+    err "codegen branching check COULD NOT RUN: failed to create temporary file"
+    [[ -n "$TMP_BR" ]] && rm -f "$TMP_BR"
   else
-    red "codegen branching NOT deterministic"
+    "$PY" -m codegen.emit_branching >/dev/null 2>&1 || true
+    if diff -q "$TMP_BR" generated/branching_compiled.py >/dev/null; then
+      green "codegen branching deterministic"
+    else
+      red "codegen branching NOT deterministic"
+    fi
+    rm -f "$TMP_BR"
   fi
 fi
 

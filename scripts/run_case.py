@@ -209,15 +209,17 @@ def call_model_with_retry(vc: VertexClient, model: str, contents: list[Any], **k
 
 
 def call_model_cached(vc: VertexClient, model: str, contents: list[Any], pass_name: str, use_cache: bool = False, cache_dir: Path | None = None, **kwargs: Any) -> str:
-    cache_dir = cache_dir or Path("generated/cache")
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    cache_file = cache_dir / f"{pass_name}.txt"
-    if use_cache and cache_file.exists():
-        logging.info(f"Using cached response for {pass_name}")
-        return cache_file.read_text(encoding="utf-8")
+    if use_cache and cache_dir:
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        cache_file = cache_dir / f"{pass_name}.txt"
+        if cache_file.exists():
+            logging.info(f"Using cached response for {pass_name}")
+            return cache_file.read_text(encoding="utf-8")
     res = call_model_with_retry(vc, model=model, contents=contents, pass_name=pass_name, **kwargs)
     txt = res.text
-    cache_file.write_text(txt, encoding="utf-8")
+    if use_cache and cache_dir:
+        cache_file = cache_dir / f"{pass_name}.txt"
+        cache_file.write_text(txt, encoding="utf-8")
     return txt
 
 
@@ -275,7 +277,8 @@ def run_live(args: argparse.Namespace, duration_s: float) -> None:
     print("    will come back unpopulated/UTD with an OCR-related abstain reason because monitor vital signs are illegible.")
     print("  - Why this matters: If any of these columns come back populated, the model is hallucinating numbers it cannot see.\n")
 
-    vc = VertexClient(project="nodepeel", location="global", log_path=Path("generated/calls.jsonl"))
+    log_path = Path(".resus_qc_tmp/calls.jsonl") if getattr(args, "log_calls", False) else None
+    vc = VertexClient(project="nodepeel", location="global", log_path=log_path)
 
     surviving_events: list[Event] = []
     surviving_intervals: list[Interval] = []

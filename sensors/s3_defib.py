@@ -117,27 +117,13 @@ def load_audio_mono_16k(audio_or_video_path: str | Path) -> tuple[np.ndarray, in
             y = y.mean(axis=1)
         return y, int(sr_val)
 
-    temp_wav = Path(f"/tmp/s3_audio_{abs(hash(str(path.resolve())))}.wav")
-    if not temp_wav.exists():
-        cmd = [
-            "ffmpeg",
-            "-y",
-            "-i",
-            str(path),
-            "-vn",
-            "-ac",
-            "1",
-            "-ar",
-            "16000",
-            "-loglevel",
-            "error",
-            str(temp_wav),
-        ]
-        subprocess.run(cmd, check=True)
-    y, sr_val = sf.read(str(temp_wav))
-    if y.ndim > 1:
-        y = y.mean(axis=1)
-    return y, int(sr_val)
+    from sensors.temp_artifacts import transient_audio_extract
+
+    with transient_audio_extract(path, sr=16000, mono=True) as temp_wav:
+        y, sr_val = sf.read(str(temp_wav))
+        if y.ndim > 1:
+            y = y.mean(axis=1)
+        return y, int(sr_val)
 
 
 class S3DefibDetector:

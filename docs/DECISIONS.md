@@ -158,6 +158,13 @@ Date: 2026-08-05  Session: S03b  Decided by: human, agent
 2. **Total Fragmentation of GT #7 (`F-028`)**: Established F-028: the longest clinical pause ($844\text{–}874\text{s}$, $30.0\text{s}$, $36.6\%$ of all no-flow time) was fragmented into 4 sub-$5\text{s}$ slivers ($1.19\text{s}$, $2.25\text{s}$, $1.25\text{s}$, $3.82\text{s}$) by continuous provider movement during resuscitation termination, missing $71.6\%$ ($21.49\text{s}$) of no-flow duration.
 3. **Structural Absence of Shock Containment in Mechanical CPR (`F-029`)**: Retracted earlier claims of shock containment. Confirmed 0 of 5 defibrillation shocks fall inside pauses during mechanical CPR (shocks land 5–17s after pauses end).
 
+## 033 — Mandatory Repository-Local Transient Artifacts & Guaranteed Cleanup (`F-036`)
+Date: 2026-08-06  Session: G1  Decided by: human, agent
+1. **Repository-Local Restricted Scratch Space**: Intermediate media extractions (e.g. ffmpeg audio extracts) must never be written to shared, world-readable directories like `/tmp/` or system `tempfile.gettempdir()`. On clinical deployments, intermediate audio extracts contain unredacted resuscitation room speech (PHI). All transient extractions must target a project-local working directory (e.g. `.resus_qc_tmp/`), gitignored, and created with restrictive user-only permissions (`0700`).
+2. **Guaranteed Cleanup Lifecycle**: All transient files must be managed within context managers or explicit `try ... finally` blocks that guarantee deletion on success, unhandled exceptions, and process interrupts (`SIGINT`/`SIGTERM`).
+3. **No Non-Deterministic Caching**: Filenames based on process-randomized `hash(...)` that cannot be deterministically resolved across executions are prohibited. Intermediate extractions must either be strictly ephemeral (unlinked immediately after array loading) or indexed deterministically.
+
+
 
 
 

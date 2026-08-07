@@ -53,6 +53,13 @@ The pipeline must serialize a structured JSON diagnostics bundle (`telemetry.jso
 
 *Note on Timestamps & File Paths*: All timestamps in `telemetry.json` must be relative seconds from video start ($t=0.0\text{s}$). Burned-in clock ISO strings (e.g. `2023-11-07T07:55:57`) and absolute local filesystem paths must NOT be exported in remote telemetry.
 
+> [!CAUTION]
+> **CORRECTION (F-036 / Intermediate Disk Artifact Audit Defect)**: The previous audit of PHI containment in this section was **incomplete** because it analyzed only intended shipping outputs (`ccf_report.py`, `telemetry.json`) and failed to audit intermediate disk artifacts generated during pipeline execution. In reality, `s2_compression_audio.py` and `s3_defib.py` invoked `ffmpeg` to write unredacted `.wav` audio extracts into the shared, world-readable `/tmp/` directory without cleanup (325 files totaling 12.97 GB accumulated). On clinical footage, these intermediate artifacts contain full resuscitation room dialogue and identifiable speech left persistently on hospital machines. All transient files must be restricted to project-local directories (`.resus_qc_tmp/`) with startup sweep initialization and guaranteed `try ... finally` lifecycle deletion.
+> 
+> *Deployment Prerequisite*: Because `.resus_qc_tmp/` resides within the repository root, institutional IT administrators must explicitly **exclude `.resus_qc_tmp/` from automated filesystem backups, volume snapshots, and network synchronization software**. A transient PHI artifact captured on a backed-up volume is no longer transient.
+
+
+
 ---
 
 ### 2. What CANNOT Be Diagnosed From Numbers Alone (The Blindspots)

@@ -269,24 +269,67 @@ def check_manifest_consistency() -> list[str]:
 
 
 def check_arithmetic_consistency() -> list[str]:
-    """Verifies basic arithmetic formulas cited in prose (e.g. A - B = C)."""
+    """Verifies basic arithmetic formulas cited in prose across docs/ and sensors/."""
     errors: list[str] = []
-    # Match patterns like 155.96s - 140.00s = 15.96s, stripping LaTeX \text{s}
     clean_line_pattern = re.compile(r"\\text\{s\}|\\textbf\{|\}|\$")
-    gap_pattern = re.compile(r"(\d+(?:\.\d+)?)\s*s?\s*(?:vs|\-)\s*(\d+(?:\.\d+)?)\s*s?\s*(?:=|\:|\->|\(|\))\s*(\d+(?:\.\d+)?)\s*s?", re.IGNORECASE)
+    gap_pattern_1 = re.compile(r"(\d+(?:\.\d+)?)\s*s?\s*(?:vs|\-)\s*(\d+(?:\.\d+)?)\s*s?\s*(?:=|\:|\->)\s*(\d+(?:\.\d+)?)\s*s?", re.IGNORECASE)
+    gap_pattern_2 = re.compile(r"(\d+(?:\.\d+)?)\s*s?\s*difference\s*\(\s*(\d+(?:\.\d+)?)\s*s?\s*-\s*(\d+(?:\.\d+)?)\s*s?\s*\)", re.IGNORECASE)
 
-    findings_file = DOCS_DIR / "SENSOR_FINDINGS.md"
-    if findings_file.exists():
-        content = findings_file.read_text(encoding="utf-8")
+    paths_to_scan = sorted(list(DOCS_DIR.rglob("*.md")) + list(SENSORS_DIR.rglob("*.py")))
+    for p in paths_to_scan:
+        try:
+            content = p.read_text(encoding="utf-8")
+        except Exception:
+            continue
         for line_no, line in enumerate(content.splitlines(), start=1):
             clean_line = clean_line_pattern.sub("", line)
-            if "vs raw cci sum" in clean_line.lower() or "difference (" in clean_line.lower():
-                for m in gap_pattern.finditer(clean_line):
+            if "vs raw cci sum" in clean_line.lower() or "difference (" in clean_line.lower() or "two-measurement gap" in clean_line.lower():
+                for m in gap_pattern_1.finditer(clean_line):
                     a, b, c = float(m.group(1)), float(m.group(2)), float(m.group(3))
                     if abs(abs(a - b) - c) > 0.05:
                         errors.append(
-                            f"Arithmetic mismatch at SENSOR_FINDINGS.md:{line_no} — |{a} - {b}| = {abs(a-b):.2f} != {c}"
+                            f"Arithmetic mismatch at {p.relative_to(REPO_ROOT)}:{line_no} — |{a} - {b}| = {abs(a-b):.2f} != {c}"
                         )
+                for m in gap_pattern_2.finditer(clean_line):
+                    c, a, b = float(m.group(1)), float(m.group(2)), float(m.group(3))
+                    if abs(abs(a - b) - c) > 0.05:
+                        errors.append(
+                            f"Arithmetic mismatch at {p.relative_to(REPO_ROOT)}:{line_no} — |{a} - {b}| = {abs(a-b):.2f} != {c}"
+                        )
+    return errors
+
+
+def check_unvalidated_report_integrity() -> list[str]:
+    """
+    Enforces that report JSONs marked unvalidated or with no ground truth
+    must not carry ground-truth-derived accuracy metrics or error figures.
+    """
+    errors = []
+    demo_dir = REPO_ROOT / "demo"
+    if not demo_dir.exists():
+        return errors
+
+    for jf in demo_dir.glob("*.json"):
+        try:
+            data = json.loads(jf.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if not isinstance(data, dict):
+            continue
+
+        val_status = str(data.get("validation_status", "")).lower()
+        if "not validated" in val_status or "unvalidated" in val_status:
+            # Must not contain gt figures
+            if data.get("validation") is not None:
+                errors.append(
+                    f"{jf.name} is marked unvalidated but contains a non-null 'validation' block."
+                )
+            caveats_str = " ".join(data.get("caveats", []))
+            for forbidden_sub in ["CCF Error is", "GT active CPR", "false positives under"]:
+                if forbidden_sub in caveats_str:
+                    errors.append(
+                        f"{jf.name} is marked unvalidated but carries ground-truth caveat '{forbidden_sub}'."
+                    )
     return errors
 
 
@@ -454,34 +497,103 @@ def regenerate_manifest() -> int:
     return 0
 
 
+def check_transient_workspace_integrity() -> list[str]:
+    """Verifies that .resus_qc_tmp/ and calls.jsonl are ignored by git and scratch directory is empty."""
+    errors = []
+    # Check .resus_qc_tmp ignore status
+    res = subprocess.run(["git", "check-ignore", "-q", ".resus_qc_tmp/"], cwd=REPO_ROOT)
+    if res.returncode != 0:
+        errors.append(".resus_qc_tmp/ is NOT ignored by .gitignore (PHI risk).")
+
+    # Check calls.jsonl ignore status
+    res = subprocess.run(["git", "check-ignore", "-q", "calls.jsonl"], cwd=REPO_ROOT)
+    if res.returncode != 0:
+        errors.append("calls.jsonl is NOT ignored by .gitignore (PHI risk).")
+
+    tmp_dir = REPO_ROOT / ".resus_qc_tmp"
+    if tmp_dir.exists():
+        residual_files = list(tmp_dir.glob("*"))
+        if residual_files:
+            errors.append(
+                f".resus_qc_tmp/ contains {len(residual_files)} residual artifact(s) at gate time: {[f.name for f in residual_files[:5]]}"
+            )
+    return errors
+
+
+def check_demo_cleanliness() -> list[str]:
+    """
+    Enforces Decision 033 / K1: demo/ccf_viewer.html must be a pure renderer with zero
+    hardcoded metric scores, dummy datasets, or embedded simulation numbers.
+    """
+    errors = []
+    viewer_file = REPO_ROOT / "demo" / "ccf_viewer.html"
+    if not viewer_file.exists():
+        return errors
+
+    data_patterns = [
+        (r"(const|let|var)\s+defaultReport\s*=", "embedded defaultReport dataset"),
+        (r"['\"]?shocks['\"]?\s*:\s*\[\s*\{", "embedded hardcoded shocks list"),
+        (r"['\"]?cci_intervals['\"]?\s*:\s*\[\s*\{", "embedded hardcoded cci_intervals list"),
+        (r">\s*\d+\.\d+%\s*<", "hardcoded percentage text in HTML markup"),
+        (r"\b1363\.78\b", "hardcoded simulation duration (1363.78s)"),
+        (r"\b209\.74\b", "hardcoded truncated CPR duration (209.74s)"),
+        (r"\b1154\.03\b", "hardcoded pause duration (1154.03s)"),
+        (r"\b695\.29\b", "hardcoded active CPR duration (695.29s)"),
+        (r"\b15\.38\b", "hardcoded stale CCF (15.38%)"),
+    ]
+
+    text = viewer_file.read_text(encoding="utf-8")
+    for pattern, label in data_patterns:
+        if re.search(pattern, text):
+            errors.append(
+                f"demo/ccf_viewer.html violates pure-renderer contract: contains {label}."
+            )
+
+    return errors
+
+
+
+
 def verify_all_claims() -> int:
     """Executes all fast-tier mechanical honesty checks."""
     print("=== Running Mechanical Honesty Gate (scripts/check_claims.sh) ===")
     all_errors: list[str] = []
 
-    print("[1/6] Checking Git commit SHA resolutions...")
+    print("[1/7] Checking Git commit SHA resolutions...")
     sha_errors = check_commit_shas()
     all_errors.extend(sha_errors)
 
-    print("[2/6] Checking Ground Truth interval quotations...")
+    print("[2/7] Checking Ground Truth interval quotations...")
     gt_errors = check_ground_truth_quotations()
     all_errors.extend(gt_errors)
 
-    print("[3/6] Checking identifier uniqueness (Findings, Decisions, Questions)...")
+    print("[3/7] Checking identifier uniqueness (Findings, Decisions, Questions)...")
     id_errors = check_id_uniqueness()
     all_errors.extend(id_errors)
 
-    print("[4/6] Checking metric manifest freshness & cross-document consistency...")
+    print("[4/7] Checking metric manifest freshness & cross-document consistency...")
     manifest_errors = check_manifest_consistency()
     all_errors.extend(manifest_errors)
 
-    print("[5/6] Checking cited arithmetic consistency...")
+    print("[5/7] Checking cited arithmetic consistency...")
     arith_errors = check_arithmetic_consistency()
     all_errors.extend(arith_errors)
 
-    print("[6/6] Checking grounded measurement run logs (docs/RUNS.jsonl)...")
+    print("[6/7] Checking grounded measurement run logs (docs/RUNS.jsonl)...")
     runs_errors = check_grounded_runs()
     all_errors.extend(runs_errors)
+
+    print("[7/7] Checking transient workspace integrity (.resus_qc_tmp & calls.jsonl)...")
+    tmp_errors = check_transient_workspace_integrity()
+    all_errors.extend(tmp_errors)
+
+    print("[8/9] Checking demo/ pure-renderer contract & zero hardcoded metrics...")
+    demo_errors = check_demo_cleanliness()
+    all_errors.extend(demo_errors)
+
+    print("[9/9] Checking unvalidated report integrity (zero leaked GT metrics)...")
+    unval_errors = check_unvalidated_report_integrity()
+    all_errors.extend(unval_errors)
 
     if all_errors:
         print("\n❌ MECHANICAL HONESTY GATE FAILED:")

@@ -8,6 +8,9 @@ import numpy as np
 import soundfile as sf
 from scipy import signal, stats
 
+from pathlib import Path
+import subprocess
+
 WINDOWS = [
     (160.0, 180.0, "Consensus Shock 1 (draws: 164.0 / 165.0 / 171.5 / 173.0)", 167.94),
     (380.0, 395.0, "Consensus Shock 2 (draws: 386.5 / 387.0)", 385.07),
@@ -19,10 +22,30 @@ WINDOWS = [
 
 
 def analyze_charge_tone(idx: int, ts: float, te: float, label: str, t_peak: float) -> None:
-    wav_path = f"/tmp/probe_win_{idx}.wav"
-    y, sr = sf.read(wav_path)
-    if y.ndim > 1:
-        y = y.mean(axis=1)
+    from sensors.temp_artifacts import init_repo_temp_dir
+
+    temp_dir = init_repo_temp_dir(sweep=False)
+    wav_path = temp_dir / f"probe_win_{idx}.wav"
+
+    video_candidate = Path("tests/video/vidsim2.mp4")
+    if not video_candidate.exists():
+        video_candidate = Path("/tmp/sim.mp4")
+    if not video_candidate.exists():
+        print(f"Skipping window {idx+1}: Video file not found.")
+        return
+
+    cmd = [
+        "ffmpeg", "-y", "-ss", str(ts), "-t", str(te - ts),
+        "-i", str(video_candidate), "-vn", "-ac", "1", "-ar", "16000",
+        "-loglevel", "error", str(wav_path)
+    ]
+    try:
+        subprocess.run(cmd, check=True)
+        y, sr = sf.read(str(wav_path))
+        if y.ndim > 1:
+            y = y.mean(axis=1)
+    finally:
+        wav_path.unlink(missing_ok=True)
 
     # 1. RMS transient check around t_peak
     w = int(0.05 * sr)

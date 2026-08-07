@@ -22,17 +22,30 @@ WINDOWS = [
 
 
 def analyze_window(idx: int, t_start: float, t_end: float, label: str) -> None:
-    wav_path = f"/tmp/probe_win_{idx}.wav"
+    from sensors.temp_artifacts import init_repo_temp_dir
+
+    temp_dir = init_repo_temp_dir(sweep=False)
+    wav_path = temp_dir / f"probe_win_{idx}.wav"
+
+    video_candidate = Path("tests/video/vidsim2.mp4")
+    if not video_candidate.exists():
+        video_candidate = Path("/tmp/sim.mp4")
+    if not video_candidate.exists():
+        print(f"Skipping window {idx+1}: Video file not found.")
+        return
+
     cmd = [
         "ffmpeg", "-y", "-ss", str(t_start), "-t", str(t_end - t_start),
-        "-i", "/tmp/sim.mp4", "-vn", "-ac", "1", "-ar", "16000",
-        "-loglevel", "error", wav_path
+        "-i", str(video_candidate), "-vn", "-ac", "1", "-ar", "16000",
+        "-loglevel", "error", str(wav_path)
     ]
-    subprocess.run(cmd, check=True)
-
-    y, sr = sf.read(wav_path)
-    if y.ndim > 1:
-        y = y.mean(axis=1)
+    try:
+        subprocess.run(cmd, check=True)
+        y, sr = sf.read(str(wav_path))
+        if y.ndim > 1:
+            y = y.mean(axis=1)
+    finally:
+        wav_path.unlink(missing_ok=True)
 
     # 1. RMS Transient Envelope (50ms window)
     w = int(0.05 * sr)

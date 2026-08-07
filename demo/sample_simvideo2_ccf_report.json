@@ -1,0 +1,1528 @@
+{
+  "case_id": "simvideo2",
+  "video_path": "tests/video/vidsim2.mp4",
+  "t0_iso": "2023-11-07T07:55:57",
+  "t0_source": "burned_in",
+  "total_case_duration_s": 1363.78,
+  "patient_enters_room_s": 36.0,
+  "patient_enters_room_source": "operator_supplied",
+  "death_pronounced_s": 922.0,
+  "death_pronounced_source": "operator_supplied",
+  "interval_window_s": [
+    36.0,
+    922.0
+  ],
+  "intervals_abstained": false,
+  "intervals_abstain_reason": null,
+  "ccf_window_s": [
+    70.75,
+    922.0
+  ],
+  "t_first_s": 70.75,
+  "t_first_source": "sensor_derived (S1 first compression motion)",
+  "ccf_denominator_s": 851.25,
+  "total_cpr_duration_s": 695.29,
+  "total_cci_duration_s": 137.82,
+  "cpr_active_duration_s": 695.29,
+  "cpr_active_fraction": 0.8168,
+  "ccf": 0.817,
+  "ccf_percent": 81.7,
+  "ccf_by_2min_epoch": [
+    0.9615,
+    0.9036,
+    0.7182,
+    0.736,
+    0.7777,
+    0.7649,
+    0.8385
+  ],
+  "ccf_abstained": false,
+  "ccf_abstain_reason": null,
+  "n_cci_over_10s": 0,
+  "longest_cci_s": 9.62,
+  "median_cci_s": 2.28,
+  "readership_banner": [
+    "NOT FOR CLINICAL OR PERFORMANCE ASSESSMENT.",
+    "In the single manikin validation case, interval precision was 0.36 and the longest interruption was not detected. Accuracy on this case is unmeasured."
+  ],
+  "validation_status": "VALIDATED (against human ground truth)",
+  "validation": {
+    "gt_ccf_active": 0.9037,
+    "ccf_error_active": 0.0867,
+    "non_cpr_motion_duration_s": 155.96,
+    "interval_stream_pause_duration_s": 140.0,
+    "two_measurement_gap_s": 15.96
+  },
+  "caveats": [
+    "CCF Error is 0.09 across active window 70.75-922.00s: S1 active CPR 695.29s vs GT active CPR 769.25s (error reflects cancelling errors: false-positive pause duration accumulated during detection vs missed true pause duration).",
+    "Two-Measurement Gap: Non-CPR motion duration derived from compute_ccf (155.96s) and emitted interval stream pause duration (140.00s) differ by exactly 15.96s over the 851.25s CCF evaluation window.",
+    "7 of 11 reported intervals are false positives under +/-3.0s monotonic tolerance matching (5 coincide with S6-detected provider crowding; 2 are unexplained).",
+    "Single manikin case (n=1) validation basis. Device and bay calibration required before production."
+  ],
+  "shocks": [
+    {
+      "id": "shock_1",
+      "candidate_timestamp_s": 165.0,
+      "candidate_source": "operator_supplied",
+      "detected_timestamp_s": null,
+      "iso_time": "2023-11-07T07:55:57 + 165.00s",
+      "confirmed": false,
+      "adjudication_status": "UNAVAILABLE",
+      "adjudication_verdict": "S3 adjudication unavailable: no calibrated profile for this device (Q-019)",
+      "pre_shock_pause_s": null,
+      "post_shock_pause_s": null,
+      "shock_inside_cci": false,
+      "cci_id": null,
+      "peak_rms_ratio": 0.0,
+      "tone_slope_hz_s": 0.0
+    },
+    {
+      "id": "shock_2",
+      "candidate_timestamp_s": 388.0,
+      "candidate_source": "operator_supplied",
+      "detected_timestamp_s": null,
+      "iso_time": "2023-11-07T07:55:57 + 388.00s",
+      "confirmed": false,
+      "adjudication_status": "UNAVAILABLE",
+      "adjudication_verdict": "S3 adjudication unavailable: no calibrated profile for this device (Q-019)",
+      "pre_shock_pause_s": null,
+      "post_shock_pause_s": null,
+      "shock_inside_cci": false,
+      "cci_id": null,
+      "peak_rms_ratio": 0.0,
+      "tone_slope_hz_s": 0.0
+    },
+    {
+      "id": "shock_3",
+      "candidate_timestamp_s": 622.0,
+      "candidate_source": "operator_supplied",
+      "detected_timestamp_s": null,
+      "iso_time": "2023-11-07T07:55:57 + 622.00s",
+      "confirmed": false,
+      "adjudication_status": "UNAVAILABLE",
+      "adjudication_verdict": "S3 adjudication unavailable: no calibrated profile for this device (Q-019)",
+      "pre_shock_pause_s": null,
+      "post_shock_pause_s": null,
+      "shock_inside_cci": false,
+      "cci_id": null,
+      "peak_rms_ratio": 0.0,
+      "tone_slope_hz_s": 0.0
+    },
+    {
+      "id": "shock_4",
+      "candidate_timestamp_s": 742.0,
+      "candidate_source": "operator_supplied",
+      "detected_timestamp_s": null,
+      "iso_time": "2023-11-07T07:55:57 + 742.00s",
+      "confirmed": false,
+      "adjudication_status": "UNAVAILABLE",
+      "adjudication_verdict": "S3 adjudication unavailable: no calibrated profile for this device (Q-019)",
+      "pre_shock_pause_s": 1.08,
+      "post_shock_pause_s": 0.92,
+      "shock_inside_cci": true,
+      "cci_id": "cci_32",
+      "peak_rms_ratio": 0.0,
+      "tone_slope_hz_s": 0.0
+    },
+    {
+      "id": "shock_5",
+      "candidate_timestamp_s": 879.0,
+      "candidate_source": "operator_supplied",
+      "detected_timestamp_s": null,
+      "iso_time": "2023-11-07T07:55:57 + 879.00s",
+      "confirmed": false,
+      "adjudication_status": "UNAVAILABLE",
+      "adjudication_verdict": "S3 adjudication unavailable: no calibrated profile for this device (Q-019)",
+      "pre_shock_pause_s": null,
+      "post_shock_pause_s": null,
+      "shock_inside_cci": false,
+      "cci_id": null,
+      "peak_rms_ratio": 0.0,
+      "tone_slope_hz_s": 0.0
+    }
+  ],
+  "raw_intervals": [
+    {
+      "id": "cci_1",
+      "type": "compression_interruption",
+      "t_start_s": 150.0,
+      "t_end_s": 154.62,
+      "duration_s": 4.62,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_2",
+      "type": "compression_interruption",
+      "t_start_s": 245.74,
+      "t_end_s": 249.11,
+      "duration_s": 3.37,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_3",
+      "type": "compression_interruption",
+      "t_start_s": 249.49,
+      "t_end_s": 256.43,
+      "duration_s": 6.94,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_4",
+      "type": "compression_interruption",
+      "t_start_s": 341.68,
+      "t_end_s": 347.05,
+      "duration_s": 5.37,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_5",
+      "type": "compression_interruption",
+      "t_start_s": 351.8,
+      "t_end_s": 357.87,
+      "duration_s": 6.07,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_6",
+      "type": "compression_interruption",
+      "t_start_s": 362.74,
+      "t_end_s": 365.18,
+      "duration_s": 2.44,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_7",
+      "type": "compression_interruption",
+      "t_start_s": 365.36,
+      "t_end_s": 373.05,
+      "duration_s": 7.69,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_8",
+      "type": "compression_interruption",
+      "t_start_s": 375.11,
+      "t_end_s": 377.11,
+      "duration_s": 2.0,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_9",
+      "type": "compression_interruption",
+      "t_start_s": 377.43,
+      "t_end_s": 378.36,
+      "duration_s": 0.93,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_10",
+      "type": "compression_interruption",
+      "t_start_s": 383.68,
+      "t_end_s": 385.24,
+      "duration_s": 1.56,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_11",
+      "type": "compression_interruption",
+      "t_start_s": 397.86,
+      "t_end_s": 399.55,
+      "duration_s": 1.69,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_12",
+      "type": "compression_interruption",
+      "t_start_s": 430.86,
+      "t_end_s": 432.36,
+      "duration_s": 1.5,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_13",
+      "type": "compression_interruption",
+      "t_start_s": 436.86,
+      "t_end_s": 438.3,
+      "duration_s": 1.44,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_14",
+      "type": "compression_interruption",
+      "t_start_s": 438.36,
+      "t_end_s": 438.74,
+      "duration_s": 0.38,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_15",
+      "type": "compression_interruption",
+      "t_start_s": 452.05,
+      "t_end_s": 456.05,
+      "duration_s": 4.0,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_16",
+      "type": "compression_interruption",
+      "t_start_s": 459.99,
+      "t_end_s": 462.3,
+      "duration_s": 2.31,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_17",
+      "type": "compression_interruption",
+      "t_start_s": 470.3,
+      "t_end_s": 471.49,
+      "duration_s": 1.19,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_18",
+      "type": "compression_interruption",
+      "t_start_s": 483.74,
+      "t_end_s": 491.92,
+      "duration_s": 8.18,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_19",
+      "type": "compression_interruption",
+      "t_start_s": 495.74,
+      "t_end_s": 500.11,
+      "duration_s": 4.37,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_20",
+      "type": "compression_interruption",
+      "t_start_s": 509.61,
+      "t_end_s": 514.86,
+      "duration_s": 5.25,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_21",
+      "type": "compression_interruption",
+      "t_start_s": 525.55,
+      "t_end_s": 527.3,
+      "duration_s": 1.75,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_22",
+      "type": "compression_interruption",
+      "t_start_s": 567.42,
+      "t_end_s": 569.23,
+      "duration_s": 1.81,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_23",
+      "type": "compression_interruption",
+      "t_start_s": 608.86,
+      "t_end_s": 617.23,
+      "duration_s": 8.37,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_24",
+      "type": "compression_interruption",
+      "t_start_s": 623.73,
+      "t_end_s": 625.23,
+      "duration_s": 1.5,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_25",
+      "type": "compression_interruption",
+      "t_start_s": 630.17,
+      "t_end_s": 635.48,
+      "duration_s": 5.31,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_26",
+      "type": "compression_interruption",
+      "t_start_s": 639.42,
+      "t_end_s": 644.67,
+      "duration_s": 5.25,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_27",
+      "type": "compression_interruption",
+      "t_start_s": 664.42,
+      "t_end_s": 666.86,
+      "duration_s": 2.44,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_28",
+      "type": "compression_interruption",
+      "t_start_s": 675.48,
+      "t_end_s": 676.98,
+      "duration_s": 1.5,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_29",
+      "type": "compression_interruption",
+      "t_start_s": 701.92,
+      "t_end_s": 704.54,
+      "duration_s": 2.62,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_30",
+      "type": "compression_interruption",
+      "t_start_s": 715.79,
+      "t_end_s": 716.86,
+      "duration_s": 1.07,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_31",
+      "type": "compression_interruption",
+      "t_start_s": 727.61,
+      "t_end_s": 737.23,
+      "duration_s": 9.62,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_32",
+      "type": "compression_interruption",
+      "t_start_s": 740.92,
+      "t_end_s": 742.92,
+      "duration_s": 2.0,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_33",
+      "type": "compression_interruption",
+      "t_start_s": 750.1,
+      "t_end_s": 751.17,
+      "duration_s": 1.07,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_34",
+      "type": "compression_interruption",
+      "t_start_s": 758.23,
+      "t_end_s": 767.04,
+      "duration_s": 8.81,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_35",
+      "type": "compression_interruption",
+      "t_start_s": 797.73,
+      "t_end_s": 799.42,
+      "duration_s": 1.69,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_36",
+      "type": "compression_interruption",
+      "t_start_s": 810.54,
+      "t_end_s": 812.67,
+      "duration_s": 2.13,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_37",
+      "type": "compression_interruption",
+      "t_start_s": 819.04,
+      "t_end_s": 820.1,
+      "duration_s": 1.06,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_38",
+      "type": "compression_interruption",
+      "t_start_s": 822.6,
+      "t_end_s": 823.92,
+      "duration_s": 1.32,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_39",
+      "type": "compression_interruption",
+      "t_start_s": 839.73,
+      "t_end_s": 840.29,
+      "duration_s": 0.56,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_40",
+      "type": "compression_interruption",
+      "t_start_s": 840.42,
+      "t_end_s": 840.73,
+      "duration_s": 0.31,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_41",
+      "type": "compression_interruption",
+      "t_start_s": 845.66,
+      "t_end_s": 846.85,
+      "duration_s": 1.19,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_42",
+      "type": "compression_interruption",
+      "t_start_s": 853.16,
+      "t_end_s": 855.41,
+      "duration_s": 2.25,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_43",
+      "type": "compression_interruption",
+      "t_start_s": 862.48,
+      "t_end_s": 863.73,
+      "duration_s": 1.25,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_44",
+      "type": "compression_interruption",
+      "t_start_s": 870.91,
+      "t_end_s": 874.73,
+      "duration_s": 3.82,
+      "confidence": 0.88
+    }
+  ],
+  "ccf_intervals": [
+    {
+      "id": "cci_1",
+      "type": "compression_interruption",
+      "t_start_s": 150.0,
+      "t_end_s": 154.62,
+      "duration_s": 4.62,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_2",
+      "type": "compression_interruption",
+      "t_start_s": 245.74,
+      "t_end_s": 249.11,
+      "duration_s": 3.37,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_3",
+      "type": "compression_interruption",
+      "t_start_s": 249.49,
+      "t_end_s": 256.43,
+      "duration_s": 6.94,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_4",
+      "type": "compression_interruption",
+      "t_start_s": 341.68,
+      "t_end_s": 347.05,
+      "duration_s": 5.37,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_5",
+      "type": "compression_interruption",
+      "t_start_s": 351.8,
+      "t_end_s": 357.87,
+      "duration_s": 6.07,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_6",
+      "type": "compression_interruption",
+      "t_start_s": 362.74,
+      "t_end_s": 365.18,
+      "duration_s": 2.44,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_7",
+      "type": "compression_interruption",
+      "t_start_s": 365.36,
+      "t_end_s": 373.05,
+      "duration_s": 7.69,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_8",
+      "type": "compression_interruption",
+      "t_start_s": 375.11,
+      "t_end_s": 377.11,
+      "duration_s": 2.0,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_10",
+      "type": "compression_interruption",
+      "t_start_s": 383.68,
+      "t_end_s": 385.24,
+      "duration_s": 1.56,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_11",
+      "type": "compression_interruption",
+      "t_start_s": 397.86,
+      "t_end_s": 399.55,
+      "duration_s": 1.69,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_12",
+      "type": "compression_interruption",
+      "t_start_s": 430.86,
+      "t_end_s": 432.36,
+      "duration_s": 1.5,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_13",
+      "type": "compression_interruption",
+      "t_start_s": 436.86,
+      "t_end_s": 438.3,
+      "duration_s": 1.44,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_15",
+      "type": "compression_interruption",
+      "t_start_s": 452.05,
+      "t_end_s": 456.05,
+      "duration_s": 4.0,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_16",
+      "type": "compression_interruption",
+      "t_start_s": 459.99,
+      "t_end_s": 462.3,
+      "duration_s": 2.31,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_17",
+      "type": "compression_interruption",
+      "t_start_s": 470.3,
+      "t_end_s": 471.49,
+      "duration_s": 1.19,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_18",
+      "type": "compression_interruption",
+      "t_start_s": 483.74,
+      "t_end_s": 491.92,
+      "duration_s": 8.18,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_19",
+      "type": "compression_interruption",
+      "t_start_s": 495.74,
+      "t_end_s": 500.11,
+      "duration_s": 4.37,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_20",
+      "type": "compression_interruption",
+      "t_start_s": 509.61,
+      "t_end_s": 514.86,
+      "duration_s": 5.25,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_21",
+      "type": "compression_interruption",
+      "t_start_s": 525.55,
+      "t_end_s": 527.3,
+      "duration_s": 1.75,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_22",
+      "type": "compression_interruption",
+      "t_start_s": 567.42,
+      "t_end_s": 569.23,
+      "duration_s": 1.81,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_23",
+      "type": "compression_interruption",
+      "t_start_s": 608.86,
+      "t_end_s": 617.23,
+      "duration_s": 8.37,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_24",
+      "type": "compression_interruption",
+      "t_start_s": 623.73,
+      "t_end_s": 625.23,
+      "duration_s": 1.5,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_25",
+      "type": "compression_interruption",
+      "t_start_s": 630.17,
+      "t_end_s": 635.48,
+      "duration_s": 5.31,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_26",
+      "type": "compression_interruption",
+      "t_start_s": 639.42,
+      "t_end_s": 644.67,
+      "duration_s": 5.25,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_27",
+      "type": "compression_interruption",
+      "t_start_s": 664.42,
+      "t_end_s": 666.86,
+      "duration_s": 2.44,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_28",
+      "type": "compression_interruption",
+      "t_start_s": 675.48,
+      "t_end_s": 676.98,
+      "duration_s": 1.5,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_29",
+      "type": "compression_interruption",
+      "t_start_s": 701.92,
+      "t_end_s": 704.54,
+      "duration_s": 2.62,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_30",
+      "type": "compression_interruption",
+      "t_start_s": 715.79,
+      "t_end_s": 716.86,
+      "duration_s": 1.07,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_31",
+      "type": "compression_interruption",
+      "t_start_s": 727.61,
+      "t_end_s": 737.23,
+      "duration_s": 9.62,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_32",
+      "type": "compression_interruption",
+      "t_start_s": 740.92,
+      "t_end_s": 742.92,
+      "duration_s": 2.0,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_33",
+      "type": "compression_interruption",
+      "t_start_s": 750.1,
+      "t_end_s": 751.17,
+      "duration_s": 1.07,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_34",
+      "type": "compression_interruption",
+      "t_start_s": 758.23,
+      "t_end_s": 767.04,
+      "duration_s": 8.81,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_35",
+      "type": "compression_interruption",
+      "t_start_s": 797.73,
+      "t_end_s": 799.42,
+      "duration_s": 1.69,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_36",
+      "type": "compression_interruption",
+      "t_start_s": 810.54,
+      "t_end_s": 812.67,
+      "duration_s": 2.13,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_37",
+      "type": "compression_interruption",
+      "t_start_s": 819.04,
+      "t_end_s": 820.1,
+      "duration_s": 1.06,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_38",
+      "type": "compression_interruption",
+      "t_start_s": 822.6,
+      "t_end_s": 823.92,
+      "duration_s": 1.32,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_41",
+      "type": "compression_interruption",
+      "t_start_s": 845.66,
+      "t_end_s": 846.85,
+      "duration_s": 1.19,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_42",
+      "type": "compression_interruption",
+      "t_start_s": 853.16,
+      "t_end_s": 855.41,
+      "duration_s": 2.25,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_43",
+      "type": "compression_interruption",
+      "t_start_s": 862.48,
+      "t_end_s": 863.73,
+      "duration_s": 1.25,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_44",
+      "type": "compression_interruption",
+      "t_start_s": 870.91,
+      "t_end_s": 874.73,
+      "duration_s": 3.82,
+      "confidence": 0.88
+    }
+  ],
+  "redcap_intervals": [
+    {
+      "id": "cci_1",
+      "type": "compression_interruption",
+      "t_start_s": 150.0,
+      "t_end_s": 154.62,
+      "duration_s": 4.62,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_2",
+      "type": "compression_interruption",
+      "t_start_s": 245.74,
+      "t_end_s": 249.11,
+      "duration_s": 3.37,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_3",
+      "type": "compression_interruption",
+      "t_start_s": 249.49,
+      "t_end_s": 256.43,
+      "duration_s": 6.94,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_4",
+      "type": "compression_interruption",
+      "t_start_s": 341.68,
+      "t_end_s": 347.05,
+      "duration_s": 5.37,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_5",
+      "type": "compression_interruption",
+      "t_start_s": 351.8,
+      "t_end_s": 357.87,
+      "duration_s": 6.07,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_7",
+      "type": "compression_interruption",
+      "t_start_s": 365.36,
+      "t_end_s": 373.05,
+      "duration_s": 7.69,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_15",
+      "type": "compression_interruption",
+      "t_start_s": 452.05,
+      "t_end_s": 456.05,
+      "duration_s": 4.0,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_18",
+      "type": "compression_interruption",
+      "t_start_s": 483.74,
+      "t_end_s": 491.92,
+      "duration_s": 8.18,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_19",
+      "type": "compression_interruption",
+      "t_start_s": 495.74,
+      "t_end_s": 500.11,
+      "duration_s": 4.37,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_20",
+      "type": "compression_interruption",
+      "t_start_s": 509.61,
+      "t_end_s": 514.86,
+      "duration_s": 5.25,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_23",
+      "type": "compression_interruption",
+      "t_start_s": 608.86,
+      "t_end_s": 617.23,
+      "duration_s": 8.37,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_25",
+      "type": "compression_interruption",
+      "t_start_s": 630.17,
+      "t_end_s": 635.48,
+      "duration_s": 5.31,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_26",
+      "type": "compression_interruption",
+      "t_start_s": 639.42,
+      "t_end_s": 644.67,
+      "duration_s": 5.25,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_31",
+      "type": "compression_interruption",
+      "t_start_s": 727.61,
+      "t_end_s": 737.23,
+      "duration_s": 9.62,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_34",
+      "type": "compression_interruption",
+      "t_start_s": 758.23,
+      "t_end_s": 767.04,
+      "duration_s": 8.81,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_44",
+      "type": "compression_interruption",
+      "t_start_s": 870.91,
+      "t_end_s": 874.73,
+      "duration_s": 3.82,
+      "confidence": 0.88
+    }
+  ],
+  "reported_intervals": [
+    {
+      "id": "cci_3",
+      "type": "compression_interruption",
+      "t_start_s": 249.49,
+      "t_end_s": 256.43,
+      "duration_s": 6.94,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_4",
+      "type": "compression_interruption",
+      "t_start_s": 341.68,
+      "t_end_s": 347.05,
+      "duration_s": 5.37,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_5",
+      "type": "compression_interruption",
+      "t_start_s": 351.8,
+      "t_end_s": 357.87,
+      "duration_s": 6.07,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_7",
+      "type": "compression_interruption",
+      "t_start_s": 365.36,
+      "t_end_s": 373.05,
+      "duration_s": 7.69,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_18",
+      "type": "compression_interruption",
+      "t_start_s": 483.74,
+      "t_end_s": 491.92,
+      "duration_s": 8.18,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_20",
+      "type": "compression_interruption",
+      "t_start_s": 509.61,
+      "t_end_s": 514.86,
+      "duration_s": 5.25,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_23",
+      "type": "compression_interruption",
+      "t_start_s": 608.86,
+      "t_end_s": 617.23,
+      "duration_s": 8.37,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_25",
+      "type": "compression_interruption",
+      "t_start_s": 630.17,
+      "t_end_s": 635.48,
+      "duration_s": 5.31,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_26",
+      "type": "compression_interruption",
+      "t_start_s": 639.42,
+      "t_end_s": 644.67,
+      "duration_s": 5.25,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_31",
+      "type": "compression_interruption",
+      "t_start_s": 727.61,
+      "t_end_s": 737.23,
+      "duration_s": 9.62,
+      "confidence": 0.88
+    },
+    {
+      "id": "cci_34",
+      "type": "compression_interruption",
+      "t_start_s": 758.23,
+      "t_end_s": 767.04,
+      "duration_s": 8.81,
+      "confidence": 0.88
+    }
+  ],
+  "compression_intervals": [
+    {
+      "id": "s1_1",
+      "type": "compression_motion",
+      "t_start_s": 61.5,
+      "t_end_s": 67.81,
+      "duration_s": 6.31,
+      "cadence_cpm": 114.1,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_2",
+      "type": "compression_motion",
+      "t_start_s": 70.75,
+      "t_end_s": 150.0,
+      "duration_s": 79.25,
+      "cadence_cpm": 103.5,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_3",
+      "type": "compression_motion",
+      "t_start_s": 154.62,
+      "t_end_s": 222.24,
+      "duration_s": 67.62,
+      "cadence_cpm": 102.0,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_4",
+      "type": "compression_motion",
+      "t_start_s": 223.12,
+      "t_end_s": 245.74,
+      "duration_s": 22.62,
+      "cadence_cpm": 102.0,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_5",
+      "type": "compression_motion",
+      "t_start_s": 256.43,
+      "t_end_s": 335.8,
+      "duration_s": 79.37,
+      "cadence_cpm": 102.0,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_6",
+      "type": "compression_motion",
+      "t_start_s": 336.49,
+      "t_end_s": 341.68,
+      "duration_s": 5.19,
+      "cadence_cpm": 104.1,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_7",
+      "type": "compression_motion",
+      "t_start_s": 349.18,
+      "t_end_s": 351.8,
+      "duration_s": 2.62,
+      "cadence_cpm": 114.3,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_8",
+      "type": "compression_motion",
+      "t_start_s": 357.87,
+      "t_end_s": 362.74,
+      "duration_s": 4.87,
+      "cadence_cpm": 98.5,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_9",
+      "type": "compression_motion",
+      "t_start_s": 378.36,
+      "t_end_s": 383.68,
+      "duration_s": 5.32,
+      "cadence_cpm": 101.6,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_10",
+      "type": "compression_motion",
+      "t_start_s": 385.24,
+      "t_end_s": 397.86,
+      "duration_s": 12.62,
+      "cadence_cpm": 142.6,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_11",
+      "type": "compression_motion",
+      "t_start_s": 399.55,
+      "t_end_s": 407.24,
+      "duration_s": 7.69,
+      "cadence_cpm": 101.5,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_12",
+      "type": "compression_motion",
+      "t_start_s": 407.93,
+      "t_end_s": 430.86,
+      "duration_s": 22.93,
+      "cadence_cpm": 102.0,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_13",
+      "type": "compression_motion",
+      "t_start_s": 432.36,
+      "t_end_s": 436.86,
+      "duration_s": 4.5,
+      "cadence_cpm": 106.7,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_14",
+      "type": "compression_motion",
+      "t_start_s": 438.74,
+      "t_end_s": 452.05,
+      "duration_s": 13.31,
+      "cadence_cpm": 103.7,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_15",
+      "type": "compression_motion",
+      "t_start_s": 456.05,
+      "t_end_s": 459.99,
+      "duration_s": 3.94,
+      "cadence_cpm": 106.7,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_16",
+      "type": "compression_motion",
+      "t_start_s": 462.3,
+      "t_end_s": 470.3,
+      "duration_s": 8.0,
+      "cadence_cpm": 105.0,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_17",
+      "type": "compression_motion",
+      "t_start_s": 471.49,
+      "t_end_s": 483.74,
+      "duration_s": 12.25,
+      "cadence_cpm": 102.9,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_18",
+      "type": "compression_motion",
+      "t_start_s": 491.92,
+      "t_end_s": 495.74,
+      "duration_s": 3.82,
+      "cadence_cpm": 141.6,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_19",
+      "type": "compression_motion",
+      "t_start_s": 500.11,
+      "t_end_s": 506.74,
+      "duration_s": 6.63,
+      "cadence_cpm": 99.6,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_20",
+      "type": "compression_motion",
+      "t_start_s": 507.24,
+      "t_end_s": 509.61,
+      "duration_s": 2.37,
+      "cadence_cpm": 101.1,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_21",
+      "type": "compression_motion",
+      "t_start_s": 514.86,
+      "t_end_s": 525.55,
+      "duration_s": 10.69,
+      "cadence_cpm": 101.1,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_22",
+      "type": "compression_motion",
+      "t_start_s": 527.3,
+      "t_end_s": 549.86,
+      "duration_s": 22.56,
+      "cadence_cpm": 102.0,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_23",
+      "type": "compression_motion",
+      "t_start_s": 550.61,
+      "t_end_s": 567.42,
+      "duration_s": 16.81,
+      "cadence_cpm": 103.5,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_24",
+      "type": "compression_motion",
+      "t_start_s": 571.23,
+      "t_end_s": 608.86,
+      "duration_s": 37.63,
+      "cadence_cpm": 102.0,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_25",
+      "type": "compression_motion",
+      "t_start_s": 617.23,
+      "t_end_s": 623.73,
+      "duration_s": 6.5,
+      "cadence_cpm": 101.5,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_26",
+      "type": "compression_motion",
+      "t_start_s": 625.23,
+      "t_end_s": 630.17,
+      "duration_s": 4.94,
+      "cadence_cpm": 133.7,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_27",
+      "type": "compression_motion",
+      "t_start_s": 635.48,
+      "t_end_s": 639.42,
+      "duration_s": 3.94,
+      "cadence_cpm": 106.7,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_28",
+      "type": "compression_motion",
+      "t_start_s": 644.67,
+      "t_end_s": 664.42,
+      "duration_s": 19.75,
+      "cadence_cpm": 103.3,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_29",
+      "type": "compression_motion",
+      "t_start_s": 666.86,
+      "t_end_s": 675.48,
+      "duration_s": 8.62,
+      "cadence_cpm": 104.4,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_30",
+      "type": "compression_motion",
+      "t_start_s": 676.98,
+      "t_end_s": 701.92,
+      "duration_s": 24.94,
+      "cadence_cpm": 102.0,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_31",
+      "type": "compression_motion",
+      "t_start_s": 704.54,
+      "t_end_s": 715.79,
+      "duration_s": 11.25,
+      "cadence_cpm": 101.3,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_32",
+      "type": "compression_motion",
+      "t_start_s": 716.86,
+      "t_end_s": 727.61,
+      "duration_s": 10.75,
+      "cadence_cpm": 100.5,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_33",
+      "type": "compression_motion",
+      "t_start_s": 737.23,
+      "t_end_s": 740.92,
+      "duration_s": 3.69,
+      "cadence_cpm": 97.6,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_34",
+      "type": "compression_motion",
+      "t_start_s": 742.92,
+      "t_end_s": 750.1,
+      "duration_s": 7.18,
+      "cadence_cpm": 100.2,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_35",
+      "type": "compression_motion",
+      "t_start_s": 751.17,
+      "t_end_s": 758.23,
+      "duration_s": 7.06,
+      "cadence_cpm": 101.9,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_36",
+      "type": "compression_motion",
+      "t_start_s": 767.04,
+      "t_end_s": 780.85,
+      "duration_s": 13.81,
+      "cadence_cpm": 104.3,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_37",
+      "type": "compression_motion",
+      "t_start_s": 781.79,
+      "t_end_s": 784.23,
+      "duration_s": 2.44,
+      "cadence_cpm": 98.5,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_38",
+      "type": "compression_motion",
+      "t_start_s": 784.73,
+      "t_end_s": 790.67,
+      "duration_s": 5.94,
+      "cadence_cpm": 111.2,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_39",
+      "type": "compression_motion",
+      "t_start_s": 791.23,
+      "t_end_s": 794.04,
+      "duration_s": 2.81,
+      "cadence_cpm": 106.7,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_40",
+      "type": "compression_motion",
+      "t_start_s": 794.79,
+      "t_end_s": 797.73,
+      "duration_s": 2.94,
+      "cadence_cpm": 102.1,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_41",
+      "type": "compression_motion",
+      "t_start_s": 799.42,
+      "t_end_s": 805.42,
+      "duration_s": 6.0,
+      "cadence_cpm": 100.0,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_42",
+      "type": "compression_motion",
+      "t_start_s": 806.29,
+      "t_end_s": 810.54,
+      "duration_s": 4.25,
+      "cadence_cpm": 98.8,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_43",
+      "type": "compression_motion",
+      "t_start_s": 812.67,
+      "t_end_s": 819.04,
+      "duration_s": 6.37,
+      "cadence_cpm": 103.5,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_44",
+      "type": "compression_motion",
+      "t_start_s": 820.1,
+      "t_end_s": 822.6,
+      "duration_s": 2.5,
+      "cadence_cpm": 96.0,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_45",
+      "type": "compression_motion",
+      "t_start_s": 823.92,
+      "t_end_s": 839.73,
+      "duration_s": 15.81,
+      "cadence_cpm": 102.5,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_46",
+      "type": "compression_motion",
+      "t_start_s": 840.73,
+      "t_end_s": 845.66,
+      "duration_s": 4.93,
+      "cadence_cpm": 109.4,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_47",
+      "type": "compression_motion",
+      "t_start_s": 846.85,
+      "t_end_s": 853.16,
+      "duration_s": 6.31,
+      "cadence_cpm": 114.1,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_48",
+      "type": "compression_motion",
+      "t_start_s": 855.41,
+      "t_end_s": 862.48,
+      "duration_s": 7.07,
+      "cadence_cpm": 152.9,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_49",
+      "type": "compression_motion",
+      "t_start_s": 863.73,
+      "t_end_s": 865.91,
+      "duration_s": 2.18,
+      "cadence_cpm": 164.6,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_50",
+      "type": "compression_motion",
+      "t_start_s": 866.73,
+      "t_end_s": 870.91,
+      "duration_s": 4.18,
+      "cadence_cpm": 143.3,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_51",
+      "type": "compression_motion",
+      "t_start_s": 874.73,
+      "t_end_s": 883.73,
+      "duration_s": 9.0,
+      "cadence_cpm": 100.0,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_52",
+      "type": "compression_motion",
+      "t_start_s": 884.48,
+      "t_end_s": 923.91,
+      "duration_s": 39.43,
+      "cadence_cpm": 102.0,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_53",
+      "type": "compression_motion",
+      "t_start_s": 952.35,
+      "t_end_s": 955.22,
+      "duration_s": 2.87,
+      "cadence_cpm": 104.4,
+      "confidence": 0.88
+    },
+    {
+      "id": "s1_54",
+      "type": "compression_motion",
+      "t_start_s": 955.85,
+      "t_end_s": 957.91,
+      "duration_s": 2.06,
+      "cadence_cpm": 116.4,
+      "confidence": 0.88
+    }
+  ]
+}

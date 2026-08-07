@@ -23,3 +23,6 @@ generated/*
 
 tests/video/
 .DS_Store
+.resus_qc_tmp/
+calls.jsonl
+

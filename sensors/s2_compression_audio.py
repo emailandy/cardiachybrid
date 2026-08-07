@@ -207,35 +207,39 @@ class S2CompressionAudioDetector:
                 )
             ]
 
-        hop_s = float(self.config.get("stft_hop_s", 0.1))
-        win_s = float(self.config.get("stft_window_s", 4.0))
+        hop_samples = max(1, int(sr * hop_s))
+        n_frames = len(data) // hop_samples
+        if n_frames < 20:
+            return [
+                AudioCompressionInterval(
+                    id="s2_short",
+                    type="compression_audio",
+                    t_start_s=0.0,
+                    t_end_s=float(len(data) / sr),
+                    frequency_hz=0.0,
+                    confidence=0.0,
+                    abstained=True,
+                    abstain_reason="Audio track too short for cadence periodicity STFT",
+                    support=[],
+                )
+            ]
 
-        try:
-            env = np.abs(hilbert(data))
-            dec_1 = int(self.config.get("env_decimate_factor_1", 10))
-            dec_2 = int(self.config.get("env_decimate_factor_2", 16))
-            if sr >= (dec_1 * dec_2):
+        dec_1 = int(self.config.get("env_decimate_factor_1", 10))
+        dec_2 = int(self.config.get("env_decimate_factor_2", 16))
+        if sr >= (dec_1 * dec_2) and len(data) >= 2 * dec_1 * dec_2:
+            try:
+                env = np.abs(hilbert(data))
                 env = decimate(decimate(env, dec_1, ftype="fir"), dec_2, ftype="fir")
                 fs_env = float(sr) / (dec_1 * dec_2)
-            else:
-                fs_env = float(sr)
-        except Exception:
-            hop_samples = max(1, int(sr * hop_s))
-            n_frames = len(data) // hop_samples
-            if n_frames < 20:
-                return [
-                    AudioCompressionInterval(
-                        id="s2_short",
-                        type="compression_audio",
-                        t_start_s=0.0,
-                        t_end_s=float(len(data) / sr),
-                        frequency_hz=0.0,
-                        confidence=0.0,
-                        abstained=True,
-                        abstain_reason="Audio track too short for cadence periodicity STFT",
-                        support=[],
-                    )
-                ]
+            except (ValueError, TypeError):
+                env = np.array(
+                    [
+                        np.sqrt(np.mean(data[i * hop_samples : (i + 1) * hop_samples] ** 2))
+                        for i in range(n_frames)
+                    ]
+                )
+                fs_env = 1.0 / hop_s
+        else:
             env = np.array(
                 [
                     np.sqrt(np.mean(data[i * hop_samples : (i + 1) * hop_samples] ** 2))
@@ -404,26 +408,12 @@ class S2CompressionAudioDetector:
             if data.ndim > 1:
                 data = np.mean(data, axis=1)
         except Exception:
-            temp_wav = Path(f"/tmp/s2_audio_{abs(hash(str(path.resolve())))}.wav")
-            if not temp_wav.exists():
-                cmd = [
-                    "ffmpeg",
-                    "-y",
-                    "-i",
-                    str(path),
-                    "-vn",
-                    "-ac",
-                    "1",
-                    "-ar",
-                    str(self.sr),
-                    "-loglevel",
-                    "error",
-                    str(temp_wav),
-                ]
-                subprocess.run(cmd, check=True)
-            data, sr_val = sf.read(str(temp_wav))
-            if data.ndim > 1:
-                data = np.mean(data, axis=1)
+            from sensors.temp_artifacts import transient_audio_extract
+
+            with transient_audio_extract(path, sr=self.sr, mono=True) as temp_wav:
+                data, sr_val = sf.read(str(temp_wav))
+                if data.ndim > 1:
+                    data = np.mean(data, axis=1)
         return self._detect_from_audio_array(data, int(sr_val), device_hz=device_hz)
 
     def detect_through_occlusion(
