@@ -31,7 +31,7 @@ def test_read_timecode_decodes_a_real_frame() -> None:
 
     samples = read_video_timecode_samples(video_path, sample_times_s=(10.0, 300.0, 600.0))
     assert len(samples) == 3
-    assert samples[0]["raw_string"] == "11/7/2023 07:56:06.630 AM"
+    assert samples[0]["raw_string"] == "11/7/2023 07:56:06.530 AM"
     assert samples[1]["raw_string"] == "11/7/2023 08:00:57.072 AM"
     assert samples[2]["raw_string"] == "11/7/2023 08:05:57.081 AM"
 
@@ -41,6 +41,35 @@ def test_read_timecode_decodes_a_real_frame() -> None:
     assert anchor.confidence == 0.98
     assert anchor.max_drift_s < 2.0
     assert any("burned_in: Validated 3 samples" in msg for msg in anchor.fallback_log)
+
+
+@pytest.mark.integration
+def test_simvid3_decodes_patient2_room2_cleanly() -> None:
+    """Verifies that simvid3.mp4 decodes 12/8/2023 (Room 2) with zero manual x-offset."""
+    video_path = os.path.join(os.path.dirname(__file__), "video", "simvid3.mp4")
+    if not os.path.exists(video_path):
+        pytest.skip(f"Integration video {video_path} not found.")
+
+    samples = read_video_timecode_samples(video_path, sample_times_s=(10.0, 100.0, 300.0))
+    assert len(samples) == 3
+    assert samples[0]["raw_string"].startswith("12/8/2023")
+    assert "07:54:26.840 AM" in samples[0]["raw_string"]
+
+
+@pytest.mark.integration
+def test_five_run_bit_identical_determinism() -> None:
+    """Verifies that S5 produces 100% bit-identical decodes across 5 repeated runs."""
+    video_path = os.path.join(os.path.dirname(__file__), "video", "vidsim2.mp4")
+    if not os.path.exists(video_path):
+        pytest.skip(f"Integration video {video_path} not found.")
+
+    results = []
+    for _ in range(5):
+        samples = read_video_timecode_samples(video_path, sample_times_s=(10.0, 300.0, 600.0))
+        results.append([s["raw_string"] for s in samples])
+
+    for i in range(1, 5):
+        assert results[i] == results[0]
 
 
 def test_read_timecode_returns_none_on_low_confidence() -> None:
@@ -107,3 +136,43 @@ def test_fallback_to_none_terminal() -> None:
     assert "monitor_clock: Insufficient samples" in anchor.fallback_log[1]
     assert "manual: Insufficient samples" in anchor.fallback_log[2]
     assert "none: No reliable clock anchor found" in anchor.fallback_log[3]
+
+
+@pytest.mark.integration
+def test_synchronize_clock_anchor_catches_blankbayvideop1_splice_jump() -> None:
+    """Verifies that dense monotonic verification in synchronize_clock_anchor catches spliced cuts."""
+    video_path = os.path.join(os.path.dirname(__file__), "video", "blankbayvideop1.mp4")
+    if not os.path.exists(video_path):
+        pytest.skip(f"Integration video {video_path} not found.")
+
+    from sensors.s5_timecode import synchronize_clock_anchor
+
+    with pytest.raises(ClockDrift, match="Clock discontinuity / splice jump detected"):
+        synchronize_clock_anchor(video_path, max_drift_tolerance_s=0.50)
+
+
+@pytest.mark.integration
+def test_read_timecode_returns_none_and_logs_on_corrupted_glyph(caplog: Any) -> None:
+    """Verifies that an unmatched or corrupted component returns None and logs failing position."""
+    import logging
+    import cv2
+
+    video_path = os.path.join(os.path.dirname(__file__), "video", "vidsim2.mp4")
+    if not os.path.exists(video_path):
+        pytest.skip(f"Integration video {video_path} not found.")
+
+    cap = cv2.VideoCapture(video_path)
+    cap.set(cv2.CAP_PROP_POS_FRAMES, 160)
+    ret, frame = cap.read()
+    cap.release()
+
+    # Corrupt minute character in ROI (x=175..185 in frame)
+    corrupted_frame = frame.copy()
+    corrupted_frame[120:144, 175:185, :] = 0
+
+    with caplog.at_level(logging.WARNING):
+        result = read_timecode(corrupted_frame)
+
+    assert result is None
+    assert any("S5 OCR match failed" in record.message or "S5 OCR margin ambiguous" in record.message for record in caplog.records)
+

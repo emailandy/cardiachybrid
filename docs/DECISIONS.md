@@ -164,6 +164,19 @@ Date: 2026-08-06  Session: G1  Decided by: human, agent
 2. **Guaranteed Cleanup Lifecycle**: All transient files must be managed within context managers or explicit `try ... finally` blocks that guarantee deletion on success, unhandled exceptions, and process interrupts (`SIGINT`/`SIGTERM`).
 3. **No Non-Deterministic Caching**: Filenames based on process-randomized `hash(...)` that cannot be deterministically resolved across executions are prohibited. Intermediate extractions must either be strictly ephemeral (unlinked immediately after array loading) or indexed deterministically.
 
+## 034 — Negative Control Video Provenance & S1 Optical Flow Floor Verification
+Date: 2026-08-06  Session: S09  Decided by: human, agent
+1. **Retraction of Room 2 Negative Control (`blankbayvideo.mp4`)**: Frame-to-frame pixel difference analysis across all 937 consecutive frame pairs proved that from $t=4.0\text{s}$ through $t=31.27\text{s}$, `blankbayvideo.mp4` is a static frozen still frame at the terminal DVR freeze timestamp (`08:15:30.818 AM`). Optical flow was zero ($\text{std} = 0.000764\text{ px}$) by construction. The earlier `AA5` explanation of "147x lower flow due to dark mattress texture and lighting" is falsified and retracted. Room 2 has zero empirical negative control in the codebase.
+2. **Room 1 Negative Control Verification (`blankbayvideop1.mp4`)**: Verified as an active live video stream of the Room 1 empty resuscitation bay bed prior to patient entry. On the longest continuous unspliced segment ($t=18\text{–}30\text{s}$, 361 frames), S1 optical flow measures genuine camera noise with a windowed modulation of **`0.0043`**, safely below the `min_modulation: 0.010` floor (a factor of $2.3\times$).
+3. **Clinical Calibration Prerequisite**: Calibration protocols must require empty-bay negative control clips to be verified live (monotonically advancing timecode at $1/\text{fps}$ and non-zero inter-frame pixel variance) prior to acceptance.
+
+## 035 — S5 Vertical Projection Profile OCR Architecture & Clean Template Bootstrapping
+Date: 2026-08-06  Session: S09  Decided by: human, agent
+1. **Vertical Projection Profile Architecture**: Replaced rigid column slicing with vertical projection profile segmentation on active character rows ($y=4..20$, binary threshold $190$), partitioning the timecode overlay into 23–24 isolated glyph cells via zero-energy valley boundaries. Separator templates (`/`, `:`, `.`) partition the string into semantic fields, handling variable-width dates (`MM/D/YYYY` vs `MM/DD/YYYY`) and camera-specific horizontal offsets dynamically.
+2. **Context-Free Template Bootstrapping**: Script `scripts/extract_timecode_templates.py` extracts clean, edge-uncontaminated grayscale glyph templates (`0-9`, `/`, `:`, `.`, `A`, `M`) directly from reference frames with background margin verification on both lateral borders. No synthetic `P.png` is created; S5 operates strictly in morning envelope (`AM`) and cleanly abstains on afternoon footage under Invariant I5.
+3. **Acceptance & Validation**: Successfully decodes Patient 2 / Room 2 (`simvid3.mp4`) as `12/8/2023 07:54:26.840 AM` (resolving day digit `8` without manual x-offset) and Patient 1 / Room 1 (`vidsim2.mp4`) as `11/7/2023 07:55:57.072 AM` ($T_0 = \text{2023-11-07T07:55:57}$, matching human clock logs at $t=300\text{s}$) with 5-run bit-identical determinism.
+
+
 
 
 
