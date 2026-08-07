@@ -203,12 +203,6 @@ def main() -> None:
     evs_04, invs_04, cov_04, fields_04 = process_run(merged_04)
 
     # -------------------------------------------------------------------------
-    # Run 5 (Live Sensor-Assisted Execution)
-    # -------------------------------------------------------------------------
-    merged_05 = EventStream.model_validate_json(Path("generated/case_run_05.json").read_text(encoding="utf-8"))
-    evs_05, invs_05, cov_05, fields_05 = process_run(merged_05)
-
-    # -------------------------------------------------------------------------
     # Human Gold Standard Run (fixtures/ground_truth_simvideo2.json)
     # -------------------------------------------------------------------------
     with open("fixtures/ground_truth_simvideo2.json", encoding="utf-8") as f:
@@ -489,36 +483,9 @@ def main() -> None:
                     "schema_violations": 0,
                 },
             },
-            {
-                "run_id": "run_05",
-                "label": "Run 5 (Sensor-Assisted)",
-                "cost_usd": 0.40,
-                "wall_clock_s": 370.6,
-                "run_timestamp": "2026-08-07T13:59:00Z",
-                "events": evs_05,
-                "intervals": invs_05,
-                "coverage": cov_05,
-                "metrics": {
-                    "n_events": len(evs_05),
-                    "n_intervals": len(invs_05),
-                    "n_shocks": 4,
-                    "n_CCIs": 27,
-                },
-                "fields": fields_05,
-                "summary": {
-                    "num_times_defib_ed_v2": 4,
-                    "total_cci_seconds": 242.0,
-                    "ccf": 0.82,
-                },
-                "audit": {
-                    "mandatory_failures": 0,
-                    "invalid_formats": 0,
-                    "schema_violations": 0,
-                },
-            },
         ],
-        "default_run": "run_05",
-        "default_compare_runs": ["ground_truth", "run_02", "run_05"],
+        "default_run": "run_02",
+        "default_compare_runs": ["ground_truth", "run_02", "run_03"],
         "replication": {
             "clip": "730-750s",
             "target": "defibrillation shock at 742.2s",
