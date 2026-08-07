@@ -36,12 +36,12 @@ profiles:
       impulse_rejection_win: 5
       impulse_min_spike_px: 2.0
       # Cadence stability discriminator (derived from 20s FFT discrete bin arithmetic, Delta_f = 3.0 CPM/bin)
-      # Maximum achievable sigma for 3 samples across <=2 adjacent bins is sqrt(8) = 2.828 CPM; smallest 3-bin jump is sqrt(18) = 4.243 CPM.
+      # Maximum achievable sigma for 3 samples across a contiguous 3-bin span (<=6.0 CPM spread) is sqrt(8) = 2.828 CPM; smallest 4-bin jump is sqrt(18) = 4.243 CPM.
       mechanical_cadence_max_std_cpm: 2.83
       manual_cadence_min_std_cpm: 8.0
-      # Derived LUCAS rate envelope: nominal 102 CPM +/- 2 bins (+/- 6.0 CPM) = [96.0, 108.0] CPM (re-derive per device model on gold set expansion)
-      mechanical_cadence_min_cpm: 96.0
-      mechanical_cadence_max_cpm: 108.0
+      # Forward-derived LUCAS rate envelope: datasheet nominal (102 +/- 2 CPM) +/- 1 bin (+/- 3.0 CPM measurement resolution) = [97.0, 107.0] CPM
+      mechanical_cadence_min_cpm: 97.0
+      mechanical_cadence_max_cpm: 107.0
       mode_min_duration_s: 60.0
       # expected_cadence_cpm is a smoothing parameter, not a detection constraint — S1 must still detect off-cadence CPR
       expected_cadence_cpm: 102.0
@@ -167,12 +167,12 @@ profiles:
       impulse_rejection_win: 5
       impulse_min_spike_px: 2.0
       # Cadence stability discriminator (derived from 20s FFT discrete bin arithmetic, Delta_f = 3.0 CPM/bin)
-      # Maximum achievable sigma for 3 samples across <=2 adjacent bins is sqrt(8) = 2.828 CPM; smallest 3-bin jump is sqrt(18) = 4.243 CPM.
+      # Maximum achievable sigma for 3 samples across a contiguous 3-bin span (<=6.0 CPM spread) is sqrt(8) = 2.828 CPM; smallest 4-bin jump is sqrt(18) = 4.243 CPM.
       mechanical_cadence_max_std_cpm: 2.83
       manual_cadence_min_std_cpm: 8.0
-      # Derived LUCAS rate envelope: nominal 102 CPM +/- 2 bins (+/- 6.0 CPM) = [96.0, 108.0] CPM (re-derive per device model on gold set expansion)
-      mechanical_cadence_min_cpm: 96.0
-      mechanical_cadence_max_cpm: 108.0
+      # Forward-derived LUCAS rate envelope: datasheet nominal (102 +/- 2 CPM) +/- 1 bin (+/- 3.0 CPM measurement resolution) = [97.0, 107.0] CPM
+      mechanical_cadence_min_cpm: 97.0
+      mechanical_cadence_max_cpm: 107.0
       mode_min_duration_s: 60.0
       # expected_cadence_cpm is a smoothing parameter, not a detection constraint — S1 must still detect off-cadence CPR
       expected_cadence_cpm: 102.0

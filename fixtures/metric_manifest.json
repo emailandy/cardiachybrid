@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "case_id": "simvideo2.mp4",
-  "generated_at_utc": "2026-08-07T14:55:21Z",
+  "generated_at_utc": "2026-08-07T15:09:49Z",
   "source_hashes": {
-    "sensors/s1_s6_motion.py": "19a7ced156f38e00bc8d521d06ba84eb3fad8d7d8dd26c0e0f584662e344f9d9",
+    "sensors/s1_s6_motion.py": "58380d406d9f392a98a0f67708fcbee80a2e27401cf222f2730a0f7186f98e44",
     "sensors/eval/metrics.py": "c9fea7d00f3d5087562b52f2411c1d1022dc907bc1fbaeb726d68286db604744",
     "sensors/eval/report.py": "b74d57b571220721df8a744a56ca33495260f0d7277f1f56f52ae8d189d7dbc2",
-    "sensors/calibration/roi_config.yaml": "4ee68d46be88d15cca3456d4c050080c1af892aadbefa976127506f4096c6780",
+    "sensors/calibration/roi_config.yaml": "6b67d71df6b9535f6bab099e12c6c8bd5fd430d818f926960031dc4fab46d967",
     "fixtures/ground_truth_simvideo2.json": "7b564a498c1f87ee03d1ca16370572295dfef8e0fa087cc2b88ce6a229b36525"
   },
   "provenance": "human_adjudicated",

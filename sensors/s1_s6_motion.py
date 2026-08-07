@@ -244,8 +244,8 @@ class S1ChestMotionDetector:
         sub_stds = [float(np.std(cadences[i : i + 3])) for i in range(len(cadences) - 2)]
         min_sub_std = min(sub_stds)
 
-        mech_min_cpm = float(self.s1_config.get("mechanical_cadence_min_cpm", 96.0))
-        mech_max_cpm = float(self.s1_config.get("mechanical_cadence_max_cpm", 108.0))
+        mech_min_cpm = float(self.s1_config.get("mechanical_cadence_min_cpm", 97.0))
+        mech_max_cpm = float(self.s1_config.get("mechanical_cadence_max_cpm", 107.0))
 
         if min_sub_std < mech_max_std:
             if mech_min_cpm <= med_cad <= mech_max_cpm:
