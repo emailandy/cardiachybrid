@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "case_id": "simvideo2.mp4",
-  "generated_at_utc": "2026-08-07T16:40:27Z",
+  "generated_at_utc": "2026-08-07T16:47:37Z",
   "source_hashes": {
     "sensors/s1_s6_motion.py": "58380d406d9f392a98a0f67708fcbee80a2e27401cf222f2730a0f7186f98e44",
     "sensors/eval/metrics.py": "c9fea7d00f3d5087562b52f2411c1d1022dc907bc1fbaeb726d68286db604744",
