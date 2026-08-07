@@ -281,6 +281,16 @@ def run_live(args: argparse.Namespace, duration_s: float) -> None:
     log_path = Path(".resus_qc_tmp/calls.jsonl") if getattr(args, "log_calls", False) else None
     vc = VertexClient(project="nodepeel", location="global", log_path=log_path)
 
+    sensor_result = None
+    sensor_runner = None
+    if getattr(args, "with_sensors", False):
+        print("\n[SENSOR LAYER PRE-PROCESSING (S1-S7)]")
+        from pipeline.sensor_runner import SensorPipelineRunner
+        sensor_runner = SensorPipelineRunner()
+        local_v = "tests/video/vidsim2.mp4" if Path("tests/video/vidsim2.mp4").exists() else args.video
+        sensor_result = sensor_runner.run_pipeline(local_v, video_duration_s=duration_s)
+        print(f"✓ Sensor pre-processing complete: S1 ({len(sensor_result.s1_compressions)} comp, {len(sensor_result.s1_pauses)} pauses), S3 ({len(sensor_result.s3_defib_shocks)} defib), S5 ({sensor_result.clock_anchor_iso})")
+
     surviving_events: list[Event] = []
     surviving_intervals: list[Interval] = []
     surviving_notes: list[CoverageNote] = []
@@ -288,6 +298,10 @@ def run_live(args: argparse.Namespace, duration_s: float) -> None:
 
     t_start_wall = time.time()
     for idx, w_start, w_end, p_end, ov_lead, w_start_prim in WINDOWS:
+        sensor_data = None
+        if sensor_result is not None and sensor_runner is not None:
+            sensor_data = sensor_runner.get_p1_sensor_placeholders(sensor_result, win_start=w_start, win_end=w_end)
+
         p1 = build_p1(
             chunk_index=idx,
             chunk_total=len(WINDOWS),
@@ -297,7 +311,7 @@ def run_live(args: argparse.Namespace, duration_s: float) -> None:
             primary_end=p_end,
             overlap_lead=ov_lead,
             win_start_primary=w_start_prim,
-            sensor_data=None,
+            sensor_data=sensor_data,
         )
         meta = types.VideoMetadata(
             start_offset=f"{int(w_start)}s",
@@ -309,7 +323,7 @@ def run_live(args: argparse.Namespace, duration_s: float) -> None:
             video_metadata=meta,
         )
         p1_model_val = getattr(args, "p1_model", None) or get_model_for_pass("pass_1")
-        print(f"  Calling P1 Window {idx} [{w_start}s -> {w_end}s] (model: {p1_model_val})...")
+        print(f"  Calling P1 Window {idx} [{w_start}s -> {w_end}s] (model: {p1_model_val}, with_sensors={bool(sensor_data)})...")
         res_text = call_model_cached(
             vc,
             model=p1_model_val,
@@ -535,6 +549,7 @@ def main() -> None:
     parser.add_argument("--no-bq", action="store_true", help="Disable writing results to BigQuery")
     parser.add_argument("--k", type=int, default=1, help="Ensemble k per pass (default 1)")
     parser.add_argument("--with-p2", action="store_true", help="Include P2 single-event verification (default off)")
+    parser.add_argument("--with-sensors", action="store_true", help="Enable deterministic sensor layer (S1-S7) preprocessing and prompt injection")
     parser.add_argument("--t0", default="2023-11-07T07:55:57", help="Wall-clock T0 anchor datetime")
     parser.add_argument("--t0-source", default="burned_in_timecode", help="Source of T0 anchor")
     parser.add_argument("--media-resolution", default="low", help="Media resolution for video passes (low/medium/high)")
