@@ -210,16 +210,24 @@ class CCFReport:
                 and float(g.get("end_s", g.get("t_end_s", 0.0))) > self.ccf_window_s[0]
             )
 
+            # Four-term cancelling error reconciliation (O1)
+            net_interval_excess = raw_cci_dur_in_ccf - gt_pause_s
+            boundary_double_count = fp_pause_dur - fn_pause_dur - net_interval_excess
+            total_ccf_err_s = motion_non_cpr_dur - gt_pause_s
+
             # M3: Label accurately without claiming generic endorsement
             val_status = "COMPARED (against human-adjudicated ground truth for this case, Q-017)"
             val_dict: dict[str, Any] | None = {
                 "gt_ccf_active": round(gt_ccf, 4),
                 "ccf_error_active": round(ccf_err, 4),
+                "total_ccf_error_s": round(total_ccf_err_s, 2),
                 "non_cpr_motion_duration_s": round(motion_non_cpr_dur, 2),
                 "interval_stream_pause_duration_s": round(raw_cci_dur_in_ccf, 2),
                 "two_measurement_gap_s": round(measurement_gap, 2),
+                "net_interval_excess_s": round(net_interval_excess, 2),
                 "fp_pause_duration_active_s": round(fp_pause_dur, 2),
                 "fn_missed_pause_duration_active_s": round(fn_pause_dur, 2),
+                "boundary_double_count_s": round(boundary_double_count, 2),
                 "reporting_reported_count": len(self.reported_intervals),
                 "reporting_true_positives": tp_count,
                 "reporting_false_positives": fp_count,
@@ -227,7 +235,7 @@ class CCFReport:
                 "reporting_unexplained_fps": unexplained_fp_count,
             }
             caveats_list = [
-                f"Cancelling Errors ({self.ccf_window_s[0]:.2f}-{self.ccf_window_s[1]:.2f}s): Observed CCF error {ccf_err:.2f} (S1 {self.ccf or 0.0:.4f} vs GT {gt_ccf:.4f}) reflects cancelling errors: +{fp_pause_dur:.1f}s of false-positive pause duration accumulated during detection vs -{fn_pause_dur:.1f}s of missed true pause duration.",
+                f"Cancelling Errors ({self.ccf_window_s[0]:.2f}-{self.ccf_window_s[1]:.2f}s): CCF error +{total_ccf_err_s:.2f}s (~{ccf_err:.2f}) reconciles as: +{fp_pause_dur:.2f}s unmatched pause - {fn_pause_dur:.2f}s missed pause - {boundary_double_count:.2f}s boundary double-count + {measurement_gap:.2f}s two-measurement gap.",
                 two_meas_caveat or "",
                 f"False Positive Rate: Under the >=5.0s reporting threshold, {fp_count} of {len(self.reported_intervals)} reported intervals are false positives under +/-3.0s monotonic tolerance matching ({s6_fp_count} coincide with S6-detected provider crowding; {unexplained_fp_count} unexplained).",
                 "Single manikin case (n=1) validation basis. Device and bay calibration required before production (Q-017).",
@@ -478,16 +486,20 @@ class CCFReport:
                 and float(g.get("end_s", g.get("t_end_s", 0.0))) > self.ccf_window_s[0]
             )
 
+            net_interval_excess = raw_cci_dur_in_ccf - gt_pause_s
+            boundary_double_count = fp_pause_dur - fn_pause_dur - net_interval_excess
+            total_ccf_err_s = motion_non_cpr_dur - gt_pause_s
+
             lines.append("Validation & Error Decomposition (Computed vs Ground Truth, Q-017):")
             lines.append(
                 f"  - Ground Truth CCF ({self.ccf_window_s[0]:.2f}-{self.ccf_window_s[1]:.2f}s): {gt_ccf:.4f}"
             )
             lines.append(
-                f"  - Absolute CCF Error: {ccf_err:.4f} (~{round(ccf_err, 2)})"
+                f"  - Absolute CCF Error: {ccf_err:.4f} (~{round(ccf_err, 2)}), total error +{total_ccf_err_s:.2f}s"
             )
             lines.append(
-                f"  - Cancelling Error Decomposition: Observed CCF error {ccf_err:.2f} reflects cancelling errors: "
-                f"+{fp_pause_dur:.1f}s of false-positive pause duration accumulated during detection vs -{fn_pause_dur:.1f}s of missed true pause duration."
+                f"  - Cancelling Error Decomposition: CCF error +{total_ccf_err_s:.2f}s reconciles as: "
+                f"+{fp_pause_dur:.2f}s unmatched pause - {fn_pause_dur:.2f}s missed pause - {boundary_double_count:.2f}s boundary double-count + {measurement_gap:.2f}s two-measurement gap."
             )
             lines.append(
                 f"  - Two Independent Measurements: Over the CCF evaluation window, non-CPR duration derived from "

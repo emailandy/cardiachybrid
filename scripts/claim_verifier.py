@@ -375,6 +375,22 @@ def check_report_contract_integrity() -> list[str]:
                     f"{jf.name} ccf_error_active ({ccf_err}) != |ccf ({ccf_val}) - gt_ccf ({gt_ccf})|"
                 )
 
+            fp_dur = float(val_block.get("fp_pause_duration_active_s") or 0.0)
+            fn_dur = float(val_block.get("fn_missed_pause_duration_active_s") or 0.0)
+            dbl_count = float(val_block.get("boundary_double_count_s") or 0.0)
+            net_excess = float(val_block.get("net_interval_excess_s") or (raw_cci_dur - (82.0 if "simvideo2" in jf.name else 0.0)))
+            total_err_s = float(val_block.get("total_ccf_error_s") or (non_cpr_dur - (82.0 if "simvideo2" in jf.name else 0.0)))
+
+            if abs(net_excess - (fp_dur - fn_dur - dbl_count)) > 0.05:
+                errors.append(
+                    f"{jf.name} net_interval_excess_s ({net_excess}) != fp ({fp_dur}) - fn ({fn_dur}) - dbl_count ({dbl_count})"
+                )
+
+            if abs(total_err_s - (net_excess + gap)) > 0.05:
+                errors.append(
+                    f"{jf.name} total_ccf_error_s ({total_err_s}) != net_excess ({net_excess}) + gap ({gap})"
+                )
+
             n_rep = int(val_block.get("reporting_reported_count") or len(data.get("reported_intervals", [])))
             n_tp = int(val_block.get("reporting_true_positives") or 0)
             n_fp = int(val_block.get("reporting_false_positives") or 0)

@@ -286,14 +286,14 @@
           <span class="scorecard-sub">${cprDurSecs != null ? `${cprDurSecs.toFixed(2)}s active` : 'Abstained'}</span>
         </div>
         <div class="scorecard">
-          <span class="scorecard-title">Total Pause Duration</span>
+          <span class="scorecard-title">CCF Pauses (>=1.0s tier)</span>
           <div class="scorecard-val">${(cciDurSecs / 60).toFixed(1)}m</div>
-          <span class="scorecard-sub">${cciDurSecs.toFixed(2)}s in pauses</span>
+          <span class="scorecard-sub">${cciDurSecs.toFixed(2)}s (${(data.ccf_intervals || []).length} pauses${data.validation && data.validation.interval_stream_pause_duration_s ? `; raw: ${data.validation.interval_stream_pause_duration_s}s` : ''})</span>
         </div>
         <div class="scorecard">
-          <span class="scorecard-title">Reported CCIs (>=5s)</span>
+          <span class="scorecard-title">Reported CCIs (>=5.0s tier)</span>
           <div class="scorecard-val">${(data.reported_intervals || []).length}</div>
-          <span class="scorecard-sub">${(data.ccf_intervals || []).length} raw CCF pauses</span>
+          <span class="scorecard-sub">${(data.ccf_intervals || []).length} CCF tier pauses</span>
         </div>
       `;
       container.appendChild(scoreGrid);

@@ -53,8 +53,12 @@
     "mae_2s": 1.0183
   },
   "cancelling_errors": {
+    "net_interval_excess_s": 58.0,
     "fp_pause_duration_active_s": 101.52,
     "fn_missed_pause_duration_active_s": 41.0,
+    "boundary_double_count_s": 2.52,
+    "two_measurement_gap_s": 15.96,
+    "total_ccf_error_s": 73.96,
     "duration_recall": 0.5
   }
 }
