@@ -31,7 +31,7 @@ from prompts.builder import (
     build_p5,
     _all_anchor_event_types,
 )
-from prompts.registry import prompt_set_sha
+from prompts.registry import prompt_set_sha, get_model_binding
 from pipeline.vertex_client import VertexClient
 
 logging.basicConfig(
@@ -260,12 +260,6 @@ def apply_t0_to_datetimes(fvs: list[FieldValue], t0_str: str) -> None:
                     pass
 
 
-def get_model_for_pass(pass_name: str) -> str:
-    import yaml
-    versions = yaml.safe_load(Path("prompts/VERSIONS.yaml").read_text(encoding="utf-8"))
-    return versions["model_binding"].get(pass_name, {}).get("model", "gemini-3.6-flash")
-
-
 def run_live(args: argparse.Namespace, duration_s: float) -> None:
     """Executes live DEMO-1 pipeline against Vertex AI."""
     run_id_val = getattr(args, "run_id", None) or "run_01"
@@ -296,7 +290,14 @@ def run_live(args: argparse.Namespace, duration_s: float) -> None:
     surviving_notes: list[CoverageNote] = []
     window_streams: list[tuple[Any, float, float]] = []
 
+    seed_val = getattr(args, "seed", None)
+
     t_start_wall = time.time()
+    b_p1 = get_model_binding("pass_1")
+    p1_model_val = getattr(args, "p1_model", None) or b_p1["model"]
+    p1_temp = float(b_p1["temperature"])
+    p1_thinking = b_p1.get("thinking")
+
     for idx, w_start, w_end, p_end, ov_lead, w_start_prim in WINDOWS:
         sensor_data = None
         if sensor_result is not None and sensor_runner is not None:
@@ -322,8 +323,7 @@ def run_live(args: argparse.Namespace, duration_s: float) -> None:
             file_data=types.FileData(file_uri=args.video, mime_type="video/mp4"),
             video_metadata=meta,
         )
-        p1_model_val = getattr(args, "p1_model", None) or get_model_for_pass("pass_1")
-        print(f"  Calling P1 Window {idx} [{w_start}s -> {w_end}s] (model: {p1_model_val}, with_sensors={bool(sensor_data)})...")
+        print(f"  Calling P1 Window {idx} [{w_start}s -> {w_end}s] (model: {p1_model_val}, temp: {p1_temp}, seed: {seed_val}, with_sensors={bool(sensor_data)})...")
         res_text = call_model_cached(
             vc,
             model=p1_model_val,
@@ -332,6 +332,9 @@ def run_live(args: argparse.Namespace, duration_s: float) -> None:
             use_cache=args.use_cache,
             cache_dir=cache_dir,
             media_resolution_str=args.media_resolution,
+            temperature=p1_temp,
+            thinking_str=p1_thinking,
+            seed=seed_val,
             response_schema=p1.response_schema,
             response_mime_type="application/json",
             case_id=args.case_id,
@@ -371,56 +374,84 @@ def run_live(args: argparse.Namespace, duration_s: float) -> None:
     print(f"  Surviving tail intervals ({len(tail_invs)}): {tail_strs}")
 
     print("\nExecuting P3 (Adjudication)...")
+    b_p3 = get_model_binding("pass_3")
+    p3_model_val = getattr(args, "p3_model", None) or b_p3["model"]
+    p3_temp = float(b_p3["temperature"])
+    p3_thinking = b_p3.get("thinking")
     p3 = build_p3()
     res_p3_txt = call_model_cached(
         vc,
-        model=get_model_for_pass("pass_3"),
+        model=p3_model_val,
         contents=[p3.system + "\n---\n" + p3.user],
         pass_name="p3_adjudicate",
         use_cache=args.use_cache,
         cache_dir=cache_dir,
+        temperature=p3_temp,
+        thinking_str=p3_thinking,
+        seed=seed_val,
         case_id=args.case_id,
         run_id=run_id_val,
     )
 
     print("Executing P4a (Team Items 1-11)...")
+    b_p4a = get_model_binding("pass_4a")
+    p4a_model_val = getattr(args, "p4a_model", None) or b_p4a["model"]
+    p4a_temp = float(b_p4a["temperature"])
+    p4a_thinking = b_p4a.get("thinking")
     p4a = build_p4a()
     res_p4a_txt = call_model_cached(
         vc,
-        model=get_model_for_pass("pass_4a"),
+        model=p4a_model_val,
         contents=[p4a.system + "\n---\n" + p4a.user],
         pass_name="p4a_team",
         use_cache=args.use_cache,
         cache_dir=cache_dir,
+        temperature=p4a_temp,
+        thinking_str=p4a_thinking,
+        seed=seed_val,
         case_id=args.case_id,
         run_id=run_id_val,
     )
 
     print("Executing P4b (Team Global)...")
+    b_p4b = get_model_binding("pass_4b")
+    p4b_model_val = getattr(args, "p4b_model", None) or b_p4b["model"]
+    p4b_temp = float(b_p4b["temperature"])
+    p4b_thinking = b_p4b.get("thinking")
     p4b = build_p4b()
     res_p4b_txt = call_model_cached(
         vc,
-        model=get_model_for_pass("pass_4b"),
+        model=p4b_model_val,
         contents=[p4b.system + "\n---\n" + p4b.user],
         pass_name="p4b_team",
         use_cache=args.use_cache,
         cache_dir=cache_dir,
+        temperature=p4b_temp,
+        thinking_str=p4b_thinking,
+        seed=seed_val,
         case_id=args.case_id,
         run_id=run_id_val,
     )
 
     print("Executing P5 (7 Section Notes)...")
+    b_p5 = get_model_binding("pass_5")
+    p5_model_val = getattr(args, "p5_model", None) or b_p5["model"]
+    p5_temp = float(b_p5["temperature"])
+    p5_thinking = b_p5.get("thinking")
     p5_notes_dict: dict[str, str] = {}
     for sec_name, tgt_field in P5_SECTIONS:
         print(f"  P5 section -> {sec_name} ({tgt_field})...")
         p5 = build_p5(section_name=sec_name, target_field=tgt_field)
         res_p5_txt = call_model_cached(
             vc,
-            model=get_model_for_pass("pass_5"),
+            model=p5_model_val,
             contents=[p5.system + "\n---\n" + p5.user],
             pass_name=f"p5_{tgt_field}",
             use_cache=args.use_cache,
             cache_dir=cache_dir,
+            temperature=p5_temp,
+            thinking_str=p5_thinking,
+            seed=seed_val,
             case_id=args.case_id,
             run_id=run_id_val,
         )
@@ -559,8 +590,12 @@ def main() -> None:
     parser.add_argument("--media-resolution", default="low", help="Media resolution for video passes (low/medium/high)")
     parser.add_argument("--use-cache", action="store_true", help="Use cached responses from generated/cache if available")
     parser.add_argument("--run-id", default=None, help="Run ID for caching and output identification")
-    parser.add_argument("--out", default=None, help="Path to write output case metadata json")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed for model generation determinism (default: 42)")
     parser.add_argument("--p1-model", default=None, help="Override model for Pass 1 (e.g. gemini-3.1-pro-preview)")
+    parser.add_argument("--p3-model", default=None, help="Override model for Pass 3 (e.g. gemini-3.1-pro-preview)")
+    parser.add_argument("--p4a-model", default=None, help="Override model for Pass 4a")
+    parser.add_argument("--p4b-model", default=None, help="Override model for Pass 4b")
+    parser.add_argument("--p5-model", default=None, help="Override model for Pass 5")
 
     args = parser.parse_args()
     duration_s = 1363.78

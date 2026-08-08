@@ -18,6 +18,15 @@ def assert_no_field_names(text: str, where: str) -> None:
             f"{where}: leaks REDCap field names into prompt text: "
             f"{hits[:5]}{'...' if len(hits) > 5 else ''}")
 
+def get_model_binding(pass_name: str) -> dict:
+    """Returns the model binding dictionary for pass_name from VERSIONS.yaml.
+    Raises KeyError if pass_name is not declared in model_binding (fail loudly)."""
+    m = manifest()
+    bindings = m.get("model_binding", {})
+    if pass_name not in bindings:
+        raise KeyError(f"Pass '{pass_name}' not found in VERSIONS.yaml model_binding")
+    return bindings[pass_name]
+
 def manifest() -> dict:
     versions_path = Path("prompts/VERSIONS.yaml")
     data = load_yaml(versions_path)

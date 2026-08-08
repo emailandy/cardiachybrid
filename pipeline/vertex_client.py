@@ -55,6 +55,7 @@ class VertexClient:
         thinking_str: Optional[str] = None,
         media_resolution_str: Optional[str] = None,
         temperature: Optional[float] = None,
+        seed: Optional[int] = None,
         response_schema: Optional[Any] = None,
         response_mime_type: Optional[str] = None,
         pass_name: str = "",
@@ -77,6 +78,8 @@ class VertexClient:
 
         if temperature is not None:
             config_kwargs["temperature"] = temperature
+        if seed is not None:
+            config_kwargs["seed"] = seed
         if response_schema is not None:
             config_kwargs["response_schema"] = response_schema
         if response_mime_type is not None:
@@ -103,6 +106,8 @@ class VertexClient:
                 "run_id": run_id,
                 "pass_name": pass_name,
                 "model": model,
+                "temperature": temperature,
+                "seed": seed,
                 "thinking_level": resolved_thinking,
                 "media_resolution": resolved_media_res,
                 "prompt_tokens": prompt_tokens,
