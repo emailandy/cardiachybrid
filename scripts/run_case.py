@@ -362,9 +362,13 @@ def run_live(args: argparse.Namespace, duration_s: float) -> None:
 
     print("\n[Window 3 Tail Inspection — 1320.0s to 1363.78s]")
     tail_evs = [ev for ev in surviving_events if 1320.0 <= ev.timestamp_s <= 1363.78]
-    tail_invs = [inv for inv in surviving_intervals if (1320.0 <= inv.t_start_s <= 1363.78 or 1320.0 <= inv.t_end_s <= 1363.78)]
+    tail_invs = [
+        inv for inv in surviving_intervals
+        if (1320.0 <= inv.t_start_s <= 1363.78 or (inv.t_end_s is not None and 1320.0 <= inv.t_end_s <= 1363.78))
+    ]
     print(f"  Surviving tail events ({len(tail_evs)}): {[f'{ev.type} @ t={ev.timestamp_s}s' for ev in tail_evs]}")
-    print(f"  Surviving tail intervals ({len(tail_invs)}): {[f'{inv.type} [{inv.t_start_s}s-{inv.t_end_s}s]' for inv in tail_invs]}")
+    tail_strs = [f"{inv.type} [{inv.t_start_s}s-{inv.t_end_s}s]" if inv.t_end_s is not None else f"{inv.type} [{inv.t_start_s}s-ongoing]" for inv in tail_invs]
+    print(f"  Surviving tail intervals ({len(tail_invs)}): {tail_strs}")
 
     print("\nExecuting P3 (Adjudication)...")
     p3 = build_p3()
