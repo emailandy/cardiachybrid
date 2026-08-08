@@ -187,6 +187,14 @@ Date: 2026-08-07  Session: S09  Decided by: human, agent
    *(Note: Spatial pixel thresholds such as `impulse_min_spike_px: 2.0` remain unscaled across camera resolutions).*
 3. **Manual Branch Untested & Patient 2 Status**: The manual classifier branch remains untested across rooms because Patient 2's manual phase is sub-floor at the bed ROI due to compressor occlusion and the static torso window breaks under two-minute provider rotations. For Patient 2, the manual phase ($t=13\text{–}483\text{s}$) is **`unable_to_determine` (UTD)**, while the mechanical phase ($t=483\text{–}591\text{s}$) is measurable with verified mechanical CPR.
 
+## 037 — VERSIONS.yaml Model Bindings as Single Source of Truth for Call-Time Decoding Parameters
+Date: 2026-08-08  Session: Task 3  Decided by: human, agent
+1. **Single Source of Truth**: All runtime model decoding parameters (`model`, `temperature`, `thinking`, `ensemble_k`, `seed`) are declared in `prompts/VERSIONS.yaml` under `model_binding` and accessed via `get_model_binding(pass_name)` in `prompts/registry.py`. No numeric temperature or thinking literals are permitted in execution scripts (`scripts/run_case.py`).
+2. **Fail Loudly**: `get_model_binding()` raises `KeyError` immediately if a pass name is not declared in `VERSIONS.yaml`. Silent fallbacks to API defaults (such as unseeded sampling or default temperature 1.0) are prohibited.
+3. **Plumbing to VertexClient**: Parameters are plumbed through `call_model_cached()` to `VertexClient.generate()`, constructing `GenerateContentConfig(temperature=..., seed=..., thinking_config=...)`.
+4. **P3 Greedy Invariant**: Pass 3 adjudication is strictly bound to `temperature: 0.0` (greedy decoding) and `thinking: high` to ensure deterministic reconciliation of clinical intervals and event boundaries.
+
+
 
 
 
