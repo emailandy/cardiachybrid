@@ -228,6 +228,26 @@ def main():
         row_str += " | ".join(cols)
         print(row_str)
 
+    # 1B. PER-SHOCK SPREAD & DISCIPLINE TABLE
+    print("\n--- TABLE 1B: PER-SHOCK TIMESTAMP SPREAD ACROSS DETECTIONS (Strict n >= 2 discipline) ---")
+    print(f"{'Gold Shock':<12} | {'n Detected':<10} | {'Spread (max - min)':<20} | Extracted Timestamps")
+    print("-" * 75)
+    for g_idx, gt in enumerate(ground_truth):
+        gt_t = gt["timestamp_s"]
+        detected_ts = []
+        for r in results:
+            assoc = r["association"]["associated"].get(g_idx)
+            if assoc:
+                detected_ts.append(assoc["pred"]["timestamp_s"])
+        n_obs = len(detected_ts)
+        if n_obs >= 2:
+            spread_val = max(detected_ts) - min(detected_ts)
+            spread_str = f"{spread_val:.1f}s"
+        else:
+            spread_str = "n/a (n < 2)"
+        ts_str = ", ".join([f"{t:.1f}s" for t in detected_ts]) if detected_ts else "None"
+        print(f"#{g_idx+1} ({gt_t:5.1f}s)  | n={n_obs:<8} | {spread_str:<20} | [{ts_str}]")
+
     # 2. ENUMERATED FALSE POSITIVES PER RUN
     print("\n--- TABLE 2: ENUMERATED UNASSOCIATED DETECTIONS (FALSE POSITIVES) ---")
     for r in results:

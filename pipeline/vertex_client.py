@@ -100,6 +100,22 @@ class VertexClient:
         finish_reason = str(response.candidates[0].finish_reason) if response.candidates else "UNKNOWN"
 
         if self.log_path:
+            config_dump = {}
+            if config is not None:
+                config_dump = {
+                    "has_temperature": config.temperature is not None,
+                    "temperature": config.temperature,
+                    "has_seed": config.seed is not None,
+                    "seed": config.seed,
+                    "has_thinking_config": config.thinking_config is not None,
+                    "thinking_level": config.thinking_config.thinking_level if config.thinking_config else None,
+                    "has_media_resolution": config.media_resolution is not None,
+                    "media_resolution": str(config.media_resolution) if config.media_resolution else None,
+                    "has_response_schema": config.response_schema is not None,
+                    "has_response_mime_type": config.response_mime_type is not None,
+                    "config_kwargs_keys": list(config_kwargs.keys()),
+                }
+
             record = {
                 "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
                 "case_id": case_id,
@@ -110,6 +126,7 @@ class VertexClient:
                 "seed": seed,
                 "thinking_level": resolved_thinking,
                 "media_resolution": resolved_media_res,
+                "config_as_sent": config_dump,
                 "prompt_tokens": prompt_tokens,
                 "candidates_tokens": cand_tokens,
                 "latency_s": round(latency, 3),

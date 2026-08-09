@@ -87,12 +87,12 @@ Owner: human / platform team.  Status: OPEN.  Blocks: nothing (workaround
 in place), but must be resolved before any production deployment.
 
 Q-008 Pin exact Gemini model version strings before the first production run.
--latest aliases make historical runs unreproducible.
-  - options: specific model strings (e.g. gemini-1.5-pro-001)
+-latest and -preview aliases make historical runs unreproducible.
+  - options: specific immutable model snapshots (e.g. pinned snapshot revisions once frozen by GCP)
   - default: None (must be explicitly pinned by human)
   - owner: human
-  - status: RESOLVED (2026-08-02 — pinned to gemini-2.5-flash for P1 and gemini-2.5-pro for P2/P3/P4/P5)
-  - blocks: nothing
+  - status: OPEN (Reopened: Task 4 demonstrated that `gemini-3.1-pro-preview` is an unpinned moving alias and `seed` is inert for multimodal video input on Vertex AI. Without bit-exact reproducibility, every historical scorecard in this repo describes a model state that cannot be re-obtained).
+  - blocks: production deployment & reproducible benchmarking
 
 Q-010 BigQuery Terraform Region Selection.
 Multi-region US vs single region (e.g. us-east4 for data-residency compliance).

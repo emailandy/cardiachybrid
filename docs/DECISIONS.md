@@ -194,6 +194,14 @@ Date: 2026-08-08  Session: Task 3  Decided by: human, agent
 3. **Plumbing to VertexClient**: Parameters are plumbed through `call_model_cached()` to `VertexClient.generate()`, constructing `GenerateContentConfig(temperature=..., seed=..., thinking_config=...)`.
 4. **P3 Greedy Invariant**: Pass 3 adjudication is strictly bound to `temperature: 0.0` (greedy decoding) and `thinking: high` to ensure deterministic reconciliation of clinical intervals and event boundaries.
 
+## 038 — Falsification of Multimodal Video Decoding Determinism via Seed Parameter (Task 4 Diagnostic)
+Date: 2026-08-09  Session: Task 4  Decided by: human, agent
+1. **Falsification of Seed Efficacy on Multimodal Payloads**: Controlled A/B probing on P1 Window 0 (`scripts/probe_seed_efficacy.py`) empirically demonstrated that `GenerateContentConfig(seed=42)` is inert on Vertex AI for multimodal video inputs (`gemini-3.1-pro-preview`). Consecutive calls with bit-identical input files (MD5 `8670427883332f487c1c25f6d2dc7198`), identical prompt text, identical temperature (`0.6`), and identical seed (`42`) produced divergent output tokens (2,527 chars vs 3,247 chars) and differing event streams.
+2. **Correction of Task 3 Determinism Claim**: Task 3's initial interpretation that "variance was eliminated" is retracted and falsified. Apparent 0.0s spread on certain shocks was an artifact of $n=1$ single observations or stochastic coincidences; Shock #4 spread 12.0s across seeded runs, and overall recall degraded from 100% to 40–80%.
+3. **Strict Spread/Variance Discipline**: Any spread or variance metric across runs must report sample size $n$ and emit `n/a` whenever $n < 2$. Single observations cannot define a zero spread.
+4. **Architectural Consequence**: Bit-exact reproducibility cannot be achieved via client-side decoding parameters alone on multimodal video payloads. Non-determinism is a platform property to design around (via ensembling, deterministic sensor layers S1-S7, and temporal anchor grounding).
+
+
 
 
 
