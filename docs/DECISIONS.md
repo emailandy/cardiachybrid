@@ -234,6 +234,19 @@ Date: 2026-08-09  Session: Task 7 Commit 1  Decided by: human, agent
 6. **Timestamp Spread Regression**: Shock #3 cross-run spread regressed from $0.0\text{s}$ ($n=3$) at $T=0.6+\text{high}$ to $10.5\text{s}$ ($n=3$) at $T=1.0+\text{high}$ due to one draw at $609.0\text{s}$ (13s early), demonstrating that higher temperature traded timestamp stability for candidate volume.
 7. **Provisional Status (Q-017)**: The selection of $T=1.0$ remains strictly provisional on an $n=1$ case and must not be characterized as "tuned," "calibrated," or "optimal."
 
+## 043 — Measurement of Candidate Shipping Configuration (T=1.0, thinking=high, k=3 Union Ensembling)
+Date: 2026-08-09  Session: Task 7 Commit 2  Decided by: human, agent
+1. **Measured Candidate Shipping Config (`pro_run_ship_01..03`)**: Evaluated the combined pipeline of $T=1.0$, `thinking: "high"`, and `ensemble_k: 3` resolved from `prompts/VERSIONS.yaml` across 3 fresh executions.
+2. **Empirical Performance**:
+   - Recall @ $\pm 15\text{s}$: 100.0% / 80.0% / 100.0% (14/15 gold shocks captured, 93.3% aggregate recall).
+   - Timestamp Error: Mean $|\Delta t| = 1.95\text{s}, 2.25\text{s}, 2.25\text{s}$, median $|\Delta t| = 2.00\text{s}$ across all 3 runs.
+   - Harvest Volume: 55, 55, 79 events per run (mean 63.0 events/run).
+   - Precision: 55.6% / 33.3% / 41.7% with 4 / 8 / 7 false positives per run (expected trade from union expansion before downstream S3 acoustic gating).
+3. **Question (a) Resolution — `n_draws` Does Not Discriminate True from False Positives**: True positive shocks appeared across $n_{\text{draws}} = 1, 2, 3$, and false positive shocks also appeared across $n_{\text{draws}} = 1, 2, 3$. Shock #4 was saved as $n_{\text{draws}}=1$ in 2 runs, and Shock #5 was detected exclusively as $n_{\text{draws}}=1$ in both runs where it was observed. An `n_draws >= 2` filter would destroy recall on true shocks while passing multi-draw false positives (e.g. $856.0\text{s}$ had $n_{\text{draws}}=3$). S3 acoustic gating is confirmed as **MANDATORY**.
+4. **Question (b) Resolution — Timestamp Stability Recovered**: $k=3$ union clustering successfully recovered timestamp stability: Shock #3 cross-run spread recovered from $10.5\text{s}$ ($k=1$) back to $2.0\text{s}$ ($n=3$, $[620.0\text{s}, 618.0\text{s}, 619.8\text{s}]$), Shock #2 had spread $0.5\text{s}$ ($n=3$), and Shock #4 had spread $0.0\text{s}$ ($n=3$, $t=740.0\text{s}$ in all 3 runs).
+5. **Provisional Invariant**: Configuration is provisionally designated as candidate shipping setup for multimodal video extraction pending multi-case clinical validation (Q-017).
+
+
 
 
 
