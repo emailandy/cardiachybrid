@@ -219,6 +219,18 @@ Date: 2026-08-09  Session: Task 5 Re-evaluation  Decided by: human, agent
 2. **Empirical Deconfounding (`pro_run_think_01..03`)**: Raising `pass_1` thinking to `"high"` (at $T=0.6, k=1$) immediately restored event enumeration (25–39 candidates per run vs 0–8 under low thinking) and single-draw shock recall to 100.0% / 60.0% / 60.0% @ $\pm 15\text{s}$ (mean $|\Delta t| = 3.70\text{s}, 5.33\text{s}, 1.33\text{s}$, median $|\Delta t| = 1.50\text{--}2.00\text{s}$).
 3. **Re-opening of Decision 039**: Decision 039 is formally re-opened and corrected: the failure of `pro_run_t10` was caused by `thinking: "low"`, not temperature 1.0. High thinking budget is required for comprehensive candidate harvest in long-context multimodal video windows.
 
+## 042 — Completion of Pass 1 Temperature × Thinking Factorial (Task 7 Commit 1)
+Date: 2026-08-09  Session: Task 7 Commit 1  Decided by: human, agent
+1. **Factorial Completed ($k=1$)**: Executed the final missing cell of the 2×2 factorial (`pro_run_t10high_01..03`, $T=1.0, \text{thinking: "high"}$, $k=1$, $\text{seed}=42$).
+2. **5-Condition Comparison**:
+   - Baseline ($T=1.0, \text{think}=\text{default}$): Recall 100/100/100%, F1 0.909/0.769/0.833, Harvest 28/36/32
+   - Seeded Low ($T=0.6, \text{think}=\text{low}$): Recall 80/40/40%, F1 0.800/0.444/0.500, Harvest 18/15/15
+   - Temp 1.0 Low ($T=1.0, \text{think}=\text{low}$): Recall 0/0/20%, F1 0.000/0.000/0.333, Harvest 0/5/8
+   - Deconfounded ($T=0.6, \text{think}=\text{high}$): Recall 100/60/60%, F1 0.909/0.545/0.600, Harvest 31/39/25
+   - Factorial Complete ($T=1.0, \text{think}=\text{high}$): Recall 60/80/80%, F1 0.600/0.727/0.800, Harvest 39/44/46
+3. **Resolution of Decision 039**: D-039 is formally resolved: $T=1.0 + \text{high}$ yields equivalent overall shock recall ($73.3\%$, $11/15$ shocks) and higher candidate harvest ($43.0$ vs $31.7$ events/run) and mean F1 ($0.709$ vs $0.685$) compared to $T=0.6 + \text{high}$. Setting $T=1.0$ is provisionally retained for candidate shipping configuration pending human review.
+
+
 
 
 
