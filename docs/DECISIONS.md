@@ -201,6 +201,13 @@ Date: 2026-08-09  Session: Task 4  Decided by: human, agent
 3. **Strict Spread/Variance Discipline**: Any spread or variance metric across runs must report sample size $n$ and emit `n/a` whenever $n < 2$. Single observations cannot define a zero spread.
 4. **Architectural Consequence**: Bit-exact reproducibility cannot be achieved via client-side decoding parameters alone on multimodal video payloads. Non-determinism is a platform property to design around (via ensembling, deterministic sensor layers S1-S7, and temporal anchor grounding).
 
+## 039 — Provisional P1 Temperature A/B Test and Falsification of Temperature-Recall Hypothesis
+Date: 2026-08-09  Session: Task 5 Commit 1  Decided by: human, agent
+1. **Provisional Measurement**: Changed `pass_1` temperature to 1.0 in `prompts/VERSIONS.yaml` to test whether temperature 1.0 restored P1 recall on single draws ($k=1$).
+2. **Empirical Falsification**: Three fresh runs (`pro_run_t10_01..03`) yielded 0.0% / 0.0% / 20.0% recall @ $\pm 15\text{s}$ (1 gold shock detected out of 15 across 3 runs). The hypothesis that temperature 1.0 recovers single-draw recall is empirically falsified.
+3. **Revert Condition Met**: Per protocol, `pass_1` temperature is reverted to 0.6. Recall recovery must come from union ensembling ($k=3$), not single-draw temperature variation.
+
+
 
 
 

@@ -26,7 +26,7 @@ team_anchors:
 model_binding:
   pass_1:
     model: "gemini-3.6-flash"
-    temperature: 0.6
+    temperature: 1.0
     ensemble_k: 3
     thinking: "low"
   pass_2:
