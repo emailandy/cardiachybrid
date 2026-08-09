@@ -246,6 +246,22 @@ Date: 2026-08-09  Session: Task 7 Commit 2  Decided by: human, agent
 4. **Question (b) Resolution — Timestamp Stability Recovered**: $k=3$ union clustering successfully recovered timestamp stability: Shock #3 cross-run spread recovered from $10.5\text{s}$ ($k=1$) back to $2.0\text{s}$ ($n=3$, $[620.0\text{s}, 618.0\text{s}, 619.8\text{s}]$), Shock #2 had spread $0.5\text{s}$ ($n=3$), and Shock #4 had spread $0.0\text{s}$ ($n=3$, $t=740.0\text{s}$ in all 3 runs).
 5. **Provisional Invariant**: Configuration is provisionally designated as candidate shipping setup for multimodal video extraction pending multi-case clinical validation (Q-017).
 
+## 044 — S3 Acoustic Gating at Fusion Layer (Candidate Shock Pool Filtering)
+Date: 2026-08-09  Session: Task 8  Decided by: human, agent
+1. **Implemented S3 Acoustic Gate (`pipeline/s3_gate.py`)**: Designed and integrated deterministic S3 acoustic gating to adjudicate candidate shock event streams from P1 union ensembling without deleting candidate events (Invariant I5).
+2. **Three-State Adjudication with Invariant I5**:
+   - `confirmed`: Confirmed by acoustic charge tone and discharge transient (raises confidence, e.g. $\ge 0.95$, `needs_review=False`).
+   - `rejected`: Positive acoustic rejection or competing bracket artifact (downgrades confidence to $\max(0.10, \text{conf} \times 0.40)$, `needs_review=True`).
+   - `abstained`: Acoustic signal uninformative or uncharged simulator defibrillation (preserves candidate confidence at $1.00$, `needs_review=True`).
+3. **Cluster Adjudication of Speech/Motion Bracket Artifacts**: Resolved multi-candidate clusters bracketing real shocks (e.g. 736s/740s/744s around 740.7s, 163.5s/167s around 164.3s, 876s/884.5s around 876.7s) by isolating the primary delivery candidate and rejecting the competing bracket artifacts.
+4. **Empirical Performance on Shipping Runs (`pro_run_ship_01..03`)**:
+   - Recall @ $\pm 15\text{s}$: 100.0% / 80.0% / 100.0% (14/15 gold shocks captured, 93.3% aggregate recall — zero true shocks downgraded below recall).
+   - False Positives: Dropped from 19 FP across 3 runs (4 / 8 / 7) down to 2 FP (0 / 1 / 1), achieving an **89.5% false positive reduction**.
+   - Precision: 100.0% / 80.0% / 83.3% (vs 55.6% / 33.3% / 41.7% ungated).
+   - F1 Score: 1.000 / 0.800 / 0.909 (vs 0.714 / 0.471 / 0.588 ungated).
+5. **Discriminator Invariance**: The gate contains zero `n_draws` thresholds, preserving Gold #4 and #5 (which appeared at $n_{\text{draws}}=1$) while successfully rejecting the multi-draw false positive at 856.0s ($n_{\text{draws}}=3$).
+
+
 
 
 
