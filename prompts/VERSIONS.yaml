@@ -28,7 +28,7 @@ model_binding:
     model: "gemini-3.6-flash"
     temperature: 0.6
     ensemble_k: 3
-    thinking: "low"
+    thinking: "high"
   pass_2:
     model: "gemini-3.1-pro-preview"
     temperature: 0.6

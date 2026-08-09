@@ -79,7 +79,7 @@ def test_vertex_client_generate_receives_declared_parameters_and_seed():
     assert config.temperature == b_p1["temperature"]
     assert config.seed == 42
     assert config.thinking_config is not None
-    assert config.thinking_config.thinking_level == "LOW"
+    assert config.thinking_config.thinking_level == (b_p1.get("thinking") or "").upper()
 
     # Test P3 binding parameters (greedy 0.0, thinking HIGH)
     b_p3 = get_model_binding("pass_3")

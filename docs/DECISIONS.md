@@ -213,6 +213,13 @@ Date: 2026-08-09  Session: Task 5 Commit 2  Decided by: human, agent
 2. **Cross-Draw Evidence Clustering**: Near-duplicate events within a window are clustered using `CROSS_DRAW_CLUSTER_TOLERANCE_S = 3.0` (derived from D-017/018 `spread_threshold_s: 3.0`). Each cluster computes and attaches `n_draws` (1..k), `t_median_s`, and `t_spread_s` (`n/a` if $n < 2$) as evidence attributes passed downstream to P3.
 3. **Empirical Measurement**: Three fresh executions (`pro_run_k3_01..03`) demonstrated recall recovery to 60.0% / 80.0% / 80.0% @ $\pm 15\text{s}$ (mean $|\Delta t| = 1.83\text{s}, 1.62\text{s}, 4.50\text{s}$) with 2–3 false positives per run. For gold shock #1, all 3 draws agreed ($n\_draws=3$, spread 2.5–3.5s), while shocks detected by only 1 draw (e.g. shock #2 in runs 1 & 2) were preserved by union rather than lost.
 
+## 041 — Deconfounding P1 Reasoning Budget: Thinking Budget as Primary Driver of Harvest Recall
+Date: 2026-08-09  Session: Task 5 Re-evaluation  Decided by: human, agent
+1. **Confound Identification in Task 5**: In commit `1d7e166`, `pass_1` was simultaneously bound to `temperature: 0.6`, `seed: 42`, and `thinking: "low"`. The subsequent temperature test (`pro_run_t10_01..03`, $T=1.0, \text{thinking="low"}$) produced 0.0% / 0.0% / 20.0% recall, leading to the invalid conclusion in Decision 039 that "temperature 1.0 was falsified." The actual confounding variable was `thinking: "low"`, which throttled model reasoning across 480-second multimodal windows.
+2. **Empirical Deconfounding (`pro_run_think_01..03`)**: Raising `pass_1` thinking to `"high"` (at $T=0.6, k=1$) immediately restored event enumeration (25–39 candidates per run vs 0–8 under low thinking) and single-draw shock recall to 100.0% / 60.0% / 60.0% @ $\pm 15\text{s}$ (mean $|\Delta t| = 3.70\text{s}, 5.33\text{s}, 1.33\text{s}$, median $|\Delta t| = 1.50\text{--}2.00\text{s}$).
+3. **Re-opening of Decision 039**: Decision 039 is formally re-opened and corrected: the failure of `pro_run_t10` was caused by `thinking: "low"`, not temperature 1.0. High thinking budget is required for comprehensive candidate harvest in long-context multimodal video windows.
+
+
 
 
 
