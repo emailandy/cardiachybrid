@@ -111,34 +111,46 @@ def run_dry_run(args: argparse.Namespace, duration_s: float) -> None:
 
     assert len(p5_prompts) == 7, f"Expected 7 distinct P5 section prompts, got {len(p5_prompts)}"
 
-    total_calls = len(WINDOWS) * args.k + 1 * args.k + 1 * args.k + 1 * args.k + len(P5_SECTIONS) * args.k
+    b_p1 = get_model_binding("pass_1")
+    b_p3 = get_model_binding("pass_3")
+    b_p4a = get_model_binding("pass_4a")
+    b_p4b = get_model_binding("pass_4b")
+    b_p5 = get_model_binding("pass_5")
+
+    k_p1 = args.k if args.k is not None else b_p1.get("ensemble_k", 3)
+    k_p3 = args.k if args.k is not None else b_p3.get("ensemble_k", 1)
+    k_p4a = args.k if args.k is not None else b_p4a.get("ensemble_k", 1)
+    k_p4b = args.k if args.k is not None else b_p4b.get("ensemble_k", 1)
+    k_p5 = args.k if args.k is not None else b_p5.get("ensemble_k", 1)
+
+    total_calls = len(WINDOWS) * k_p1 + 1 * k_p3 + 1 * k_p4a + 1 * k_p4b + len(P5_SECTIONS) * k_p5
     print(f"\n[Call Count Verification]")
-    print(f"  P1  (4 windows  × k={args.k}) = {len(WINDOWS) * args.k:2d} calls")
-    print(f"  P3  (1 case     × k={args.k}) = {1 * args.k:2d} calls")
-    print(f"  P4a (1 team     × k={args.k}) = {1 * args.k:2d} calls")
-    print(f"  P4b (1 global   × k={args.k}) = {1 * args.k:2d} calls")
-    print(f"  P5  (7 sections × k={args.k}) = {len(P5_SECTIONS) * args.k:2d} calls")
+    print(f"  P1  (4 windows  × k={k_p1}) = {len(WINDOWS) * k_p1:2d} calls")
+    print(f"  P3  (1 case     × k={k_p3}) = {1 * k_p3:2d} calls")
+    print(f"  P4a (1 team     × k={k_p4a}) = {1 * k_p4a:2d} calls")
+    print(f"  P4b (1 global   × k={k_p4b}) = {1 * k_p4b:2d} calls")
+    print(f"  P5  (7 sections × k={k_p5}) = {len(P5_SECTIONS) * k_p5:2d} calls")
     print(f"  TOTAL CALLS                 = {total_calls:2d} calls (zero API calls in dry-run)")
 
     print(f"\n[Primary Zones Tiling Verification — [0.0, {duration_s}]]")
     for idx, w_start, w_end, p_end, ov_lead, w_start_prim in WINDOWS:
         print(f"  Window {idx}: window [{w_start:7.1f} -> {w_end:7.1f}s] | PRIMARY ZONE: [{w_start_prim:7.1f} -> {p_end:7.1f}s] (dur: {p_end - w_start_prim:5.1f}s)")
 
-    p1_txt_tokens = sum(p.estimated_text_input_tokens for p in p1_prompts) * args.k
-    p3_txt_tokens = p3.estimated_text_input_tokens * args.k
-    p4a_txt_tokens = p4a.estimated_text_input_tokens * args.k
-    p4b_txt_tokens = p4b.estimated_text_input_tokens * args.k
-    p5_txt_tokens = sum(p.estimated_text_input_tokens for p in p5_prompts) * args.k
+    p1_txt_tokens = sum(p.estimated_text_input_tokens for p in p1_prompts) * k_p1
+    p3_txt_tokens = p3.estimated_text_input_tokens * k_p3
+    p4a_txt_tokens = p4a.estimated_text_input_tokens * k_p4a
+    p4b_txt_tokens = p4b.estimated_text_input_tokens * k_p4b
+    p5_txt_tokens = sum(p.estimated_text_input_tokens for p in p5_prompts) * k_p5
 
     total_txt_tokens = p1_txt_tokens + p3_txt_tokens + p4a_txt_tokens + p4b_txt_tokens + p5_txt_tokens
 
     # Video tokens estimation at MEDIA_RESOLUTION_LOW (~66 tokens/frame marginal, 2 fps -> ~132 tokens/sec)
     vid_tokens_per_sec = 132
-    p1_vid_tokens = sum(int((w[2] - w[1]) * vid_tokens_per_sec) for w in WINDOWS) * args.k
+    p1_vid_tokens = sum(int((w[2] - w[1]) * vid_tokens_per_sec) for w in WINDOWS) * k_p1
     total_p1_tokens = p1_txt_tokens + p1_vid_tokens
 
     # P3-P5 event stream payload tokens (~15,000 text tokens/call for event stream JSON)
-    p345_calls = (1 + 1 + 1 + len(P5_SECTIONS)) * args.k
+    p345_calls = (1 * k_p3 + 1 * k_p4a + 1 * k_p4b + len(P5_SECTIONS) * k_p5)
     p345_stream_tokens = p345_calls * 15000
     total_p345_tokens = (p3_txt_tokens + p4a_txt_tokens + p4b_txt_tokens + p5_txt_tokens) + p345_stream_tokens
 
@@ -146,12 +158,12 @@ def run_dry_run(args: argparse.Namespace, duration_s: float) -> None:
     cost_p345 = (total_p345_tokens / 1_000_000) * 1.25
     total_cost = cost_p1 + cost_p345
 
-    print(f"\n[Per-Pass Token Estimates (k={args.k})]")
+    print(f"\n[Per-Pass Token Estimates (P1 k={k_p1}, P3-P5 k=1)]")
     print(f"  P1  Prompt Text Tokens : {p1_txt_tokens:8,d} | Est. Video Tokens ({args.media_resolution.upper()}): {p1_vid_tokens:8,d} | Total P1  : {total_p1_tokens:8,d} (Est. Cost: ${cost_p1:.3f})")
-    print(f"  P3  Prompt Text Tokens : {p3_txt_tokens:8,d} | Est. Stream Tokens: {1 * args.k * 15000:8,d} | Total P3  : {p3_txt_tokens + 1 * args.k * 15000:8,d}")
-    print(f"  P4a Prompt Text Tokens : {p4a_txt_tokens:8,d} | Est. Stream Tokens: {1 * args.k * 15000:8,d} | Total P4a : {p4a_txt_tokens + 1 * args.k * 15000:8,d}")
-    print(f"  P4b Prompt Text Tokens : {p4b_txt_tokens:8,d} | Est. Stream Tokens: {1 * args.k * 15000:8,d} | Total P4b : {p4b_txt_tokens + 1 * args.k * 15000:8,d}")
-    print(f"  P5  Prompt Text Tokens : {p5_txt_tokens:8,d} | Est. Stream Tokens: {7 * args.k * 15000:8,d} | Total P5  : {p5_txt_tokens + 7 * args.k * 15000:8,d}")
+    print(f"  P3  Prompt Text Tokens : {p3_txt_tokens:8,d} | Est. Stream Tokens: {1 * k_p3 * 15000:8,d} | Total P3  : {p3_txt_tokens + 1 * k_p3 * 15000:8,d}")
+    print(f"  P4a Prompt Text Tokens : {p4a_txt_tokens:8,d} | Est. Stream Tokens: {1 * k_p4a * 15000:8,d} | Total P4a : {p4a_txt_tokens + 1 * k_p4a * 15000:8,d}")
+    print(f"  P4b Prompt Text Tokens : {p4b_txt_tokens:8,d} | Est. Stream Tokens: {1 * k_p4b * 15000:8,d} | Total P4b : {p4b_txt_tokens + 1 * k_p4b * 15000:8,d}")
+    print(f"  P5  Prompt Text Tokens : {p5_txt_tokens:8,d} | Est. Stream Tokens: {7 * k_p5 * 15000:8,d} | Total P5  : {p5_txt_tokens + 7 * k_p5 * 15000:8,d}")
     print(f"  ---------------------------------------------------------------------------------------------------------------")
     print(f"  TOTAL P1 INPUT TOKENS  : {total_p1_tokens:8,d} (~${cost_p1:.3f})")
     print(f"  TOTAL P3-P5 INPUT TOKENS: {total_p345_tokens:8,d} (~${cost_p345:.3f})")
@@ -291,12 +303,14 @@ def run_live(args: argparse.Namespace, duration_s: float) -> None:
     window_streams: list[tuple[Any, float, float]] = []
 
     seed_val = getattr(args, "seed", None)
-
     t_start_wall = time.time()
     b_p1 = get_model_binding("pass_1")
     p1_model_val = getattr(args, "p1_model", None) or b_p1["model"]
     p1_temp = float(b_p1["temperature"])
     p1_thinking = b_p1.get("thinking")
+    k_p1 = args.k if args.k is not None else b_p1.get("ensemble_k", 3)
+
+    from ingest.ensemble import union_and_cluster_draw_streams
 
     for idx, w_start, w_end, p_end, ov_lead, w_start_prim in WINDOWS:
         sensor_data = None
@@ -323,38 +337,48 @@ def run_live(args: argparse.Namespace, duration_s: float) -> None:
             file_data=types.FileData(file_uri=args.video, mime_type="video/mp4"),
             video_metadata=meta,
         )
-        print(f"  Calling P1 Window {idx} [{w_start}s -> {w_end}s] (model: {p1_model_val}, temp: {p1_temp}, seed: {seed_val}, with_sensors={bool(sensor_data)})...")
-        res_text = call_model_cached(
-            vc,
-            model=p1_model_val,
-            contents=[video_part, p1.system + "\n---\n" + p1.user],
-            pass_name=f"p1_win_{idx}",
-            use_cache=args.use_cache,
-            cache_dir=cache_dir,
-            media_resolution_str=args.media_resolution,
-            temperature=p1_temp,
-            thinking_str=p1_thinking,
-            seed=seed_val,
-            response_schema=p1.response_schema,
-            response_mime_type="application/json",
-            case_id=args.case_id,
-            run_id=run_id_val,
-        )
-        raw_json = clean_json_response(res_text)
-        try:
-            stream = EventStream.model_validate_json(raw_json)
-        except Exception as e:
-            logging.error(f"Failed to parse P1 Window {idx} JSON: {e}")
-            stream = EventStream(
-                case_id=args.case_id,
-                events=[],
-                intervals=[],
-                coverage=[],
-                fields=CaseFields(),
-            )
 
-        window_streams.append((stream, w_start_prim, p_end))
-        print(f"    Window {idx} parsed {len(stream.events)} events, {len(stream.intervals)} intervals")
+        draw_streams: list[EventStream] = []
+        for draw_idx in range(k_p1):
+            pass_name = f"p1_win_{idx}_draw_{draw_idx}" if k_p1 > 1 else f"p1_win_{idx}"
+            draw_str = f" (draw {draw_idx + 1}/{k_p1})" if k_p1 > 1 else ""
+            print(f"  Calling P1 Window {idx}{draw_str} [{w_start}s -> {w_end}s] (model: {p1_model_val}, temp: {p1_temp}, seed: {seed_val}, with_sensors={bool(sensor_data)})...")
+            res_text = call_model_cached(
+                vc,
+                model=p1_model_val,
+                contents=[video_part, p1.system + "\n---\n" + p1.user],
+                pass_name=pass_name,
+                use_cache=args.use_cache,
+                cache_dir=cache_dir,
+                media_resolution_str=args.media_resolution,
+                temperature=p1_temp,
+                thinking_str=p1_thinking,
+                seed=seed_val,
+                response_schema=p1.response_schema,
+                response_mime_type="application/json",
+                case_id=args.case_id,
+                run_id=run_id_val,
+            )
+            raw_json = clean_json_response(res_text)
+            try:
+                d_stream = EventStream.model_validate_json(raw_json)
+            except Exception as e:
+                logging.error(f"Failed to parse P1 Window {idx} draw {draw_idx} JSON: {e}")
+                d_stream = EventStream(
+                    case_id=args.case_id,
+                    events=[],
+                    intervals=[],
+                    coverage=[],
+                    fields=CaseFields(),
+                )
+            draw_streams.append(d_stream)
+
+        window_clustered_stream = union_and_cluster_draw_streams(draw_streams)
+        window_streams.append((window_clustered_stream, w_start_prim, p_end))
+        if k_p1 > 1:
+            print(f"    Window {idx} union ({k_p1} draws): {len(window_clustered_stream.events)} candidate events, {len(window_clustered_stream.intervals)} intervals")
+        else:
+            print(f"    Window {idx} parsed {len(window_clustered_stream.events)} events, {len(window_clustered_stream.intervals)} intervals")
 
     from ingest.ensemble import deduplicate_window_streams, pair_boundary_events
     merged_stream = pair_boundary_events(deduplicate_window_streams(window_streams))
@@ -582,7 +606,7 @@ def main() -> None:
     parser.add_argument("--video", default="gs://videval/cardiac/simvideo2.mp4", help="GCS URI of video")
     parser.add_argument("--dry-run", action="store_true", help="Assemble prompts, snapshot, zero API calls")
     parser.add_argument("--no-bq", action="store_true", help="Disable writing results to BigQuery")
-    parser.add_argument("--k", type=int, default=1, help="Ensemble k per pass (default 1)")
+    parser.add_argument("--k", type=int, default=None, help="Ensemble k per pass (default: read from VERSIONS.yaml)")
     parser.add_argument("--with-p2", action="store_true", help="Include P2 single-event verification (default off)")
     parser.add_argument("--with-sensors", action="store_true", help="Enable deterministic sensor layer (S1-S7) preprocessing and prompt injection")
     parser.add_argument("--t0", default="2023-11-07T07:55:57", help="Wall-clock T0 anchor datetime")

@@ -679,6 +679,193 @@ def pair_boundary_events(stream: Any) -> Any:
         fields=stream.fields,
     )
 
+CROSS_DRAW_CLUSTER_TOLERANCE_S: float = 3.0  # Derived from Decision 017 / Decision 018 spread_threshold_s: 3.0
+
+
+def union_and_cluster_draw_streams(
+    draw_streams: list[Any],
+    cluster_tolerance_s: float = CROSS_DRAW_CLUSTER_TOLERANCE_S,
+) -> Any:
+    """
+    Unions candidate event streams across k independent draws within a single window,
+    clustering near-duplicate events of matching type within cluster_tolerance_s.
+
+    Guarantees:
+      - Union: Every candidate from every draw enters the candidate set (zero drops before P3).
+      - Cross-draw cluster metadata attached to every clustered item:
+          n_draws: Number of distinct draws that observed the event (1..k)
+          t_median_s: Median timestamp across contributing draws
+          t_spread_s: max(t) - min(t) across contributing draws ('n/a' if n_draws < 2)
+          draw_timestamps: list of raw timestamps
+      - Monotonic order-preserving clustering across draws.
+    """
+    if not draw_streams:
+        raise ValueError("draw_streams must not be empty")
+
+    from generated.models import EventStream
+
+    if len(draw_streams) == 1:
+        s = draw_streams[0]
+        new_events = []
+        for ev in s.events:
+            t_val = getattr(ev, "timestamp_s", getattr(ev, "t_start_s", 0.0))
+            attrs = dict(getattr(ev, "attributes", {}) or {})
+            attrs["n_draws"] = 1
+            attrs["t_median_s"] = t_val
+            attrs["t_spread_s"] = "n/a"
+            attrs["draw_timestamps"] = [t_val]
+            ev_dict = ev.model_dump()
+            ev_dict["attributes"] = attrs
+            new_events.append(ev.__class__(**ev_dict))
+
+        new_intervals = []
+        for inv in s.intervals:
+            t_val = getattr(inv, "t_start_s", 0.0)
+            attrs = dict(getattr(inv, "attributes", {}) or {})
+            attrs["n_draws"] = 1
+            attrs["t_median_s"] = t_val
+            attrs["t_spread_s"] = "n/a"
+            inv_dict = inv.model_dump()
+            inv_dict["attributes"] = attrs
+            new_intervals.append(inv.__class__(**inv_dict))
+
+        return EventStream(
+            case_id=s.case_id,
+            events=new_events,
+            intervals=new_intervals,
+            coverage=list(s.coverage),
+            fields=s.fields,
+        )
+
+    # Multi-draw clustering:
+    # 1. Events by event_type
+    events_by_type: dict[str, list[tuple[int, Any]]] = {}
+    for d_idx, s in enumerate(draw_streams):
+        for ev in s.events:
+            events_by_type.setdefault(ev.type, []).append((d_idx, ev))
+
+    clustered_events = []
+    for ev_type, ev_list in events_by_type.items():
+        sorted_evs = sorted(ev_list, key=lambda x: getattr(x[1], "timestamp_s", getattr(x[1], "t_start_s", 0.0)))
+        clusters: list[list[tuple[int, Any]]] = []
+
+        for d_idx, ev in sorted_evs:
+            t_ev = getattr(ev, "timestamp_s", getattr(ev, "t_start_s", 0.0))
+            best_c = None
+            best_dist = float("inf")
+            for c in clusters:
+                c_draws = {item[0] for item in c}
+                if d_idx in c_draws:
+                    continue
+                c_median = statistics.median([getattr(item[1], "timestamp_s", getattr(item[1], "t_start_s", 0.0)) for item in c])
+                dist = abs(t_ev - c_median)
+                if dist <= cluster_tolerance_s and dist < best_dist:
+                    best_dist = dist
+                    best_c = c
+
+            if best_c is not None:
+                best_c.append((d_idx, ev))
+            else:
+                clusters.append([(d_idx, ev)])
+
+        for c in clusters:
+            draw_indices = {item[0] for item in c}
+            n_draws = len(draw_indices)
+            t_vals = [getattr(item[1], "timestamp_s", getattr(item[1], "t_start_s", 0.0)) for item in c]
+            t_median = round(statistics.median(t_vals), 2)
+            t_spread = round(max(t_vals) - min(t_vals), 2) if n_draws >= 2 else "n/a"
+
+            rep_ev = min(c, key=lambda x: abs(getattr(x[1], "timestamp_s", getattr(x[1], "t_start_s", 0.0)) - t_median))[1]
+            attrs = dict(getattr(rep_ev, "attributes", {}) or {})
+            attrs["n_draws"] = n_draws
+            attrs["t_median_s"] = t_median
+            attrs["t_spread_s"] = t_spread
+            attrs["draw_timestamps"] = sorted(t_vals)
+
+            all_evidence = []
+            seen_evidence = set()
+            for _, item_ev in c:
+                for ev_entry in (getattr(item_ev, "evidence", []) or []):
+                    desc = getattr(ev_entry, "desc", "") or str(ev_entry)
+                    if desc not in seen_evidence:
+                        seen_evidence.add(desc)
+                        all_evidence.append(ev_entry)
+
+            ev_dict = rep_ev.model_dump()
+            ev_dict["timestamp_s"] = t_median
+            if "t_start_s" in ev_dict and ev_dict["t_start_s"] is not None:
+                ev_dict["t_start_s"] = t_median
+            ev_dict["attributes"] = attrs
+            ev_dict["evidence"] = all_evidence
+            clustered_events.append(rep_ev.__class__(**ev_dict))
+
+    # 2. Intervals by interval_type
+    intervals_by_type: dict[str, list[tuple[int, Any]]] = {}
+    for d_idx, s in enumerate(draw_streams):
+        for inv in s.intervals:
+            intervals_by_type.setdefault(inv.type, []).append((d_idx, inv))
+
+    clustered_intervals = []
+    for inv_type, inv_list in intervals_by_type.items():
+        sorted_invs = sorted(inv_list, key=lambda x: getattr(x[1], "t_start_s", 0.0))
+        inv_clusters: list[list[tuple[int, Any]]] = []
+
+        for d_idx, inv in sorted_invs:
+            t_s = getattr(inv, "t_start_s", 0.0)
+            best_c = None
+            best_dist = float("inf")
+            for c in inv_clusters:
+                c_draws = {item[0] for item in c}
+                if d_idx in c_draws:
+                    continue
+                c_s_med = statistics.median([getattr(item[1], "t_start_s", 0.0) for item in c])
+                dist_s = abs(t_s - c_s_med)
+                if dist_s <= cluster_tolerance_s and dist_s < best_dist:
+                    best_dist = dist_s
+                    best_c = c
+
+            if best_c is not None:
+                best_c.append((d_idx, inv))
+            else:
+                inv_clusters.append([(d_idx, inv)])
+
+        for c in inv_clusters:
+            draw_indices = {item[0] for item in c}
+            n_draws = len(draw_indices)
+            s_vals = [getattr(item[1], "t_start_s", 0.0) for item in c]
+            e_vals = [getattr(item[1], "t_end_s", None) for item in c if getattr(item[1], "t_end_s", None) is not None]
+            s_med = round(statistics.median(s_vals), 2)
+            e_med = round(statistics.median(e_vals), 2) if e_vals else None
+            t_spread = round(max(s_vals) - min(s_vals), 2) if n_draws >= 2 else "n/a"
+
+            rep_inv = c[0][1]
+            attrs = dict(getattr(rep_inv, "attributes", {}) or {})
+            attrs["n_draws"] = n_draws
+            attrs["t_median_s"] = s_med
+            attrs["t_spread_s"] = t_spread
+
+            inv_dict = rep_inv.model_dump()
+            inv_dict["t_start_s"] = s_med
+            inv_dict["t_end_s"] = e_med
+            inv_dict["attributes"] = attrs
+            clustered_intervals.append(rep_inv.__class__(**inv_dict))
+
+    all_coverage = []
+    for s in draw_streams:
+        all_coverage.extend(s.coverage)
+
+    case_id = draw_streams[0].case_id
+    final_fields = draw_streams[0].fields
+
+    return EventStream(
+        case_id=case_id,
+        events=sorted(clustered_events, key=lambda x: getattr(x, "timestamp_s", getattr(x, "t_start_s", 0.0))),
+        intervals=sorted(clustered_intervals, key=lambda x: getattr(x, "t_start_s", 0.0)),
+        coverage=all_coverage,
+        fields=final_fields,
+    )
+
+
 
 def main() -> None:
     pc = run_path_coverage_experiment()

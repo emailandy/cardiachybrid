@@ -207,6 +207,13 @@ Date: 2026-08-09  Session: Task 5 Commit 1  Decided by: human, agent
 2. **Empirical Falsification**: Three fresh runs (`pro_run_t10_01..03`) yielded 0.0% / 0.0% / 20.0% recall @ $\pm 15\text{s}$ (1 gold shock detected out of 15 across 3 runs). The hypothesis that temperature 1.0 recovers single-draw recall is empirically falsified.
 3. **Revert Condition Met**: Per protocol, `pass_1` temperature is reverted to 0.6. Recall recovery must come from union ensembling ($k=3$), not single-draw temperature variation.
 
+## 040 — Pass 1 Union Ensembling (k=3) with Cross-Draw Evidence Clustering
+Date: 2026-08-09  Session: Task 5 Commit 2  Decided by: human, agent
+1. **Union, Not Voting, at P1 Candidate Stage**: Because single video draws are irreducibly stochastic (D-038), Pass 1 executes $k=3$ independent draws per window (`scripts/run_case.py`). Every candidate from every draw is preserved in the candidate pool without filtering to maximize event harvest recall before P3 adjudication.
+2. **Cross-Draw Evidence Clustering**: Near-duplicate events within a window are clustered using `CROSS_DRAW_CLUSTER_TOLERANCE_S = 3.0` (derived from D-017/018 `spread_threshold_s: 3.0`). Each cluster computes and attaches `n_draws` (1..k), `t_median_s`, and `t_spread_s` (`n/a` if $n < 2$) as evidence attributes passed downstream to P3.
+3. **Empirical Measurement**: Three fresh executions (`pro_run_k3_01..03`) demonstrated recall recovery to 60.0% / 80.0% / 80.0% @ $\pm 15\text{s}$ (mean $|\Delta t| = 1.83\text{s}, 1.62\text{s}, 4.50\text{s}$) with 2–3 false positives per run. For gold shock #1, all 3 draws agreed ($n\_draws=3$, spread 2.5–3.5s), while shocks detected by only 1 draw (e.g. shock #2 in runs 1 & 2) were preserved by union rather than lost.
+
+
 
 
 
