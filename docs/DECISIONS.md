@@ -228,7 +228,12 @@ Date: 2026-08-09  Session: Task 7 Commit 1  Decided by: human, agent
    - Temp 1.0 Low ($T=1.0, \text{think}=\text{low}$): Recall 0/0/20%, F1 0.000/0.000/0.333, Harvest 0/5/8
    - Deconfounded ($T=0.6, \text{think}=\text{high}$): Recall 100/60/60%, F1 0.909/0.545/0.600, Harvest 31/39/25
    - Factorial Complete ($T=1.0, \text{think}=\text{high}$): Recall 60/80/80%, F1 0.600/0.727/0.800, Harvest 39/44/46
-3. **Resolution of Decision 039**: D-039 is formally resolved: $T=1.0 + \text{high}$ yields equivalent overall shock recall ($73.3\%$, $11/15$ shocks) and higher candidate harvest ($43.0$ vs $31.7$ events/run) and mean F1 ($0.709$ vs $0.685$) compared to $T=0.6 + \text{high}$. Setting $T=1.0$ is provisionally retained for candidate shipping configuration pending human review.
+3. **Indistinguishable on Accuracy**: $T=1.0$ and $T=0.6$ (both at `thinking: "high"`) are indistinguishable on accuracy at $n=3$ runs on an $n=1$ case; recall was identical at 11/15 shocks ($73.3\%$, run-level counts `[5,3,3]` vs `[3,4,4]`, exact permutation $p=1.000$).
+4. **Selection on Candidate Harvest Volume, Not Accuracy**: $T=1.0$ is selected based solely on candidate harvest volume (43.0 vs 31.7 events/run mean, non-overlapping `[39,44,46]` vs `[25,31,39]`, a 36% increase) as richer input into $k=3$ union ensembling, noting that this volume increase did not yield more gold shocks at $k=1$.
+5. **Margins Are One False Positive Wide**: Precision and F1 differences (precision 68.9% vs 64.4%, F1 0.709 vs 0.685) derive from FP counts `2/2/1` vs `1/3/2` — a difference of only one false positive in total across 3 runs — and must not be cited as evidence of superiority.
+6. **Timestamp Spread Regression**: Shock #3 cross-run spread regressed from $0.0\text{s}$ ($n=3$) at $T=0.6+\text{high}$ to $10.5\text{s}$ ($n=3$) at $T=1.0+\text{high}$ due to one draw at $609.0\text{s}$ (13s early), demonstrating that higher temperature traded timestamp stability for candidate volume.
+7. **Provisional Status (Q-017)**: The selection of $T=1.0$ remains strictly provisional on an $n=1$ case and must not be characterized as "tuned," "calibrated," or "optimal."
+
 
 
 
