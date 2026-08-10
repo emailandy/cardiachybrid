@@ -246,34 +246,14 @@ Date: 2026-08-09  Session: Task 7 Commit 2  Decided by: human, agent
 4. **Question (b) Resolution — Timestamp Stability Recovered**: $k=3$ union clustering successfully recovered timestamp stability: Shock #3 cross-run spread recovered from $10.5\text{s}$ ($k=1$) back to $2.0\text{s}$ ($n=3$, $[620.0\text{s}, 618.0\text{s}, 619.8\text{s}]$), Shock #2 had spread $0.5\text{s}$ ($n=3$), and Shock #4 had spread $0.0\text{s}$ ($n=3$, $t=740.0\text{s}$ in all 3 runs).
 5. **Provisional Invariant**: Configuration is provisionally designated as candidate shipping setup for multimodal video extraction pending multi-case clinical validation (Q-017).
 
-## 044 — S3 Acoustic Gating at Fusion Layer (Candidate Shock Pool Filtering & Disentanglement)
-Date: 2026-08-09  Session: Task 8, 8b, & 8c  Decided by: human, agent
-1. **Sensor Contract & Physical Charge Tone Window Derivation**:
-   - Fixed sensor contract: Calls `S3DefibDetector.adjudicate(audio_or_video_path, candidate_t, window_s=13.0)` per candidate rather than full-track `detect_events()` (which F-014 retired due to ~100% full-track false positive rate).
-   - Retraction of Task 8b defect: Task 8b erroneously derived `window_s = 4.0s` from the sub-100ms discharge transient, ignoring the ~3s rising charge tone precursor and fragmented-tone bridging, which caused `adjudicate()` to fail on all 4 true positive shock candidates and led to the false conclusion that the defibrillator produced no acoustic energy. That conclusion is formally retracted.
-   - Re-derivation from charge tone physics (F-009, F-014, F-004): S3's primary signal is the ~3.0s rising charge tone (F-009: 515->796 Hz over 738.0-741.0s for the 742.21s shock) with fragmented-tone bridging gap tolerance up to 1.5s (F-014) and observation jitter up to 2.0s (F-004). The required leading search half-width is $\tau_{\text{lead}} = 3.0\text{s} + 1.5\text{s} + 2.0\text{s} = 6.5\text{s}$, giving a derived scalar window $\text{window\_s} = 2 \times 6.5\text{s} = 13.0\text{s}$. (The scalar signature constraint enforcing symmetric trailing reach is flagged in Q-019).
-2. **Real-Detector Regression Gate (`tests/test_s3_regression.py`)**:
-   - Added real-detector integration regression test calling `S3DefibDetector.adjudicate()` on real `tests/video/vidsim2.mp4` (no mocks).
-   - Proved failing 4/4 at `window_s = 4.0s` (`AssertionError: S3 adjudicate() at window_s=4.0s failed to confirm 4/4 certified positives: [167.94, 385.07, 621.34, 742.21]`).
-   - Verified negative controls at 861.0s and 884.5s return `confirmed == False`, Gold #5 (879.0s) legitimately abstains without crashing, and uncalibrated default profile limitations are tracked under Q-019.
-3. **Three-State Adjudication with Invariant I5 (Downgrade and Route)**:
-   - `confirmed`: Confirmed by acoustic charge tone and discharge transient within derived window (raises confidence $\ge 0.95$, `needs_review=False`).
-   - `rejected`: Confirmed non-shock speech artifact or competing bracket artifact (downgrades confidence to $\max(0.10, \text{conf} \times 0.40)$, `needs_review=True`).
-   - `abstained`: Acoustic signal uninformative, uncharacterized, or uncharged simulator defibrillation (preserves candidate confidence at $1.00$, `needs_review=True`).
-4. **Disentangled Mechanism Breakdown & Scorecard (`pro_run_ship_01..03`)**:
-   - **Condition A — Raw Acoustic Adjudication Alone (Bracket Heuristic Disabled)**:
-     - `n_confirmed = 0`, `n_abstained = 6, 7, 7`, `n_rejected = 3, 5, 5`.
-     - Precision-on-confirmed: `0/0 (n/a)` (zero affirmative confirmations under uncalibrated default profile).
-     - Retained Recall (confirmed + abstained): 100.0% / 80.0% / 100.0% (14/15 shocks, 93.3% aggregate).
-     - Retained Precision: 83.3% / 57.1% / 71.4% (FP = 1 / 3 / 2, down from 4 / 8 / 7 ungated).
-     - Mechanism: Acoustic rejection alone eliminates isolated speech/pulse-check false positives (e.g. 257s, 265s, 856s), but leaves bracket artifacts near real shocks as abstained.
-   - **Condition B — S3 Acoustic Gate + Within-Cluster Bracket Heuristic (Enabled)**:
-     - `n_confirmed = 0`, `n_abstained = 5, 4, 5`, `n_rejected = 4, 8, 7`.
-     - Retained Recall (confirmed + abstained): 100.0% / 80.0% / 100.0% (14/15 shocks, 93.3% aggregate).
-     - Retained Precision: 100.0% / 100.0% / 100.0% (FP = 0 / 0 / 0).
-     - Mechanism: Within-cluster bracket heuristic resolves multi-candidate clusters near real shocks (e.g. 736s/744s around 740s, 162s/167s around 164s, 884.5s after 876s), eliminating the remaining bracket false positives.
-5. **Honest Bottom Line**: S3 acoustic adjudication acts as an isolated speech-only false positive filter (rejecting 257s, 265s, 856s) and an Invariant I5 abstention safeguard (retaining true shocks and Gold #5 at conf=1.00). The within-cluster bracket heuristic performs the temporal de-duplication of verbal call-outs bracketing real discharges. Automated positive confirmation remains constrained by the uncalibrated default profile pending direct clinical bay calibration (Q-019).
+## 044 — S3 Acoustic Gating and Bracket Heuristic Attribution (Task 8)
+Date: 2026-08-10  Session: Task 8e  Decided by: human, agent
 
+1. **Retraction of Acoustic Confirmation Claims**: S3 returned **zero confirmations** across all candidates (F-030, M1). The automated detector under the uncalibrated `default` profile confirms zero shocks because the training-configuration defibrillator never charged or delivered electrical energy. The 13.0s charge tone window derivation has been retracted as irrelevant to a signal that does not exist.
+2. **Bracket Heuristic Attribution**: The retained-precision gains (42.4% -> 100%) observed during fusion gating are **100% attributable to the bracket heuristic**, not acoustic discrimination. 
+3. **No "Acoustic Gating" Result**: The result should not be described as "acoustic gating." It is candidate de-duplication with an abstaining sensor attached.
+4. **Valid Bracket Result**: The bracket heuristic result is **real and valuable**, successfully resolving multi-candidate clusters near real shocks (e.g. 736s/744s around 740s, 162s/167s around 164s, 884.5s after 876s) and eliminating bracket false positives. It is reported as the genuine finding it is.
+5. **Invariant I5 Validation**: Gold #5 (879s) survival is correct I5 behavior. S3 correctly abstains on the uncharged simulator delivery, preserving the candidate at conf=1.00.
 
 
 

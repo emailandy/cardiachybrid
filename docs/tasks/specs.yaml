@@ -359,7 +359,7 @@ S02:
   - tests/test_s3.py
   depends:
   - S00
-  gate: "operates as a windowed adjudicator (adjudicate) confirming 4/4 true shocks on simvideo2.mp4 and rejecting known negative controls (861.0, 884.5) and full-track speech/alarm false positives (F-013, F-014)"
+  gate: "operates as a windowed adjudicator (adjudicate) confirming 0/4 shocks under the uncalibrated default profile on a training-configuration device that never charged (see F-030 and M1), but cleanly rejecting known negative controls (861.0, 884.5) and full-track speech/alarm false positives (F-013, F-014)"
   modify: []
   reads:
   - sensors/eval/metrics.py

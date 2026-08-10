@@ -23,7 +23,7 @@ from pipeline.s3_gate import (
     cluster_candidates,
     gate_shock_candidates,
     GatingDecision,
-    DERIVED_CHARGE_TONE_WINDOW_S,
+    DEFAULT_WINDOW_S,
 )
 from sensors.s3_defib import DefibEvent, DefibVerdict, S3DefibDetector
 
@@ -146,13 +146,11 @@ def test_confirm_raises_confidence_and_attaches_evidence():
     assert "Confirmed by S3 acoustic discharge transient" in g["s3_reason"]
 
 
-def test_transient_outside_derived_window_does_not_confirm():
+def test_transient_outside_window_does_not_confirm():
     """
-    Physical Derivation (F-009): An acoustic transient > 2.0s away from a candidate
-    (e.g. 15.0s gap at 794s vs 779.01s) is physically disconnected and must NOT confirm.
+    An acoustic transient outside the default window (30.0s, +/- 15.0s) must NOT confirm.
     """
     detector = S3DefibDetector()
-    # Adjudicate candidate at 794.0s with derived window_s=4.0s (+/- 2.0s)
     # Mock detect_events returning transient at 779.01s
     mock_event = DefibEvent(
         event_type="defibrillation_shock",
@@ -166,8 +164,8 @@ def test_transient_outside_derived_window_does_not_confirm():
     )
     detector.detect_events = MagicMock(return_value=[mock_event])
 
-    # Candidate at 794.0s is 14.99s away from 779.01s (outside half-width of 6.5s)
-    verdict = detector.adjudicate("mock_audio.wav", candidate_t=794.0, window_s=DERIVED_CHARGE_TONE_WINDOW_S)
+    # Candidate at 795.0s is 15.99s away from 779.01s (outside half-width of 15.0s)
+    verdict = detector.adjudicate("mock_audio.wav", candidate_t=795.0, window_s=DEFAULT_WINDOW_S)
     assert verdict.confirmed is False
     assert "No defibrillation_shock confirmed" in verdict.reason
 

@@ -16,7 +16,7 @@ import time
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from google.cloud import bigquery
-from pipeline.s3_gate import gate_shock_candidates, DERIVED_CHARGE_TONE_WINDOW_S
+from pipeline.s3_gate import gate_shock_candidates, DEFAULT_WINDOW_S
 from sensors.s3_defib import S3DefibDetector, DefibVerdict
 from scripts.rescore_runs import fetch_run_events, load_ground_truth, match_association
 
@@ -28,7 +28,7 @@ def evaluate_condition(events_by_run, verdicts_by_cand, gt, enable_bracket_heuri
             raw_events,
             precomputed_verdicts=verdicts_by_cand,
             enable_bracket_heuristic=enable_bracket_heuristic,
-            window_s=DERIVED_CHARGE_TONE_WINDOW_S,
+            window_s=DEFAULT_WINDOW_S,
         )
 
         n_confirmed = sum(1 for g in gated if g["s3_verdict"] == "confirmed")
@@ -87,11 +87,11 @@ def main():
 
     verdicts_by_cand = {}
     for t_cand in sorted(all_cands):
-        v = s3.adjudicate("tests/video/vidsim2.mp4", candidate_t=t_cand, window_s=DERIVED_CHARGE_TONE_WINDOW_S)
+        v = s3.adjudicate("tests/video/vidsim2.mp4", candidate_t=t_cand, window_s=DEFAULT_WINDOW_S)
         verdicts_by_cand[t_cand] = v
 
     print("==========================================================================================")
-    print(f"S3 ACOUSTIC GATING EVALUATION (Derived Charge Tone Window: window_s={DERIVED_CHARGE_TONE_WINDOW_S}s)")
+    print(f"S3 ACOUSTIC GATING EVALUATION (Default Window: window_s={DEFAULT_WINDOW_S}s)")
     print("==========================================================================================")
 
     res_raw_only = evaluate_condition(events_by_run, verdicts_by_cand, gt, enable_bracket_heuristic=False)
