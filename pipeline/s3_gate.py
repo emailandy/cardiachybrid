@@ -4,19 +4,20 @@ pipeline/s3_gate.py — S3 Acoustic Gating at the Fusion Layer.
 Adjudicates P1/LLM shock candidate event streams using deterministic Sensor S3 acoustics.
 Operates on the principle: "Union for recall, acoustic adjudication for precision."
 
-Physical Window Derivation (F-009, F-004):
-- F-009 establishes that an electrical defibrillator discharge is an instantaneous
-  physical transient lasting < 100ms (sub-100ms impulse).
-- Observational jitter from video container frame rates (16 fps = 62.5ms) and human/vision
-  timestamp annotation in degraded footage is bounded by Constitution precision t_precision_s = 2.0s.
-- Therefore, the physical transient matching window is derived as:
-    DERIVED_TRANSIENT_WINDOW_S = 4.0s (i.e. +/- 2.0s search half-width around candidate_t).
-  Any acoustic transient > 2.0s away from a candidate is physically disconnected and cannot confirm it.
-
-Sensor Contract (F-013, F-014):
-- Standalone full-track scanning (detect_events) was retired in F-014 due to ~100% false positive rate
-  on ambient bay acoustics. S3 is formalised strictly as a windowed adjudicator:
-  S3DefibDetector.adjudicate(audio_or_video_path, candidate_t, window_s=4.0).
+Physical Charge Tone Window Derivation (F-009, F-014, F-004):
+- F-009 & F-014 establish that S3's primary signal is the rising narrowband charge tone
+  (measured ~3.0s duration, 515->796 Hz over 738.0-741.0s for the 742.21s shock), with the
+  sub-100ms discharge transient as corroboration.
+- F-014 establishes fragmented-tone bridging across CPR interruptions with inter-fragment gap
+  tolerance up to 1.5s (gap <= 1.5s in s3_defib.py:207).
+- Video annotator/vision observation jitter is bounded by Constitution precision t_precision_s = 2.0s (F-004).
+- Therefore, the required leading precursor search reach before candidate_t is:
+    tau_lead = 3.0s (charge tone, F-009) + 1.5s (bridging gap, F-014) + 2.0s (annotator jitter, F-004) = 6.5s.
+- S3DefibDetector.adjudicate() accepts a scalar window_s parameter and evaluates symmetrically as:
+    [candidate_t - window_s/2.0, candidate_t + window_s/2.0].
+  To ensure the leading half-width window_s/2.0 spans tau_lead = 6.5s, the derived scalar window is:
+    DERIVED_CHARGE_TONE_WINDOW_S = 2 * 6.5s = 13.0s.
+  (Limitation: The scalar signature forces a symmetric 6.5s trailing window; flagged for future asymmetric API).
 
 Key Invariants:
 1. Invariant I5: Never silently drop or delete candidate events.
@@ -42,8 +43,8 @@ from typing import Any, Sequence
 from sensors.s3_defib import DefibEvent, DefibVerdict, S3DefibDetector
 
 
-# Derived from F-009 (sub-100ms physical transient) and F-004 (2.0s degraded mode precision)
-DERIVED_TRANSIENT_WINDOW_S = 4.0
+# Derived from F-009 (3.0s charge tone), F-014 (1.5s bridging gap), and F-004 (2.0s jitter): 2 * 6.5s = 13.0s
+DERIVED_CHARGE_TONE_WINDOW_S = 13.0
 CLUSTER_NEIGHBORHOOD_S = 15.0
 DOWNGRADE_FACTOR = 0.40
 MIN_DOWNGRADED_CONFIDENCE = 0.10
@@ -96,7 +97,7 @@ def adjudicate_candidate_cluster(
     cluster: list[dict[str, Any]],
     candidate_verdicts: dict[float, DefibVerdict],
     enable_bracket_heuristic: bool = True,
-    window_s: float = DERIVED_TRANSIENT_WINDOW_S,
+    window_s: float = DERIVED_CHARGE_TONE_WINDOW_S,
 ) -> list[tuple[dict[str, Any], GatingDecision]]:
     """
     Adjudicates a temporal cluster of shock candidates using per-candidate S3DefibVerdict outcomes.
@@ -246,7 +247,7 @@ def adjudicate_candidate_cluster(
                         s3_verdict_obj=verdict_obj,
                     )
             else:
-                # REJECTED: False positive speech / pulse check artifact (e.g. 256-271s, 847-856s)
+                # REJECTED: False positive speech / pulse check artifact (e.g. 250-280s, 840-865s)
                 new_conf = max(MIN_DOWNGRADED_CONFIDENCE, orig_conf * DOWNGRADE_FACTOR)
                 decision = GatingDecision(
                     verdict="rejected",
@@ -265,7 +266,7 @@ def gate_shock_candidates(
     candidates: list[dict[str, Any]],
     audio_or_video_path: str | Path | None = None,
     s3_detector: S3DefibDetector | None = None,
-    window_s: float = DERIVED_TRANSIENT_WINDOW_S,
+    window_s: float = DERIVED_CHARGE_TONE_WINDOW_S,
     enable_bracket_heuristic: bool = True,
     precomputed_verdicts: dict[float, DefibVerdict] | None = None,
 ) -> list[dict[str, Any]]:

@@ -23,7 +23,7 @@ from pipeline.s3_gate import (
     cluster_candidates,
     gate_shock_candidates,
     GatingDecision,
-    DERIVED_TRANSIENT_WINDOW_S,
+    DERIVED_CHARGE_TONE_WINDOW_S,
 )
 from sensors.s3_defib import DefibEvent, DefibVerdict, S3DefibDetector
 
@@ -166,8 +166,8 @@ def test_transient_outside_derived_window_does_not_confirm():
     )
     detector.detect_events = MagicMock(return_value=[mock_event])
 
-    # Candidate at 794.0s is 14.99s away from 779.01s
-    verdict = detector.adjudicate("mock_audio.wav", candidate_t=794.0, window_s=DERIVED_TRANSIENT_WINDOW_S)
+    # Candidate at 794.0s is 14.99s away from 779.01s (outside half-width of 6.5s)
+    verdict = detector.adjudicate("mock_audio.wav", candidate_t=794.0, window_s=DERIVED_CHARGE_TONE_WINDOW_S)
     assert verdict.confirmed is False
     assert "No defibrillation_shock confirmed" in verdict.reason
 

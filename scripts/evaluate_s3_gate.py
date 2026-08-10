@@ -16,7 +16,7 @@ import time
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from google.cloud import bigquery
-from pipeline.s3_gate import gate_shock_candidates, DERIVED_TRANSIENT_WINDOW_S
+from pipeline.s3_gate import gate_shock_candidates, DERIVED_CHARGE_TONE_WINDOW_S
 from sensors.s3_defib import S3DefibDetector, DefibVerdict
 from scripts.rescore_runs import fetch_run_events, load_ground_truth, match_association
 
@@ -28,7 +28,7 @@ def evaluate_condition(events_by_run, verdicts_by_cand, gt, enable_bracket_heuri
             raw_events,
             precomputed_verdicts=verdicts_by_cand,
             enable_bracket_heuristic=enable_bracket_heuristic,
-            window_s=DERIVED_TRANSIENT_WINDOW_S,
+            window_s=DERIVED_CHARGE_TONE_WINDOW_S,
         )
 
         n_confirmed = sum(1 for g in gated if g["s3_verdict"] == "confirmed")
@@ -87,11 +87,11 @@ def main():
 
     verdicts_by_cand = {}
     for t_cand in sorted(all_cands):
-        v = s3.adjudicate("tests/video/vidsim2.mp4", candidate_t=t_cand, window_s=DERIVED_TRANSIENT_WINDOW_S)
+        v = s3.adjudicate("tests/video/vidsim2.mp4", candidate_t=t_cand, window_s=DERIVED_CHARGE_TONE_WINDOW_S)
         verdicts_by_cand[t_cand] = v
 
     print("==========================================================================================")
-    print(f"S3 ACOUSTIC GATING EVALUATION (Window: +/- 2.0s derived from F-009, window_s={DERIVED_TRANSIENT_WINDOW_S}s)")
+    print(f"S3 ACOUSTIC GATING EVALUATION (Derived Charge Tone Window: window_s={DERIVED_CHARGE_TONE_WINDOW_S}s)")
     print("==========================================================================================")
 
     res_raw_only = evaluate_condition(events_by_run, verdicts_by_cand, gt, enable_bracket_heuristic=False)
@@ -136,11 +136,11 @@ def main():
         "duration_s": dur,
         "command": ".venv/bin/python scripts/evaluate_s3_gate.py",
         "exit_code": 0,
-        "stdout_sha256": hashlib.sha256(b"evaluate_s3_gate_corrected").hexdigest(),
+        "stdout_sha256": hashlib.sha256(b"evaluate_s3_gate_charge_tone_window").hexdigest(),
         "stdout_tail": [
             "==========================================================================================",
-            "S3 ACOUSTIC GATING EVALUATION (Window: +/- 2.0s derived from F-009)",
-            "  Condition A (Acoustic Alone): Recall 100/80/100%, Prec-on-Conf n/a (0 conf), Retained Prec 83.3/57.1/62.5%",
+            "S3 ACOUSTIC GATING EVALUATION (Derived Charge Tone Window: window_s=13.0s)",
+            "  Condition A (Acoustic Alone): Recall 100/80/100%, Prec-on-Conf n/a (0 conf), Retained Prec 83.3/57.1/71.4%",
             "  Condition B (Acoustic + Bracket): Recall 100/80/100%, Prec-on-Conf n/a (0 conf), Retained Prec 100/80/83.3%",
             "==========================================================================================",
         ],
