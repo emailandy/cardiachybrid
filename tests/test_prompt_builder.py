@@ -298,10 +298,9 @@ def test_response_schema_declares_contract_attributes():
 
     bp_triggered = build_p1(0, 1, 1000.0, 0.0, 480.0, 420.0, 0.0, 0.0, None, keywords=["shock", "pulse"])
     events_items_trig = bp_triggered.response_schema["properties"]["events"]["items"]
-    assert "anyOf" in events_items_trig, "events.items should be sliced anyOf schemas for <=30 types"
+    assert "properties" in events_items_trig, "events.items uses unified schema to avoid Vertex AI INVALID_ARGUMENT"
     trig_attrs = set()
-    for branch in events_items_trig["anyOf"]:
-        trig_attrs.update(branch["properties"]["attributes"]["properties"].keys())
+    trig_attrs = set(events_items_trig["properties"]["attributes"]["properties"].keys())
     assert "pad_position" in trig_attrs
     assert "locations" in trig_attrs
 
