@@ -624,10 +624,17 @@ def main() -> None:
     args = parser.parse_args()
     duration_s = 1363.78
 
-    if args.dry_run:
-        run_dry_run(args, duration_s)
-    else:
-        run_live(args, duration_s)
+    try:
+        if args.dry_run:
+            run_dry_run(args, duration_s)
+        else:
+            run_live(args, duration_s)
+    finally:
+        import shutil
+        from pathlib import Path
+        tmp_dir = Path(".resus_qc_tmp")
+        if tmp_dir.exists():
+            shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
 if __name__ == "__main__":
