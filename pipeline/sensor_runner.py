@@ -225,13 +225,16 @@ class SensorPipelineRunner:
         q_track = _filter_by_window(
             result.s6_coverage_notes, win_start, win_end
         )
-        if result.clock_anchor_iso is not None and win_start <= 0.0:
+        if result.clock_anchor_iso is not None:
+            from datetime import datetime, timedelta
+            t0 = datetime.fromisoformat(result.clock_anchor_iso)
+            win_clock = t0 + timedelta(seconds=win_start)
             q_track.insert(
                 0,
                 {
                     "type": "clock_anchor",
-                    "timestamp_s": 0.0,
-                    "clock_anchor_iso": result.clock_anchor_iso,
+                    "timestamp_s": float(win_start),
+                    "clock_anchor_iso": win_clock.isoformat(),
                     "source": "s5_timecode",
                 },
             )

@@ -296,6 +296,16 @@ def run_live(args: argparse.Namespace, duration_s: float) -> None:
         local_v = "tests/video/vidsim2.mp4" if Path("tests/video/vidsim2.mp4").exists() else args.video
         sensor_result = sensor_runner.run_pipeline(local_v, video_duration_s=duration_s)
         print(f"✓ Sensor pre-processing complete: S1 ({len(sensor_result.s1_compressions)} comp, {len(sensor_result.s1_pauses)} pauses), S3 ({len(sensor_result.s3_defib_shocks)} defib), S5 ({sensor_result.clock_anchor_iso})")
+    elif getattr(args, "with_s5_only", False):
+        print("\n[SENSOR LAYER PRE-PROCESSING (S5 ONLY)]")
+        from pipeline.sensor_runner import SensorPipelineRunner, SensorPipelineResult
+        sensor_runner = SensorPipelineRunner()
+        sensor_result = SensorPipelineResult(
+            video_path=args.video, audio_path=args.video, video_duration_s=duration_s,
+            clock_anchor_iso=args.t0, s1_compressions=[], s1_pauses=[], s2_audio_cadence=[],
+            s3_defib_shocks=[], s4_monitor_vitals=[], s7_utterances=[], s6_coverage_notes=[]
+        )
+        print(f"✓ S5 ONLY injected: {sensor_result.clock_anchor_iso}")
 
     surviving_events: list[Event] = []
     surviving_intervals: list[Interval] = []
@@ -608,6 +618,7 @@ def main() -> None:
     parser.add_argument("--no-bq", action="store_true", help="Disable writing results to BigQuery")
     parser.add_argument("--k", type=int, default=None, help="Ensemble k per pass (default: read from VERSIONS.yaml)")
     parser.add_argument("--with-p2", action="store_true", help="Include P2 single-event verification (default off)")
+    parser.add_argument("--with-s5-only", action="store_true", help="Enable ONLY the S5 clock anchor")
     parser.add_argument("--with-sensors", action="store_true", help="Enable deterministic sensor layer (S1-S7) preprocessing and prompt injection")
     parser.add_argument("--t0", default="2023-11-07T07:55:57", help="Wall-clock T0 anchor datetime")
     parser.add_argument("--t0-source", default="burned_in_timecode", help="Source of T0 anchor")
