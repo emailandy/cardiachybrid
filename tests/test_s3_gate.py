@@ -1,17 +1,20 @@
 """
 tests/test_s3_gate.py — Unit Tests for S3 Acoustic Gating at Fusion Layer.
 
-Tests all five gating invariants:
+Tests all gating invariants:
 1. Abstain preserves candidate confidence and routes for review (Gold #5 uncharged defib scenario).
 2. Reject downgrades confidence (max(0.10, conf * 0.40)) but never deletes the candidate (Invariant I5).
 3. Confirm raises confidence and attaches acoustic evidence.
 4. Cluster adjudication isolates the primary discharge candidate and downgrades competing bracket artifacts.
 5. Zero n_draws filtering exists anywhere in the gate logic.
-6. Pure mocked S3 responses (no network, no video decode).
+6. A transient outside the derived window (+/- 2.0s from F-009) does NOT confirm.
+7. Sensor contract: adjudicate() is the call path; detect_events() full-track is not used for gating.
+8. Pure mocked S3 responses (no network, no video decode).
 """
 
 import inspect
 from pathlib import Path
+from unittest.mock import MagicMock
 import pytest
 
 from pipeline import s3_gate
@@ -20,8 +23,9 @@ from pipeline.s3_gate import (
     cluster_candidates,
     gate_shock_candidates,
     GatingDecision,
+    DERIVED_TRANSIENT_WINDOW_S,
 )
-from sensors.s3_defib import DefibEvent
+from sensors.s3_defib import DefibEvent, DefibVerdict, S3DefibDetector
 
 
 def test_abstain_preserves_candidate_confidence_gold5_scenario():
@@ -40,8 +44,16 @@ def test_abstain_preserves_candidate_confidence_gold5_scenario():
         }
     ]
 
-    # No acoustic events in uncharged defib region
-    gated = gate_shock_candidates(candidates, precomputed_s3_events=[])
+    mock_verdicts = {
+        876.5: DefibVerdict(
+            confirmed=False,
+            candidate_t=876.5,
+            event=None,
+            reason="No defibrillation_shock confirmed within candidate window",
+        )
+    }
+
+    gated = gate_shock_candidates(candidates, precomputed_verdicts=mock_verdicts)
 
     assert len(gated) == 1
     g = gated[0]
@@ -50,7 +62,7 @@ def test_abstain_preserves_candidate_confidence_gold5_scenario():
     assert g["original_confidence"] == 1.0
     assert g["original_timestamp_s"] == 876.5
     assert g["needs_review"] is True
-    assert "uncharged simulator defib" in g["s3_reason"]
+    assert "acoustic abstention" in g["s3_reason"]
 
 
 def test_reject_downgrades_confidence_never_deletes():
@@ -75,7 +87,12 @@ def test_reject_downgrades_confidence_never_deletes():
         },
     ]
 
-    gated = gate_shock_candidates(candidates, precomputed_s3_events=[])
+    mock_verdicts = {
+        257.0: DefibVerdict(confirmed=False, candidate_t=257.0, event=None, reason="No shock confirmed"),
+        856.0: DefibVerdict(confirmed=False, candidate_t=856.0, event=None, reason="No shock confirmed"),
+    }
+
+    gated = gate_shock_candidates(candidates, precomputed_verdicts=mock_verdicts)
 
     assert len(gated) == 2  # Zero candidates deleted!
     for g in gated:
@@ -83,7 +100,7 @@ def test_reject_downgrades_confidence_never_deletes():
         assert g["confidence"] == 0.40  # Downgraded from 1.00
         assert g["original_confidence"] == 1.00
         assert g["needs_review"] is True
-        assert "Rejected: no acoustic defibrillation shock confirmed" in g["s3_reason"]
+        assert "Rejected: S3 adjudicate confirmed no acoustic shock" in g["s3_reason"]
 
 
 def test_confirm_raises_confidence_and_attaches_evidence():
@@ -103,16 +120,19 @@ def test_confirm_raises_confidence_and_attaches_evidence():
 
     mock_s3_event = DefibEvent(
         event_type="defibrillation_shock",
-        timestamp_s=742.21,
-        charge_start_s=739.3,
-        charge_end_s=742.1,
+        timestamp_s=740.5,
+        charge_start_s=737.5,
+        charge_end_s=740.3,
         slope_hz_per_s=191.3,
         r_value=0.88,
         transient_ratio=8.5,
         confidence=0.95,
     )
+    mock_verdicts = {
+        740.0: DefibVerdict(confirmed=True, candidate_t=740.0, event=mock_s3_event, reason="Confirmed")
+    }
 
-    gated = gate_shock_candidates(candidates, precomputed_s3_events=[mock_s3_event])
+    gated = gate_shock_candidates(candidates, precomputed_verdicts=mock_verdicts)
 
     assert len(gated) == 1
     g = gated[0]
@@ -120,10 +140,55 @@ def test_confirm_raises_confidence_and_attaches_evidence():
     assert g["confidence"] >= 0.95  # Raised confidence
     assert g["original_confidence"] == 0.85
     assert g["needs_review"] is False
-    assert g["attributes"]["s3_transient_s"] == 742.21
+    assert g["attributes"]["s3_transient_s"] == 740.5
     assert g["attributes"]["s3_slope_hz_s"] == 191.3
     assert g["attributes"]["s3_transient_ratio"] == 8.5
     assert "Confirmed by S3 acoustic discharge transient" in g["s3_reason"]
+
+
+def test_transient_outside_derived_window_does_not_confirm():
+    """
+    Physical Derivation (F-009): An acoustic transient > 2.0s away from a candidate
+    (e.g. 15.0s gap at 794s vs 779.01s) is physically disconnected and must NOT confirm.
+    """
+    detector = S3DefibDetector()
+    # Adjudicate candidate at 794.0s with derived window_s=4.0s (+/- 2.0s)
+    # Mock detect_events returning transient at 779.01s
+    mock_event = DefibEvent(
+        event_type="defibrillation_shock",
+        timestamp_s=779.01,
+        charge_start_s=777.3,
+        charge_end_s=778.5,
+        slope_hz_per_s=271.5,
+        r_value=0.63,
+        transient_ratio=6.4,
+        confidence=0.70,
+    )
+    detector.detect_events = MagicMock(return_value=[mock_event])
+
+    # Candidate at 794.0s is 14.99s away from 779.01s
+    verdict = detector.adjudicate("mock_audio.wav", candidate_t=794.0, window_s=DERIVED_TRANSIENT_WINDOW_S)
+    assert verdict.confirmed is False
+    assert "No defibrillation_shock confirmed" in verdict.reason
+
+
+def test_gate_uses_adjudicate_contract_not_full_track_scan():
+    """
+    Sensor Contract (F-014): Asserts that gate_shock_candidates calls detector.adjudicate()
+    per candidate rather than invoking full-track detect_events().
+    """
+    detector = S3DefibDetector()
+    detector.adjudicate = MagicMock(
+        return_value=DefibVerdict(confirmed=False, candidate_t=740.0, event=None, reason="No shock")
+    )
+    detector.detect_events = MagicMock(side_effect=AssertionError("detect_events() full-track must NOT be called by gate!"))
+
+    candidates = [{"event_id": "c1", "event_type": "defibrillation_shock", "timestamp_s": 740.0, "confidence": 1.0}]
+    gated = gate_shock_candidates(candidates, audio_or_video_path="mock.wav", s3_detector=detector)
+
+    assert len(gated) == 1
+    assert detector.adjudicate.called
+    assert detector.detect_events.call_count == 0
 
 
 def test_cluster_adjudication_isolates_discharge_among_neighbors():
@@ -149,7 +214,13 @@ def test_cluster_adjudication_isolates_discharge_among_neighbors():
         confidence=0.97,
     )
 
-    gated = gate_shock_candidates(candidates, precomputed_s3_events=[mock_s3_event])
+    mock_verdicts = {
+        736.0: DefibVerdict(confirmed=False, candidate_t=736.0, event=None, reason="No shock"),
+        740.0: DefibVerdict(confirmed=True, candidate_t=740.0, event=mock_s3_event, reason="Confirmed"),
+        744.0: DefibVerdict(confirmed=False, candidate_t=744.0, event=None, reason="No shock"),
+    }
+
+    gated = gate_shock_candidates(candidates, precomputed_verdicts=mock_verdicts)
 
     assert len(gated) == 3
     # c2 at 740.0s is closest to 740.5s -> CONFIRMED
