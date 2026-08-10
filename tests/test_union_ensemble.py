@@ -123,7 +123,7 @@ def test_distinct_events_do_not_overcluster():
 
 @patch("scripts.run_case.call_model_cached")
 @patch("scripts.run_case.VertexClient")
-def test_k_draws_produce_k_times_p1_calls(mock_vc_cls, mock_call_cached):
+def test_k_draws_produce_k_times_p1_calls(mock_vc_cls, mock_call_cached, tmp_path):
     """Verifies that k=3 produces exactly 4 windows × 3 draws = 12 P1 API calls."""
     from scripts.run_case import run_live
 
@@ -171,7 +171,7 @@ def test_k_draws_produce_k_times_p1_calls(mock_vc_cls, mock_call_cached):
         p4a_model=None,
         p4b_model=None,
         p5_model=None,
-        out=None,
+        out=str(tmp_path / "case.json"),
     )
 
     with patch("scripts.run_case.assemble_submission"):
