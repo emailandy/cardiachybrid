@@ -268,7 +268,7 @@ def _build_p1_response_schema(selected_anchors: list[str]) -> dict[str, Any]:
         event_anyof.append(et_item)
 
     if event_anyof:
-        if len(event_anyof) <= 30:
+        if len(event_anyof) <= 0:
             base_schema["properties"]["events"]["items"] = {"anyOf": event_anyof}
         else:
             unified_attrs = {}
