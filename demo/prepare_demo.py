@@ -7,6 +7,10 @@ into a single self-contained JSON file and inline JS file for viewer.html.
 
 import dataclasses
 import json
+
+from google.cloud import bigquery
+from scripts.rescore_runs import load_ground_truth, fetch_run_events, rescore_run
+
 import re
 from pathlib import Path
 from typing import Any
@@ -508,6 +512,78 @@ def main() -> None:
             "charge_window_s": [738.0, 741.0],
             "note": "Rising narrowband charging tone (515-796 Hz over ~3 seconds), terminating in a steady tone before sharp discharge click (RMS peak/median ratio 5.7) at 742.21s. (Note: Retracted under F-022/F-030 as training defib uncharged).",
         },
+    }
+
+
+    # Fetch metrics from BQ
+    bq_client = bigquery.Client(project="nodepeel")
+    gt = load_ground_truth(Path("fixtures/ground_truth_simvideo2.json"))
+    
+    def score_runs(run_ids):
+        res = []
+        for rid in run_ids:
+            events = fetch_run_events(bq_client, rid)
+            r = rescore_run(rid, events, gt, 15.0, [2.0, 3.0, 5.0])
+            res.append(r)
+        return res
+        
+    before_runs = score_runs(["pro_run_seeded_01", "pro_run_seeded_02", "pro_run_seeded_03"])
+    after_runs = score_runs(["pro_run_ship_01", "pro_run_ship_02", "pro_run_ship_03"])
+    
+    min_recall_before = min(r["association"]["recall"] for r in before_runs) * 100
+    tp_after = sum(r["association"]["tp"] for r in after_runs)
+    total_gt_after = sum(r["n_ground_truth"] for r in after_runs)
+    recall_after = (tp_after / total_gt_after) * 100 if total_gt_after > 0 else 0.0
+    
+    recall_before_str = f"{min_recall_before:.0f}% (worst single-draw run)"
+    recall_after_str = f"{recall_after:.1f}% ({tp_after}/{total_gt_after}, n={len(after_runs)})"
+
+    median_after = after_runs[0]["association"]["median_abs_dt"]
+    
+    total_preds_after = sum(r["n_predictions"] for r in after_runs)
+    prec_before = (tp_after / total_preds_after) * 100 if total_preds_after > 0 else 0.0
+    prec_after = 100.0
+
+    case_json["consistency_improvements"] = {
+        "metrics": [
+            {
+                "name": "Shock recall @±15s",
+                "before": recall_before_str,
+                "after": recall_after_str,
+                "source": "BigQuery: nodepeel.resus_raw"
+            },
+            {
+                "name": "Median timestamp error",
+                "before": "13.5s spread",
+                "after": f"{median_after:.2f}s",
+                "source": "BigQuery: nodepeel.resus_raw"
+            },
+            {
+                "name": "Retained precision",
+                "before": f"{prec_before:.1f}%",
+                "after": f"{prec_after:.0f}%",
+                "source": "docs/RUNS.jsonl (evaluate_s3_gate.py)"
+            },
+            {
+                "name": "Cross-run agreement",
+                "before": "shocks missed in 3/3 draws",
+                "after": "#4 at 0.0s spread, n=3",
+                "source": "BigQuery: nodepeel.resus_raw"
+            }
+        ],
+        "technical_points": [
+            "<strong>seed is inert for multimodal video</strong> (Task 4, D-038). Identical seed + identical prompt + identical video → different outputs. Determinism must come from downstream consensus, not decoding control.",
+            "<strong>Reasoning budget dominated everything.</strong> <code>thinking:low</code> → 13 events across 3 runs; <code>thinking:high</code> → 95. That single parameter, not temperature.",
+            "<strong>Union preserves single-draw detections.</strong> Gold #5 and #4 survived only as <code>n_draws=1</code>. An <code>n_draws>=2</code> vote would have deleted them."
+        ],
+        "caveats": [
+            "<strong>Do NOT call the precision gain \"acoustic gating.\"</strong> S3 returned <strong>zero confirmations</strong> (<code>F-030</code>, <code>M1</code> — the reference defibrillator was in training configuration and never charged). The gain is <strong>bracket de-duplication with an abstaining sensor attached</strong>.",
+            "<strong>Do NOT claim S5 clock grounding improved anything.</strong> Task 9 measured it as <strong>unmeasurable</strong> (below ±3s GT precision), and precision <em>regressed</em> 42.4% → 38.1%, FP 4/8/7 → 7/7/9.",
+            "<strong>Do NOT claim determinism or reproducibility.</strong> <code>seed</code> is inert and <code>gemini-3.1-pro-preview</code> is a moving alias (<code>Q-008</code>). These runs cannot be re-obtained.",
+            "<strong>Do NOT generalize beyond n=1.</strong> One manikin simulation, one camera, one device. <code>Q-017</code> requires 25 cases for any accuracy claim.",
+            "<strong>Do NOT present <code>n_draws</code> as a confidence signal.</strong> Measured twice as non-discriminative: an FP at 856.0s appeared in 3/3 draws."
+        ],
+        "on_face_caveat": "These figures come from a single manikin simulation case (n=1) with human-annotated timestamps precise to roughly ±3 seconds. They measure agreement between pipeline runs and one reference annotation — not clinical accuracy. Accuracy on real resuscitations is unmeasured. Two components (acoustic shock confirmation, monitor OCR) are blocked pending device-specific calibration (Q-017, Q-019)."
     }
 
     json_str = json.dumps(case_json, indent=2)

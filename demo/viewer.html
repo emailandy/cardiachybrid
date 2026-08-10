@@ -1355,6 +1355,49 @@
         </div>
       </div>
 
+
+      <!-- TASK 10: Consistency Improvements -->
+      <div class="extraction-card" id="consistency-improvements-section">
+        <h2 style="color: var(--accent-indigo); display: flex; align-items: center; justify-content: space-between;">
+            Extraction Consistency & Ensembling Architecture
+        </h2>
+        <p>The single-draw generation is irreducibly stochastic. We implemented consensus across draws (union) and temporal de-duplication (bracket heuristic) to resolve this.</p>
+        
+        <div id="consistency-on-face-caveat" style="background: rgba(255, 237, 213, 0.9); color: #9a3412; border-left: 4px solid #ea580c; padding: 1rem 1.25rem; border-radius: 6px; margin: 1rem 0 1.5rem 0; font-size: 0.92rem;">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
+            <div>
+                <h3>1. Measured Improvements</h3>
+                <table class="extraction-table" style="margin-bottom: 0;">
+                    <thead>
+                        <tr>
+                            <th style="width: 25%">Metric</th>
+                            <th style="width: 25%">Before (Baseline)</th>
+                            <th style="width: 25%">After (Consensus & Gating)</th>
+                            <th style="width: 25%">Source</th>
+                        </tr>
+                    </thead>
+                    <tbody id="consistency-metrics-body">
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div>
+                    <h3>2. Architectural Realities</h3>
+                    <ul id="consistency-tech-points" style="font-size: 0.95rem; color: var(--text-main); padding-left: 1.2rem; line-height: 1.5;">
+                    </ul>
+                </div>
+                <div>
+                    <h3>3. Known Limitations (Blocked Sensors)</h3>
+                    <ul id="consistency-caveats" style="font-size: 0.95rem; color: var(--text-main); padding-left: 1.2rem; line-height: 1.5;">
+                    </ul>
+                </div>
+            </div>
+        </div>
+      </div>
+
       <!-- DEMO-3 Part 3 Extraction Table & White UTD Rows -->
       <div class="extraction-card" id="extraction-table-section">
         <h2>REDCap Extraction Contract &amp; Provenance Panels (DEMO-3 Part 3)</h2>
@@ -1478,6 +1521,7 @@
       renderHeaderStrip(appState.data, activeRun);
       renderShellContent(appState.data, activeRun);
       renderTimelineCompare(appState.data);
+      renderConsistencySection();
       renderExtractionTable();
     }
 
@@ -1799,6 +1843,57 @@
         return { type: 'match', label: '✓ Match (' + gtDisplay + ')', class: 'gold-match', gtVal: gtVal };
       } else {
         return { type: 'mismatch', label: '✕ Discrepancy (Gold: ' + gtDisplay + ')', class: 'gold-mismatch', gtVal: gtVal };
+      }
+    }
+
+
+    function renderConsistencySection() {
+      const data = window.CASE_DATA;
+      if (!data || !data.consistency_improvements) return;
+      
+      const cons = data.consistency_improvements;
+      
+      // On-face caveat
+      document.getElementById('consistency-on-face-caveat').innerHTML = cons.on_face_caveat;
+      
+      // Metrics
+      const tbody = document.getElementById('consistency-metrics-body');
+      tbody.innerHTML = '';
+      if (cons.metrics) {
+          cons.metrics.forEach(m => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                  <td style="font-weight: 500;">${m.name}</td>
+                  <td style="color: var(--text-muted);">${m.before}</td>
+                  <td style="font-weight: 600; color: var(--accent-indigo);">${m.after}</td>
+                  <td style="font-size: 0.8rem; color: var(--text-dim);">${m.source || 'BigQuery: nodepeel.resus_raw'}</td>
+              `;
+              tbody.appendChild(tr);
+          });
+      }
+      
+      // Tech Points
+      const techUl = document.getElementById('consistency-tech-points');
+      techUl.innerHTML = '';
+      if (cons.technical_points) {
+          cons.technical_points.forEach(tp => {
+              const li = document.createElement('li');
+              li.style.marginBottom = '0.5rem';
+              li.innerHTML = tp;
+              techUl.appendChild(li);
+          });
+      }
+      
+      // Caveats
+      const cavUl = document.getElementById('consistency-caveats');
+      cavUl.innerHTML = '';
+      if (cons.caveats) {
+          cons.caveats.forEach(c => {
+              const li = document.createElement('li');
+              li.style.marginBottom = '0.5rem';
+              li.innerHTML = c;
+              cavUl.appendChild(li);
+          });
       }
     }
 

@@ -22,14 +22,24 @@ def load_routing_config(config_path: Path | str = "config/routing.yaml") -> dict
     return load_yaml(path)
 
 
+
+_cached_rule_map = None
+
 def _get_field_rule_map(registry_path: Path | str = "mapping/registry.yaml") -> dict[str, str]:
-    """Return map of field_name -> rule from mapping/registry.yaml."""
+    global _cached_rule_map
+    if _cached_rule_map is not None:
+        return _cached_rule_map
+    
     reg = load_yaml(Path(registry_path))
     rule_map: dict[str, str] = {}
     for sec in reg.get("sections", []):
         for entry in sec.get("fields", []):
-            if "field" in entry and "rule" in entry:
-                rule_map[str(entry["field"])] = str(entry["rule"])
+            if isinstance(entry, dict):
+                col = entry.get("export_column")
+                rule = entry.get("rule")
+                if col and rule:
+                    rule_map[col] = rule
+    _cached_rule_map = rule_map
     return rule_map
 
 
