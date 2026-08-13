@@ -35,7 +35,7 @@ def _get_field_rule_map(registry_path: Path | str = "mapping/registry.yaml") -> 
     for sec in reg.get("sections", []):
         for entry in sec.get("fields", []):
             if isinstance(entry, dict):
-                col = entry.get("export_column")
+                col = entry.get("field")
                 rule = entry.get("rule")
                 if col and rule:
                     rule_map[col] = rule
