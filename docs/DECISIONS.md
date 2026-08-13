@@ -284,3 +284,10 @@ Date: 2026-08-13  Session: Task 11  Decided by: human, agent
 3. **Legacy Bucket Non-Import**: The existing `gs://videval/` bucket is deliberately excluded from `terraform import`. Importing live clinical buckets into local, unshared state presents unmanaged risks; migration must be a discrete future human operation.
 4. **Targeted Pipeline Access**: Granted `roles/aiplatform.user` on `nodepeel` and `roles/storage.objectViewer` on `clinical-video` strictly to `sa_ingest`. `sa_analyst` and `sa_reviewer` are denied access to source video to preserve the `resus_raw` PHI denial boundary.
 5. **No REDCap Infrastructure**: Explicitly skipped Secret Manager and REDCap-related IAM provisioning, as the pipeline directly targets BigQuery.
+
+## 039 — Retirement of REDCap Network API Submission Layer
+Date: 2026-08-13  Session: Task 12  Decided by: human, agent
+1. **Network Layer Retired**: The REDCap API submission layer (`redcap/client.py`, `redcap/assemble.py`, and tests) is officially retired. The pipeline output is natively BigQuery (`nodepeel.resus_raw`).
+2. **Dictionary Remains the Data Model**: The REDCap data dictionary (`dictionary/instrument.csv`) remains the authoritative data model. `generated/redcap_fields.py` and codegen invariants (I3, I4) continue to enforce dictionary semantics (e.g., 1/0 yesno rules, checkbox iteration, SUBMISSION_COLUMNS completeness).
+3. **Dead Code Removed**: `redcap/client.py`, `redcap/assemble.py`, `tests/test_roundtrip.py`, and `tests/test_assemble.py` were deleted as their output was unconsumed by the pipeline (`scripts/run_case.py` imported but never invoked `assemble_submission`).
+4. **CI Secret Scan Updated**: The REDCap 32-character hex token secret scan was removed from `.github/workflows/ci.yml`.

@@ -21,7 +21,6 @@ from google.genai import types
 from generated.models import EventStream, Event, Interval, CoverageNote, CaseFields
 from reducer.engine import reduce_stream, FieldValue
 from generated.redcap_fields import FIELDS
-from redcap.assemble import assemble_submission
 
 from prompts.builder import (
     build_p1,

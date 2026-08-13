@@ -107,8 +107,7 @@ Q-011 text_embedding storage in fact_utterance.
   - note: "Embedding storage deferred to the retrieval layer. When added, requires separate governance review — derived embeddings of clinical audio are PHI and voice embeddings may be biometric identifiers."
 
 Q-014 Scratch REDCap project with video_review instrument and API token required for D13b round-trip verification.
-  - status: OPEN
-  - note: "Scratch REDCap project with video_review instrument and API token required for D13b round-trip verification. Blocks the definitive coverage proof — all column-count agreement to date is internal to codegen."
+  - status: OBSOLETE (REDCap network submission retired)
 
 Q-015 Three TEAM calibration anchor cases at consensus global 2, 6, 9 require human-rated cases from the gold set.
   - status: OPEN
@@ -239,4 +238,4 @@ Q-022 — Bay Camera DVR Date Format Standardization & Date Resolution (Patient 
 * **State Management**: Should we enable a remote GCS backend for `terraform.tfstate`? The local-only state introduces a single-machine risk, but a dedicated remote state bucket requires setup.
 
 ## REDCap Submission (`Q-014`)
-* **Retirement vs Deferral**: Is the `D11` / REDCap payload submission being permanently retired from the architecture, or just deferred? This affects whether `Q-014` stays open, and whether Secret Manager/API connectivity to REDCap will ever need to be provisioned.
+* **REDCap Submission (`Q-014`)**: RESOLVED/OBSOLETE. REDCap API network submission is officially retired. The pipeline output is natively BigQuery (nodepeel.resus_raw).

@@ -74,34 +74,6 @@ jobs:
           print("✓ Codegen is byte-identical across consecutive runs")
           PY
 
-      - name: 6. Secret Scan (REDCap Token 32-char uppercase hex)
-        run: |
-          python - <<'PY'
-          import re, subprocess, sys
-          from pathlib import Path
-
-          pattern = re.compile(r'\b[A-F0-9]{32}\b')
-          files = subprocess.check_output(["git", "ls-files"], text=True).splitlines()
-          violations = []
-          for rel_path in files:
-              if "test_roundtrip.py" in rel_path:
-                  continue
-              p = Path(rel_path)
-              if p.is_file():
-                  try:
-                      content = p.read_text(errors="ignore")
-                      matches = pattern.findall(content)
-                      if matches:
-                          violations.append((rel_path, matches))
-                  except Exception:
-                      pass
-          if violations:
-              for f, m in violations:
-                  print(f"FAIL: Possible REDCap API token(s) found in {f}: {m[:3]}", file=sys.stderr)
-              sys.exit(1)
-          print("✓ No REDCap tokens detected")
-          PY
-
       - name: 7. Invariants Check (scripts/check_invariants.sh)
         run: |
           bash scripts/check_invariants.sh

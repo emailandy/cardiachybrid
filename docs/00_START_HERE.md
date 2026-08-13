@@ -33,7 +33,7 @@ This documentation package consists of nine authoritative technical specificatio
 ## 3. Core Architectural & Operational Truths
 
 1. **Why Sensors First (`F-008`, `F-010`)**: Large Language Models alone cannot reliably count instantaneous physical events or establish sub-second temporal boundaries across 30-minute videos (`F-008`). Our architecture enforces **Union-of-k for Recall, Deterministic Sensors for Precision**: LLM draws propose candidate event windows, while deterministic sensors (`S1–S7`) adjudicate timestamps and physical signal validity (`F-006`, `F-009`).
-2. **Three-Layer Design**: The system separates **Extraction** (Sensors `S1–S7` + LLM Passes `P1–P5`), **Reduction** (`reducer/engine.py`, deterministic branching and schema evaluation), and **Storage/Integration** (13 physical BigQuery tables in `resus_raw`, 7 curated audit views in `resus_curated`, and REDCap API submission).
+2. **Three-Layer Design**: The system separates **Extraction** (Sensors `S1–S7` + LLM Passes `P1–P5`), **Reduction** (`reducer/engine.py`, deterministic branching and schema evaluation), and **Storage/Integration** (13 physical BigQuery tables in `resus_raw`, 7 curated audit views in `resus_curated`, ).
 3. **Fail-Loudly Verification**: No fallback heuristics or silent defaults are permitted. If a dictionary checksum drift is detected (`I1`), an anchor card is missing (`prompt_set_sha(strict=True)`), or a REDCap choice code is undeclared (`F-001`), the pipeline raises a fatal exception immediately.
 
 ---

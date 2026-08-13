@@ -25,7 +25,7 @@ The pipeline is structured into three strictly decoupled layers to ensure audita
                                          v
 +-----------------------------------------------------------------------------------+
 |                  3. INTEGRATION, ROUTING & ANALYTICS LAYER                        |
-|   Confidence Router (D09) -> HITL Queue | BigQuery Schema (D07) | REDCap API (D11)|
+|   Confidence Router (D09) -> HITL Queue | BigQuery Schema (D07)                   |
 +-----------------------------------------------------------------------------------+
 ```
 
@@ -39,7 +39,6 @@ The deterministic bridge between extraction and database ingestion. The Reducer 
 Receives the reduced payload and performs three functions:
 1. **Confidence Routing ([D09](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D09.md))**: Evaluates each field's extraction confidence against its declared difficulty threshold (`HIGH: 0.92`, `MEDIUM: 0.85`, `LOW: 0.80`). Low-confidence items, subjective TEAM ratings (`Q-006`), and UTD anomalies route immediately to the human-in-the-loop (`HITL`) review queue.
 2. **BigQuery Analytical Warehouse ([D07](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D07.md))**: Persists raw provenance across 13 physical tables in `resus_raw` and exposes 7 curated audit views in `resus_curated`.
-3. **REDCap API Submission ([D11](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D11.md))**: Assembles the exact 1,891-key API payload (`IMPORTABLE_COLUMNS` + `record_id` + `video_review_complete`) and submits to physical REDCap servers.
 
 ---
 
@@ -119,8 +118,6 @@ The Reducer Engine (`reducer/engine.py`, [D05](file:///Users/emailandy/Documents
                           +--------------------------------+--------------------------------+
                                                            |
                                                            v
-                                            [REDCap Submission API (D11)]
-                                            (1,891 importable payload keys)
 ```
 
 ---
@@ -149,11 +146,10 @@ Execution cost and latency per case depend on the configured ensemble draw count
 | **Prompt Layer (`P1–P5`)** | **BUILT & VERIFIED** (100% template checksum locking) | [A04](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/A04.md), [A06](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/A06.md) |
 | **Reducer Engine (`D05`)** | **BUILT & VERIFIED** (909 fields, all repeating groups) | [D05](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D05.md) |
 | **BigQuery DDL & Audit Views (`D07`)** | **BUILT & VERIFIED** (13 physical tables, 7 audit views) | [D07](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D07.md), [D07a](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D07a.md) |
-| **REDCap Payload Assembly (`D11`)** | **BUILT & VERIFIED** (1,891 keys, checkbox defaults) | [D11](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D11.md) |
 | **Sensors `S1–S7` Streaming Pipelines** | **NOT BUILT** (Hardware pipelines unbuilt in Phase 1; S3 acoustic probe validated offline in `F-009`) | [D00](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D00.md) |
 | **Clinical Gold Set (25 Cases)** | **NOT BUILT** (25 dual-annotated cases unadjudicated) | [D00](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D00.md) |
 | **Clinical Review of 39 Anchor Cards** | **NOT BUILT** (Cards pass structural linting; clinical review pending) | [A03b](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/A03b.md) (Q-009) |
-| **Live REDCap Server Round-Trip** | **NOT BUILT** (Offline assembly tests pass; live API unverified) | [D13](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D13.md) (Q-014) |
+| **Live REDCap Server Round-Trip** | **OBSOLETE** (REDCap network submission retired) | [D13](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D13.md) (Q-014) | **NOT BUILT** (Offline assembly tests pass; live API unverified) | [D13](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D13.md) (Q-014) |
 | **TEAM Subjective Score Calibration** | **NOT BUILT** (Uncalibrated; all TEAM fields route to HITL review) | [A06](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/A06.md) (Q-006, Q-015) |
 
 ---

@@ -18,16 +18,13 @@ from fixtures.synthetic_streams import (
     _ABSENT_EVENT_TYPES,
 )
 from reducer.engine import reduce_stream, FieldValue
-from redcap.assemble import assemble_submission
 
 
 # Helper for tests needing assembled payload
 def _get_maximal_payload() -> dict[str, str]:
     fvs, _, _ = reduce_stream(build_event_stream())
-    for f in fvs:
-        f.human_verified = True
-    payload, quars = assemble_submission("case_max_01", "run_01", fvs)
-    assert not quars, f"Unexpected quarantine: {quars[:5]}"
+    # The reducer emits exactly what it owns. The assembly layer used to add the rest.
+    payload = {fv.export_column: str(fv.value) if fv.value is not None else "" for fv in fvs}
     return payload
 
 
@@ -52,16 +49,7 @@ def test_reducer_emits_every_expected_column():
     assert not extra, f"{len(extra)} extra: {sorted(list(extra))[:25]}"
 
 
-# 2. NEW / MILESTONE: Payload equals SUBMISSION_COLUMNS (1,891)
-def test_payload_equals_submission_columns():
-    """Assemble adds the 12 it owns. Independent of the above."""
-    payload = _get_maximal_payload()
-    expected = set(rf.IMPORTABLE_COLUMNS) | {
-        "record_id",
-        "video_review_complete",
-    }
-    assert set(payload.keys()) == expected
-    assert len(payload) == 1891
+
 
 
 # 3. RELOCATED / CONSOLIDATED: Valid source classes across dictionary
@@ -130,26 +118,6 @@ def test_yesno_fields_are_one_zero():
 
 
 # 7. NEW / ENHANCED: checkbox fields write both states ('0' or '1', none blank)
-def test_checkbox_writes_both_states():
-    """Every checkbox choice column in assembled payload is strictly '0' or '1'."""
-    payload = _get_maximal_payload()
-    cb_cols = [
-        c
-        for s in rf.FIELDS.values()
-        if getattr(s, "field_type", "") == "checkbox"
-        and not getattr(s, "server_computed", False)
-        and getattr(s, "source_class", "")
-        not in ("ROSTER_JOIN", "HUMAN_ONLY")
-        for c in s.export_columns
-    ]
-    assert cb_cols, "No checkbox columns found"
-    for col in cb_cols:
-        assert payload.get(col) in (
-            "0",
-            "1",
-        ), f"Checkbox col {col} has invalid val {payload.get(col)!r}"
-
-
 # 8. RELOCATED / CONSOLIDATED: Calc fields never in payload
 def test_calc_fields_never_in_payload():
     """Server-computed REDCap calc fields are never present in assembled payload keys."""
@@ -167,35 +135,6 @@ def test_suppressed_codes_forced_zero():
 
 
 # 10. NEW / STRICT I2: Operator fields always null / blank on maximal case
-def test_operator_fields_always_null():
-    """All ROSTER_JOIN export columns are non-empty set and always blank ''."""
-    payload = _get_maximal_payload()
-    roster = {
-        c
-        for s in rf.FIELDS.values()
-        if getattr(s, "source_class", "") == "ROSTER_JOIN"
-        for c in s.export_columns
-    }
-    assert roster, "no ROSTER_JOIN fields — discriminator is broken"
-    for c in roster:
-        assert payload[c] == "", f"{c} must be blank (roster-sourced)"
-
-
-# 11. NEW / STRICT I2: Review trigger fields always null / blank on maximal case
-def test_review_trigger_always_null():
-    """All HUMAN_ONLY export columns are non-empty set and always blank ''."""
-    payload = _get_maximal_payload()
-    human_only = {
-        c
-        for s in rf.FIELDS.values()
-        if getattr(s, "source_class", "") == "HUMAN_ONLY"
-        for c in s.export_columns
-    }
-    assert human_only, "no HUMAN_ONLY fields — discriminator is broken"
-    for c in human_only:
-        assert payload[c] == "", f"{c} must be blank (human-only-sourced)"
-
-
 # 12. NEW / ENHANCED: Truncation sets human review and writes drop note
 def test_truncation_sets_human_review():
     """Repeating group truncation (35 CCIs -> 30) sets routed_to_human and note text."""
