@@ -174,10 +174,9 @@ def test_k_draws_produce_k_times_p1_calls(mock_vc_cls, mock_call_cached, tmp_pat
         out=str(tmp_path / "case.json"),
     )
 
-    with patch("scripts.run_case.assemble_submission"):
-        with patch("scripts.run_case.reduce_stream") as mock_reduce:
-            mock_reduce.return_value = ([], [], [])
-            run_live(args, duration_s=1363.78)
+    with patch("scripts.run_case.reduce_stream") as mock_reduce:
+        mock_reduce.return_value = ([], [], [])
+        run_live(args, duration_s=1363.78)
 
     p1_calls = [c for c in mock_call_cached.call_args_list if "p1_win" in c.kwargs.get("pass_name", "")]
     # 4 windows × k=3 = 12 calls
