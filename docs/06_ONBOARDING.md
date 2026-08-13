@@ -102,4 +102,4 @@ Never hand-type a REDCap column literal (`num_cci_v2`, `defib_shock_time_1`, etc
 Never prompt an LLM to count how many defibrillation shocks, airway attempts, or CPR interruptions occurred in a case (`F-008`). Our 5-call replication probe showed a **20% replication rate** for shock counting (`F-008`), and Pro models performed worse than Flash (`F-010`). The LLM extracts candidate event intervals; deterministic physical sensors (`S1–S7`) and the Reducer Engine (`D05`) count occurrences and unroll repeating instruments.
 
 ---
-Last verified: 2026-08-03 against dict_version e7c08437adcef4a5, prompt_set_sha 12280b94c0c134e8
+Last verified: 2026-08-13 against dict_version e7c08437adcef4a5, prompt_set_sha 2b6988545630a115

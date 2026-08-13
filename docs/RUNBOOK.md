@@ -71,4 +71,4 @@ Anyone inheriting this repository should be aware of the following unverified co
 - **TEAM Ratings Uncalibrated (`Q-006`)**: All 12 subjective resuscitation team performance rating fields route unconditionally to HITL review until inter-rater reliability (`ICC >= 0.75`) is established in production.
 
 ---
-Last verified: 2026-08-03 against dict_version e7c08437adcef4a5, prompt_set_sha 12280b94c0c134e8
+Last verified: 2026-08-13 against dict_version e7c08437adcef4a5, prompt_set_sha 2b6988545630a115

@@ -101,4 +101,4 @@ The integration test suite (`tests/`) isolates unit verification from live infra
 3. **Execution Summary**: All **150 unit tests across 17 test suites** pass 100% cleanly in offline CI (`150 passed, 8 deselected`).
 
 ---
-Last verified: 2026-08-03 against dict_version e7c08437adcef4a5, prompt_set_sha 12280b94c0c134e8
+Last verified: 2026-08-13 against dict_version e7c08437adcef4a5, prompt_set_sha 2b6988545630a115

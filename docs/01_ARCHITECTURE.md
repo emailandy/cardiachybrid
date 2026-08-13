@@ -153,4 +153,4 @@ Execution cost and latency per case depend on the configured ensemble draw count
 | **TEAM Subjective Score Calibration** | **NOT BUILT** (Uncalibrated; all TEAM fields route to HITL review) | [A06](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/A06.md) (Q-006, Q-015) |
 
 ---
-Last verified: 2026-08-03 against dict_version e7c08437adcef4a5, prompt_set_sha 12280b94c0c134e8
+Last verified: 2026-08-13 against dict_version e7c08437adcef4a5, prompt_set_sha 2b6988545630a115

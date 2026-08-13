@@ -40,4 +40,4 @@ This glossary provides authoritative clinical resuscitation definitions and syst
 * **Union-of-k / Ensemble Voting (`D08`)**: The multi-draw event harvesting architecture where candidate event windows are merged across `k` independent LLM draws (`Union-of-k` for recall) and confirmed by deterministic acoustic/motion sensors for precision (`F-008`).
 
 ---
-Last verified: 2026-08-03 against dict_version e7c08437adcef4a5, prompt_set_sha 12280b94c0c134e8
+Last verified: 2026-08-13 against dict_version e7c08437adcef4a5, prompt_set_sha 2b6988545630a115

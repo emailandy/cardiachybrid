@@ -361,4 +361,4 @@ def transcribe_diarized_utterances(audio_16k: list[float], sr: int = 16000) -> l
 * **Built Status**: **NOT BUILT** in Phase 1 ([D00](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D00.md)).
 
 ---
-Last verified: 2026-08-03 against dict_version e7c08437adcef4a5, prompt_set_sha 12280b94c0c134e8
+Last verified: 2026-08-13 against dict_version e7c08437adcef4a5, prompt_set_sha 2b6988545630a115

@@ -111,4 +111,4 @@ To guarantee reproducible prompt execution, `prompts/registry.py` exposes `promp
 * **No Missing-File Skipping (`I1`)**: In accordance with invariant `I1`, `prompt_set_sha(strict=True)` **never skips missing files**. A partial hash is a lie about reproducibility. If any required template file is missing, the function raises `FileNotFoundError` immediately ([A01](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/A01.md)).
 
 ---
-Last verified: 2026-08-03 against dict_version e7c08437adcef4a5, prompt_set_sha 12280b94c0c134e8
+Last verified: 2026-08-13 against dict_version e7c08437adcef4a5, prompt_set_sha 2b6988545630a115
