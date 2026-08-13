@@ -44,3 +44,33 @@ Voice and text embeddings derived from clinical audio are derived PHI, and voice
 - **Deletion Protection**: On production (`var.environment == "prod"`), dataset deletion protection is enforced via `delete_contents_on_destroy = false`, and all physical tables deployed into `resus_raw` MUST enforce `deletion_protection = true` to prevent accidental PHI loss.
 - **CMEK Key Binding**: `var.cmek_kms_key_name` is an **unset variable placeholder awaiting a Cloud KMS CryptoKey resource ID**. When left unset (`""`), encryption falls back to Google-managed keys (permitted only in dev/test). In production, an explicit KMS key with automated rotation MUST be supplied.
 
+
+## 7. Remote State Backend (Proposal)
+
+By deliberate decision, no remote backend is currently configured (see Section 2). However, as the infrastructure expands, a local-only `terraform.tfstate` introduces a single-machine failure risk.
+
+If a decision is made to migrate to a remote backend, the state bucket MUST meet the following requirements:
+* **Region**: `us-east4` (Single region)
+* **Access Control**: Uniform bucket-level access enabled
+* **Data Protection**: Object versioning enabled (to recover from state corruption)
+* **Encryption**: CMEK enabled if required by organizational policy
+
+**Example Configuration (DO NOT COMMIT WITHOUT APPROVAL):**
+```hcl
+# terraform {
+#   backend "gcs" {
+#     bucket = "YOUR_STATE_BUCKET_NAME"
+#     prefix = "terraform/state"
+#     # State locking is natively supported by GCS backends
+#   }
+# }
+```
+
+**Migration Command:**
+Once the block above is added, run `terraform init -migrate-state` to push the local state to GCS.
+
+## 8. Pipeline API Services & Video Storage
+
+- **API Services**: Core pipeline services (`bigquery.googleapis.com`, `storage.googleapis.com`, `aiplatform.googleapis.com`, `logging.googleapis.com`) are explicitly managed in `services.tf`.
+- **Clinical Video Bucket**: A new `clinical-video` bucket is defined in `storage.tf` for future ingestion, enforcing `public_access_prevention`, versioning, and CMEK conditionally.
+- **Unmanaged Infrastructure**: The legacy `gs://videval/` bucket (which holds `simvideo2.mp4`) remains completely **unmanaged** by this Terraform codebase. Importing this bucket requires human sign-off as it contains live clinical video and is currently outside the declarative state boundary.

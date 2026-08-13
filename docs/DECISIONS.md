@@ -276,3 +276,11 @@ Date: 2026-08-10  Session: Task 8e  Decided by: human, agent
 
 
 
+
+## 038 — Pipeline Runtime Terraform Extension (D11 Extension)
+Date: 2026-08-13  Session: Task 11  Decided by: human, agent
+1. **API Enablement**: Added `services.tf` to explicitly enable `aiplatform.googleapis.com`, `storage.googleapis.com`, `bigquery.googleapis.com`, and `logging.googleapis.com` based on pipeline codebase usage (no speculative APIs).
+2. **Video Archive Provisioning**: Provisioned `clinical-video` bucket in `storage.tf` with strict constraints (`uniform_bucket_level_access`, `public_access_prevention`, and object versioning). Raw video retention lifecycle remains pending IRB approval (`Q-020`). 
+3. **Legacy Bucket Non-Import**: The existing `gs://videval/` bucket is deliberately excluded from `terraform import`. Importing live clinical buckets into local, unshared state presents unmanaged risks; migration must be a discrete future human operation.
+4. **Targeted Pipeline Access**: Granted `roles/aiplatform.user` on `nodepeel` and `roles/storage.objectViewer` on `clinical-video` strictly to `sa_ingest`. `sa_analyst` and `sa_reviewer` are denied access to source video to preserve the `resus_raw` PHI denial boundary.
+5. **No REDCap Infrastructure**: Explicitly skipped Secret Manager and REDCap-related IAM provisioning, as the pipeline directly targets BigQuery.

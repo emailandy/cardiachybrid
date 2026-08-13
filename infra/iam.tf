@@ -112,3 +112,10 @@ resource "google_project_iam_member" "deploy_bq_admin" {
 #   role               = "roles/iam.workloadIdentityUser"
 #   member             = "principalSet://iam.googleapis.com/projects/YOUR_PROJECT_NUM/locations/global/workloadIdentityPools/YOUR_POOL/attribute.repository/YOUR_ORG/resus_qc"
 # }
+
+# Pipeline Vertex AI inference access
+resource "google_project_iam_member" "ingest_vertex_user" {
+  project = var.project_id
+  role    = "roles/aiplatform.user"
+  member  = "serviceAccount:${google_service_account.sa_ingest.email}"
+}

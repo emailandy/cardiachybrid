@@ -230,3 +230,13 @@ Q-022 — Bay Camera DVR Date Format Standardization & Date Resolution (Patient 
   - gold-standard provenance finding: The clinical review sheet dates have proven 100% accurate in both cases where independently checkable (`11/7/2023` on Patient 1; `12/8/2023` on Patient 2).
   - status: RESOLVED
   - date: 2026-08-06
+
+## Clinical Video Retention & Migration (`Q-020`)
+* **Retention Policy**: What is the IRB/clinical lead approved retention period for raw clinical video? Currently, the lifecycle block is commented out awaiting confirmation (e.g., delete after 30 days vs retain indefinitely).
+* **Legacy Bucket Migration**: Should the existing unmanaged `gs://videval/` bucket be imported into Terraform state, or should its contents be migrated to the new managed `clinical-video` bucket? Who owns this migration?
+
+## Infrastructure Remote State
+* **State Management**: Should we enable a remote GCS backend for `terraform.tfstate`? The local-only state introduces a single-machine risk, but a dedicated remote state bucket requires setup.
+
+## REDCap Submission (`Q-014`)
+* **Retirement vs Deferral**: Is the `D11` / REDCap payload submission being permanently retired from the architecture, or just deferred? This affects whether `Q-014` stays open, and whether Secret Manager/API connectivity to REDCap will ever need to be provisioned.

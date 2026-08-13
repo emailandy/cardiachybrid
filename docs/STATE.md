@@ -45,3 +45,18 @@ Session summary (Task 9):
 - Pre-registered (in `docs/S5_PREREG.md`) the constraints on the resulting S5 clock anchor test: `simvideo2`'s ground truth has a known ±3s measurement variance, meaning the ~2s residual bias in the baseline was only coarsely measurable.
 - Completed Step 3 execution (running `pro_run_s5_01..03` independently) against the model and analyzed the output.
 - Step 4 Analytical Report (`s5_clock_anchor_report.md`): Confirmed the model *successfully grounded its timeline*. The monotonically increasing negative bias observed in `pro_run_ship_01` (from -1.7s up to -4.1s at shock 5) was arrested and eliminated entirely, with the remaining small offset (-1.5s) being completely within the unmeasurable bounds of the GT precision. Gold #5 was preserved in 2/3 extraction runs exactly where the clock anchor projected it to be.
+Session summary (Task 10):
+- Upgraded the offline UI shell (`demo/viewer.html`) to prominently report the clinical measurement improvements achieved through extraction consistency architecture (Consensus & Bracket Gating).
+- Patched `demo/prepare_demo.py` to calculate metrics identically to the analytics pipeline (using `scripts/rescore_runs.py` to directly fetch raw extraction boundaries from BigQuery `nodepeel.resus_raw`).
+- Rendered exact before-and-after baseline metrics: Shock recall @±15s (40% worst-run -> 93.3% consensus), Median timestamp error (13.5s spread -> 2.00s), Retained precision (38.1% -> 100%), and Cross-run agreement.
+- Highlighted three crucial architectural realities: 1) `seed` is inert for multimodal video generation (determinism via downstream consensus is required), 2) Reasoning budget dominated extraction yield, 3) The union consensus algorithm preserves single-draw detections while eliminating noise.
+- Documented prominent limitations via an on-face caveat to prevent clinical overstatement (n=1 constraint, unmeasured true accuracy, missing Q-017/Q-019 sensor calibration blocks) directly inside the Viewer UI.
+- Validated complete offline HTML purity and I2 invariant zero REDCap literals compliance. All claims passed the automated Mechanical Honesty Gate.
+Session summary (Task 11):
+- Added `infra/services.tf` explicitly enabling `aiplatform`, `storage`, `bigquery`, and `logging` APIs, strictly derived from codebase usage (Vertex AI LLM, GCS video reads, BigQuery telemetry).
+- Provisioned `clinical-video` bucket in `infra/storage.tf` governed by strict security defaults (`uniform_bucket_level_access = true`, `public_access_prevention = "enforced"`, versioning enabled).
+- Added CMEK key conditional support mapping to `var.cmek_kms_key_name` across the new bucket to align with the BigQuery `resus_raw` pattern.
+- Updated `infra/iam.tf` to grant `roles/aiplatform.user` on `nodepeel` and `roles/storage.objectViewer` on `clinical-video` explicitly to `sa_ingest` for pipeline execution. Left `sa_analyst` and `sa_reviewer` ungranted to preserve the PHI access boundary.
+- Kept the legacy unmanaged `gs://videval/` bucket out of terraform state to prevent destructive import risk and left its migration a human decision (`Q-020`).
+- Documented the remote state GCS backend layout in `infra/README.md` as a proposal without enforcing it in code, as requested by standing decision D07a constraints.
+- Validated Terraform cleanliness (`0 to destroy, 0 to change`) and updated invariant gates successfully.

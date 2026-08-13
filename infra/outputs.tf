@@ -35,3 +35,8 @@ output "sa_deploy_email" {
   description = "Email of schema DDL deployer service account."
   value       = google_service_account.sa_deploy.email
 }
+
+output "clinical_video_bucket_name" {
+  description = "The name of the GCS bucket storing raw clinical video."
+  value       = google_storage_bucket.clinical_video.name
+}
