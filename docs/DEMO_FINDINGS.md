@@ -25,7 +25,9 @@ This document is the standalone clinical and engineering evaluation report for t
 
 ## 3. FINDINGS AND FORMAL RETRACTIONS (F-001 through F-022)
 
-* **F-023**: Agentic video processing is unreachable from the Vertex AI pipeline path (`client.models.generate_content(...)`).
+* **F-023**: [RETRACTED] Agentic video processing is unreachable from the Vertex AI pipeline path (`client.models.generate_content(...)`).
+  * **Retraction Reason**: According to the newly released [gemini-3.8-flash model spec card](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/gemini/3-8-flash), agentic video understanding is explicitly listed as a supported capability for Vertex AI (`gemini-3.8-flash`), complete with security controls like CMEK and VPC-SC, meaning the PHI/BAA blocker does not apply. The assertion that agentic video was exclusively served on the Developer API was made without evidence and is false.
+  * *Original Reasoning (Now Invalid)*:
   1. SDK Exposure: `google-genai 2.16.0` exposes `client.interactions.create` (the agentic surface), but it targets the Developer API.
   2. Vertex AI Rejection: `models.generate_content` strictly enforces `types.Part` which has no `processing` field. Pydantic raises `extra_forbidden` for `{"processing": "agentic"}`.
   3. GCS URI vs Files API: The Developer API requires `ai.files.upload` (Files API) rather than native `gs://` URIs, which is incompatible with BAA/PHI requirements for 22-minute clinical videos.
