@@ -72,3 +72,14 @@ Session summary (Task 11):
 
 ### Fixed Test Flakiness (Task 13a Part 2)
 The audio extraction test failures in `test_verify_p1_placeholder_wiring` and `test_clean_run_guarantee` were root caused and resolved. The `ffmpeg` process was prematurely exiting (code 0) without fully creating the file when running under `pytest` because `ffmpeg` consumes standard input by default and `pytest`'s mock input stream was sending an immediate EOF. This was resolved by appending `-nostdin` to the `ffmpeg` subprocess command in `sensors/temp_artifacts.py`. All 230 tests now pass locally.
+
+### Agentic Feasibility Re-Evaluation (Task 13a Part 3)
+A new model spec card for `gemini-3.8-flash` confirmed that **Agentic Video Understanding** is a supported capability on Vertex AI, complete with CMEK and VPC-SC compliance. Finding `F-023` has been formally RETRACTED in `docs/DEMO_FINDINGS.md`. Inspection of `google-genai 2.22.0` confirms that `MediaProcessing.AGENTIC` is now an available `media_processing` enum on `types.Part`. 
+
+We established that an environment upgrade to `google-genai 2.22.0` will be required to invoke it. A minimal text-only probe call was attempted on `us-east4`, but failed due to expired Application Default Credentials.
+
+**Pending Human Decisions**:
+1. **Region Governance (DECISION 014)**: The model spec lists global, us, and eu regions. We need to determine if `gemini-3.8-flash` is reachable at our IRB-pinned `us-east4` region or if it requires falling back to `us`/`global` (which requires a governance waiver).
+2. **Preview vs GA Terms**: The 3.8-flash *model* is GA, but the *agentic video capability* is explicitly marked "Preview". We must determine whether Preview features are excluded from our BAA/PHI terms before sending clinical videos.
+
+The pre-registration for the agentic video experiment has been drafted in `docs/PREREG_AGENTIC_VIDEO.md` holding `thinking_level` constant (`ThinkingLevel.MEDIUM`) across all arms, and is awaiting approval pending the governance decisions above.
