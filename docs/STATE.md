@@ -1,85 +1,12 @@
-Phase: 1 (schema spine), 2 (prompt layer), & 3 (sensor layer) — SENSOR LAYER FROZEN PENDING CALIBRATION ASSETS
-Last completed: S12 (Mechanical cadence variance derivation sigma <= 2.83 CPM from 20s FFT discrete bin arithmetic; forward-derived LUCAS rate envelope [97.0, 107.0] CPM; confirmation of mechanical branch on n=1 case [vidsim2 with 35.8x SNR]; requalification of Patient 2 mechanical detection as failed on existing bounds [med_cad=132 CPM outside 97-107 CPM] and ambiguous spectrum [1.77x SNR]; empirical falsification of manual classifier rule on n=1 testable interval with 3 intervals failing upstream; resolution of Room 2 chest geometry to y=650 retiring airway provider candidates; Patient 2 production whole-track abstention under NoPeriodicMotion; registered F-039 manual classifier breakdown, F-040 spectral peak selection discipline failure, and F-041 device filter rolloff coupling).
-Next task: SENSOR LAYER FROZEN. Do not start new code. One known defect deferred for lack of calibration data: F-040 (unconstrained argmax cadence peak selection with designed fix). Await external clinical asset delivery: (1) Per-camera manikin calibration clip (continuous unspliced >=60s, unobstructed chest, metronome-recorded cadence, one manual and one mechanical sequence), (2) 25 real clinical resuscitation cases for Phase 4 validation, and (3) 1 afternoon PM timestamp reference frame for S5 template expansion.
-Blockers: External clinical asset delivery: (1) Per-camera manikin calibration clips (HIGHEST PRIORITY: continuous unspliced >=60s with unobstructed chest and metronome-recorded target cadence for one manual and one mechanical sequence; the sole route to validating peak selection, unassisted chest ROI localization, and sensitivity control for both modes), (2) 25 real clinical resuscitation cases (Phase 4 validation), (3) 1 afternoon PM timecode reference frame; Q-007 (Procurement/policy resolution of pip index override).
-Verified gates: DEMO-0 BigQuery Schema Deployment & Verification (`docs/DEPLOY_LOG.md`, `bq/deploy.py`, `infra/verify_iam.sh`): verified dry run and apply deployment of `generated/bq_ddl.sql` and `generated/audit_views.sql` to BigQuery project `nodepeel`. Created 13 physical tables in `nodepeel:resus_raw` (`dim_case`, `dim_run`, `dim_redcap_field`, `fact_event`, `fact_interval`, `fact_utterance`, `fact_sensor_interval`, `fact_redcap_field`, `redcap_submission`, `fact_metric`, `fact_coverage_note`, `fact_near_miss`, `fact_team_score`) and 7 curated views in `nodepeel:resus_curated` (`v_redcap_wide`, `v_exemplar_store`, `v_audit_missing_fields`, `v_audit_domain_coverage`, `v_audit_hallucination`, `v_audit_low_utd`, `v_audit_branching_violation`). Verified refusal of scratch target dataset (`--dataset resus_scratch`) and direct curated deployment (`--dataset resus_curated`). Seeded `nodepeel:resus_raw.dim_redcap_field` from `generated/dim_redcap_field_seed.jsonl` (`909` instrument fields, `1` form, `6` field types). Verified execution of all 7 curated views against empty tables returning zero rows without error or limit violations. Executed IAM negative proof (`bash infra/verify_iam.sh nodepeel`) against real PHI tables: verified `sa-analyst` and `sa-reviewer` succeed on `v_redcap_wide` and `v_exemplar_store` (`0` rows) while being denied with HTTP 403 `PERMISSION_DENIED` on `fact_utterance` and `fact_event.evidence`. S12 Cross-Case Transfer & Mechanical Discrimination Verification (`sensors/s1_s6_motion.py`, `sensors/calibration/roi_config.yaml`, `docs/DECISIONS.md` 036, `docs/SENSOR_FINDINGS.md` F-038, F-039, F-040, F-041): validated mechanical CPR classifier branch on n=1 case (`vidsim2.mp4` with 35.8x dominant-to-runner-up SNR) under derived bin arithmetic (sigma <= 2.83 CPM) and forward-derived LUCAS rate envelope [97.0, 107.0] CPM; established that Patient 2 mechanical detection fails on existing rate bounds (med_cad 132 CPM outside 97-107 CPM) and is an ambiguous spectrum (1.77x SNR, 44.4% competing windows) returning UTD under production pipeline; verified whole-track abstention (NoPeriodicMotion) on Patient 2 under unassisted production pipeline; corrected Room 2 chest geometry to y=650 (retiring y=320..480 airway provider candidates); registered F-039 falsification of manual classifier rule (failed on n=1 testable interval, 3 failing upstream), F-040 lack of spectral peak selection discipline, and F-041 Butterworth filter rolloff coupling (LUCAS-specific by physical design). Verified 100% bit-identical regression on Patient 1 across all 11 reporting-tier intervals and CCF 0.8170 (noting Patient 1 has zero manual intervals and provides non-regression coverage for the mechanical branch only). Fast-tier claims verifier (9/9 checks) and full test suite (222 unit tests passed) green.
-Environment: Python 3.14.2 (Homebrew darwin arm64), numpy 2.5.1, scipy 1.18.0, opencv-python-headless 5.0.0.93. (Note: STATE.md previously carried stale 'Python 3.11' template string; cross-session determinism across other Python versions is unverified; handoff requires strict requirements-frozen.txt and interpreter check in self_test).
-
-Known-broken/deferred:
-- "check_anchors() proves structural coverage only. It cannot validate clinical accuracy. Anchor card content requires human clinical review before the first production run — see docs/CLINICAL_REVIEW_QUEUE.md."
-- "D05 must implement drug->drug_class classification and rhythm->rhythm_shockable derivation in the reducer. Both are where filters the registry depends on, excluded from the model contract because they are computable from drug and rhythm."
-- "D05 drug classification: drug=other + drug_name_text -> drug_class requires a synonym table. Thrombolytics: alteplase, tPA, TNK, tenecteplase, reteplase, retavase, activase, cathflo. Case-insensitive, substring match. Unmatched `other` drugs get drug_class=null and do not populate thrombolytic fields."
-- "_inbox/ is scheduled for deletion after D13 (retaining only referenced task/contract docs until then)."
-- "scripts/make_task.py UNVERIFIED — --dry-run produced no output, which does not distinguish 'works' from 'stub no-op'. Off the critical path; task bodies come from _inbox/. Verify before first real use."
-- "docs/tasks/A02.md is only 7 lines. Before running A02, confirm its Task body names _inbox/20_constitution.md as the source. If it does not, the agent will write a constitution from scratch instead of placing the staged one."
-- "pip index override in place (Q-007). Venv-scoped, repo-local. Must be resolved before production deployment."
-- "Anchor cards required: 42, not the ~24 originally estimated. A03 covers the 6 highest-column-count types; A03b covers the remaining 36. Re-estimate A03b accordingly."
-
-- "Do not create prompts/ content before D14 and A01."
-- "Do not run scripts/bootstrap.sh again unless the venv is deleted."
-- "Stub modules MUST have a `if __name__ == '__main__': main()` guard that raises. A stub without one exits 0 and is indistinguishable from a working module — this defeats every build gate that depends on 'fails at the expected step'."
-- "bootstrap.sh must FAIL on incomplete install, never degrade. Fourth instance of the silent-degradation pattern — check every new script for it before committing."
-- "Unknown fields referenced in branching logic evaluate to False (matching REDCap), rather than crashing. DO NOT special-case or force a build failure for them."
-- "D07a (BigQuery infrastructure) has no code dependencies and should be started in parallel — the VPC-SC perimeter change needs an Org Policy Admin, who is never available the week you need them."
-- "Interval types (e.g. cci, rosc, vent_delay) must not leak into event_types. event_types_from_rules and event_types_from_hints are kept distinct in manifest derivation. anchor_cards_required is 39."
-- "NO non-existent files should be skipped in prompt_set_sha(). A partial hash is a lie about reproducibility. Raise on missing files."
-- "Regression reference (golden_case_01 7-column routing table on 1,879 reducer-emitted fields): branching_not_satisfied: 1,462 (inactive repeating slots & unsatisfied branching predicates); auto_accepted: 371 (populated, confident clinical fields & clean nulls where coverage was adequate); low confidence: 28 (genuine unobserved optional attributes on observed events, e.g. 12 A-line SBP readings before/during hand occlusion, 3 pad position changes, 6 intubation attempt details, 5 ROSC numeric vitals, and 2 optional arrival/intubation attributes); TEAM (Q-006): 12 (all 12 subjective team rating fields route unconditionally to HITL review); empty_narrative_no_anomalies: 5 (empty section narrative notes with no section anomalies do not route); truncated group: 1 (mccd_applied_ems_v2, abstained due to provider crowding visual occlusion). Total: 1,879."
-
-Session summary: Completed Task 8e (Correct S3 record & attribute discrimination honestly): (1) Retracted the 13.0s window derivation from `pipeline/s3_gate.py` and restored `DEFAULT_WINDOW_S = 30.0s` after determining that the training-configuration device in the video generated no charge tones; (2) Renamed the integration test to `tests/test_s3_pinning.py` to correctly pin the F-030/M1 documented state (S3 confirms zero shocks under the uncalibrated default profile); (3) Investigated the identical-scorecard anomaly and verified that the window genuinely does not affect outcomes because S3 correctly abstains regardless when no valid tones exist; (4) Rewrote `docs/DECISIONS.md` D-044 to attribute 100% of retained-precision gains to the bracket heuristic rather than acoustic discrimination; (5) Corrected stale claims of "4/4 real shocks" across `docs/tasks/S02.md`, `docs/DEMO_FINDINGS.md`, `docs/STATUS.md`, and `docs/tasks/specs.yaml` to point to F-030 and M1. Status note: S3 acoustic gating is blocked on Q-019 (per-device calibration on audio with confirmed discharges) — the same class of missing clinical asset that froze the rest of the sensor layer. It is not a code defect and should not be retried until that asset exists.
-
-<!-- Updated by the agent as the LAST action of every session. If stale, the next session will redo or skip work. -->
-
-Session summary (Task 13a):
-- Conducted a feasibility probe on agentic video processing via Vertex AI.
-- Found that `google-genai` 2.16.0 exposes `interactions` but it targets the Developer API. Vertex AI `generate_content` rejects the `processing` parameter via strict `types.Part` validation.
-- Confirmed Developer API requires Files API upload, which is incompatible with BAA/PHI rules for clinical video.
-- Aborted the pre-registration and four-arm experiment as agentic processing is unreachable. Documented this as F-023 in `docs/DEMO_FINDINGS.md`.
-- Added an entry to Q-008 noting `gemini-3.8-flash` as a new unpinned moving alias.
-- Attempted minimal probe to check `gemini-3.8-flash` availability on Vertex AI, which resulted in ADC reauthentication error, leaving static availability unverified.
-
-
-
-
-
-
-
-
-
-
-
-Session summary (Task 9):
-- Fixed a pipeline bug (`run_case.py`) that leaked transient workspace debris (`case.json`), causing the mechanical honesty gate to fail.
-- Fixed a pipeline bug in `prompts/builder.py` that caused Vertex AI to throw an `INVALID_ARGUMENT` exception for prompt responses configured via an `anyOf` schema. Replaced it with a unified object schema that bypassed the backend bug.
-- Modified `pipeline/sensor_runner.py` to project the S5 Clock anchor to all P1 windows.
-- Pre-registered (in `docs/S5_PREREG.md`) the constraints on the resulting S5 clock anchor test: `simvideo2`'s ground truth has a known ±3s measurement variance, meaning the ~2s residual bias in the baseline was only coarsely measurable.
-- Completed Step 3 execution (running `pro_run_s5_01..03` independently) against the model and analyzed the output.
-- Step 4 Analytical Report (`s5_clock_anchor_report.md`): Confirmed the model *successfully grounded its timeline*. The monotonically increasing negative bias observed in `pro_run_ship_01` (from -1.7s up to -4.1s at shock 5) was arrested and eliminated entirely, with the remaining small offset (-1.5s) being completely within the unmeasurable bounds of the GT precision. Gold #5 was preserved in 2/3 extraction runs exactly where the clock anchor projected it to be.
-Session summary (Task 10):
-- Upgraded the offline UI shell (`demo/viewer.html`) to prominently report the clinical measurement improvements achieved through extraction consistency architecture (Consensus & Bracket Gating).
-- Patched `demo/prepare_demo.py` to calculate metrics identically to the analytics pipeline (using `scripts/rescore_runs.py` to directly fetch raw extraction boundaries from BigQuery `nodepeel.resus_raw`).
-- Rendered exact before-and-after baseline metrics: Shock recall @±15s (40% worst-run -> 93.3% consensus), Median timestamp error (13.5s spread -> 2.00s), Retained precision (38.1% -> 100%), and Cross-run agreement.
-- Highlighted three crucial architectural realities: 1) `seed` is inert for multimodal video generation (determinism via downstream consensus is required), 2) Reasoning budget dominated extraction yield, 3) The union consensus algorithm preserves single-draw detections while eliminating noise.
-- Documented prominent limitations via an on-face caveat to prevent clinical overstatement (n=1 constraint, unmeasured true accuracy, missing Q-017/Q-019 sensor calibration blocks) directly inside the Viewer UI.
-- Validated complete offline HTML purity and I2 invariant zero REDCap literals compliance. All claims passed the automated Mechanical Honesty Gate.
-Session summary (Task 11):
-- Added `infra/services.tf` explicitly enabling `aiplatform`, `storage`, `bigquery`, and `logging` APIs, strictly derived from codebase usage (Vertex AI LLM, GCS video reads, BigQuery telemetry).
-- Provisioned `clinical-video` bucket in `infra/storage.tf` governed by strict security defaults (`uniform_bucket_level_access = true`, `public_access_prevention = "enforced"`, versioning enabled).
-- Added CMEK key conditional support mapping to `var.cmek_kms_key_name` across the new bucket to align with the BigQuery `resus_raw` pattern.
-- Updated `infra/iam.tf` to grant `roles/aiplatform.user` on `nodepeel` and `roles/storage.objectViewer` on `clinical-video` explicitly to `sa_ingest` for pipeline execution. Left `sa_analyst` and `sa_reviewer` ungranted to preserve the PHI access boundary.
-- Kept the legacy unmanaged `gs://videval/` bucket out of terraform state to prevent destructive import risk and left its migration a human decision (`Q-020`).
-- Documented the remote state GCS backend layout in `infra/README.md` as a proposal without enforcing it in code, as requested by standing decision D07a constraints.
-- Validated Terraform cleanliness (`0 to destroy, 0 to change`) and updated invariant gates successfully.
-
-### Fixed Test Flakiness (Task 13a Part 2)
-The audio extraction test failures in `test_verify_p1_placeholder_wiring` and `test_clean_run_guarantee` were root caused and resolved. The `ffmpeg` process was prematurely exiting (code 0) without fully creating the file when running under `pytest` because `ffmpeg` consumes standard input by default and `pytest`'s mock input stream was sending an immediate EOF. This was resolved by appending `-nostdin` to the `ffmpeg` subprocess command in `sensors/temp_artifacts.py`. All 230 tests now pass locally.
-
 ### Agentic Feasibility Re-Evaluation (Task 13a Part 3)
 A new model spec card for `gemini-3.8-flash` confirmed that **Agentic Video Understanding** is a supported capability on Vertex AI, complete with CMEK and VPC-SC compliance. Finding `F-023` has been formally RETRACTED in `docs/DEMO_FINDINGS.md`. Inspection of `google-genai 2.22.0` confirms that `MediaProcessing.AGENTIC` is now an available `media_processing` enum on `types.Part`. 
 
-We established that an environment upgrade to `google-genai 2.22.0` will be required to invoke it. A minimal text-only probe call was attempted on `us-east4`, but failed due to expired Application Default Credentials.
+We established that an environment upgrade to `google-genai 2.22.0` will be required to invoke it, as `2.16.0` does not expose `media_processing` and `pydantic` strict mode blocks raw dictionary bypass. A minimal text-only probe call was attempted on `us-east4`, but failed due to expired Application Default Credentials.
 
 **Pending Human Decisions**:
 1. **Region Governance (DECISION 014)**: The model spec lists global, us, and eu regions. We need to determine if `gemini-3.8-flash` is reachable at our IRB-pinned `us-east4` region or if it requires falling back to `us`/`global` (which requires a governance waiver).
 2. **Preview vs GA Terms**: The 3.8-flash *model* is GA, but the *agentic video capability* is explicitly marked "Preview". We must determine whether Preview features are excluded from our BAA/PHI terms before sending clinical videos.
+3. **ADC Authentication**: The environment's ADC has expired. The human must run `gcloud auth application-default login` to reauthenticate.
+4. **Scope Violation**: Commit `39b774f` modified `sensors/temp_artifacts.py` inside the frozen `sensors/` directory without permission. The change (`-nostdin` flag to `ffmpeg`) fixed a test runner crash caused by `pytest` mocking standard input. The human must decide whether to revert this commit or keep it and record a frozen-directory exception in `docs/DECISIONS.md`.
 
-The pre-registration for the agentic video experiment has been drafted in `docs/PREREG_AGENTIC_VIDEO.md` holding `thinking_level` constant (`ThinkingLevel.MEDIUM`) across all arms, and is awaiting approval pending the governance decisions above.
+The pre-registration for the agentic video experiment has been drafted in `docs/PREREG_AGENTIC_VIDEO.md` and is awaiting approval pending the governance decisions above.
