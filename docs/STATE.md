@@ -69,3 +69,6 @@ Session summary (Task 11):
 - Kept the legacy unmanaged `gs://videval/` bucket out of terraform state to prevent destructive import risk and left its migration a human decision (`Q-020`).
 - Documented the remote state GCS backend layout in `infra/README.md` as a proposal without enforcing it in code, as requested by standing decision D07a constraints.
 - Validated Terraform cleanliness (`0 to destroy, 0 to change`) and updated invariant gates successfully.
+
+### Fixed Test Flakiness (Task 13a Part 2)
+The audio extraction test failures in `test_verify_p1_placeholder_wiring` and `test_clean_run_guarantee` were root caused and resolved. The `ffmpeg` process was prematurely exiting (code 0) without fully creating the file when running under `pytest` because `ffmpeg` consumes standard input by default and `pytest`'s mock input stream was sending an immediate EOF. This was resolved by appending `-nostdin` to the `ffmpeg` subprocess command in `sensors/temp_artifacts.py`. All 230 tests now pass locally.
