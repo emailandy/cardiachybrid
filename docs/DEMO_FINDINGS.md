@@ -26,11 +26,11 @@ This document is the standalone clinical and engineering evaluation report for t
 ## 3. FINDINGS AND FORMAL RETRACTIONS (F-001 through F-022)
 
 * **F-023**: [RETRACTED] Agentic video processing is unreachable from the Vertex AI pipeline path (`client.models.generate_content(...)`).
-  * **Retraction Reason**: According to the newly released [gemini-3.8-flash model spec card](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/gemini/3-8-flash), agentic video understanding is explicitly listed as a supported capability for Vertex AI (`gemini-3.8-flash`), complete with security controls like CMEK and VPC-SC, meaning the PHI/BAA blocker does not apply. The assertion that agentic video was exclusively served on the Developer API was made without evidence and is false.
+  * **Retraction Reason**: According to the [gemini-3.8-flash model spec card](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/gemini/3-8-flash) and the [Agentic Video documentation](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/capabilities/video-understanding#agentic-video-processing), agentic video understanding is natively supported via Vertex AI `generate_content`, complete with CMEK and VPC-SC. The assertion that agentic video was exclusively served on the Developer API was made without evidence and is false.
   * *Original Reasoning (Now Invalid)*:
-  1. SDK Exposure: `google-genai 2.16.0` exposes `client.interactions.create` (the agentic surface), but it targets the Developer API.
+  1. SDK Exposure: `google-genai 2.16.0` exposes `client.interactions.create` (the agentic surface), but it targets the Developer API. *(Correction: The mechanism is `media_processing="agentic"` on `types.Part`, not interactions)*.
   2. Vertex AI Rejection: `models.generate_content` strictly enforces `types.Part` which has no `processing` field. Pydantic raises `extra_forbidden` for `{"processing": "agentic"}`.
-  3. GCS URI vs Files API: The Developer API requires `ai.files.upload` (Files API) rather than native `gs://` URIs, which is incompatible with BAA/PHI requirements for 22-minute clinical videos.
+  3. GCS URI vs Files API: The Developer API requires `ai.files.upload` (Files API) rather than native `gs://` URIs, which is incompatible with BAA/PHI requirements for 22-minute clinical videos. *(Correction: Agentic processing explicitly supports native `gs://` URIs)*.
   4. Model Availability (`gemini-3.8-flash` on Vertex): A minimal probe call was attempted to verify if `gemini-3.8-flash` is available in static mode on Vertex AI (`us-east4`). The request:
      `client.models.generate_content(model="gemini-3.8-flash", contents="Hello, just a test.")`
      Literal response/error: `Reauthentication is needed. Please run \`gcloud auth application-default login\` to reauthenticate.`
