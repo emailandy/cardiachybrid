@@ -38,3 +38,23 @@ The pre-registration for the agentic video experiment has been drafted in `docs/
 *   **Recall-Only Scoping**: Temporal MAE is explicitly restricted to descriptive reporting only, due to the ±3s ground truth precision.
 *   **Architecture Framing**: Added framing that candidate generation is assigned to the LLM and temporal precision to deterministic sensors, so the experiment tests whether agentic processing widens the candidate net, not whether it improves timing.
 *   **Cost Estimate Updated**: Cost ceiling updated to ~$0.60 based on the real token counts (~2M total tokens across all draws).
+### Agentic Feasibility Probe Results (Task 13a Part 9)
+The agentic video feasibility probe was executed across `k=5` draws on `simvideo2.mp4` under the constraints established in `docs/PREREG_AGENTIC_VIDEO.md`. The target was the 5 human-adjudicated shocks.
+
+**Summary of Results**:
+*   **Arm S (STATIC)**: 
+    *   True Positives (Recall @ ±3.0s): `[3, 3, 3, 3, 3]` (Median: `3.0`)
+    *   Temporal MAE: Median `0.33s`
+    *   Token Cost: Median `126,106` tokens, `$0.189` total.
+    *   Latency: Median `27.3s`.
+*   **Arm A (AGENTIC)**:
+    *   True Positives (Recall @ ±3.0s): `[3, 3, 2, 3, 0]` (Median: `3.0`). *Note: Draw 5 failed to return parsable JSON.*
+    *   Temporal MAE: Median `1.33s`
+    *   Token Cost: Median `278,725` tokens (mostly tool-use loops), `$0.424` total.
+    *   Latency: Median `125.9s`.
+
+**Screening Gate Interpretation**:
+Applying the Asymmetric Interpretation Rule defined in §7 of the pre-registration:
+*   **Result**: The median TP count for Arm A (`3.0`) is EQUAL to the median TP count for Arm S (`3.0`).
+*   **Branch**: **Decisive Negative (Falsification)**. Agentic processing did not widen the candidate net. Instead, it was significantly slower (125s vs 27s), consumed $>2\times$ more tokens (~278k vs ~126k), lost on temporal MAE (1.33s vs 0.33s), and suffered a total parsing failure on draw 5.
+*   **Action**: Stop. We do not revisit agentic video processing until General Availability (GA). No adoption is recommended.
