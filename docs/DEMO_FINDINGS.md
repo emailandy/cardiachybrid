@@ -25,6 +25,14 @@ This document is the standalone clinical and engineering evaluation report for t
 
 ## 3. FINDINGS AND FORMAL RETRACTIONS (F-001 through F-022)
 
+* **F-023**: Agentic video processing is unreachable from the Vertex AI pipeline path (`client.models.generate_content(...)`).
+  1. SDK Exposure: `google-genai 2.16.0` exposes `client.interactions.create` (the agentic surface), but it targets the Developer API.
+  2. Vertex AI Rejection: `models.generate_content` strictly enforces `types.Part` which has no `processing` field. Pydantic raises `extra_forbidden` for `{"processing": "agentic"}`.
+  3. GCS URI vs Files API: The Developer API requires `ai.files.upload` (Files API) rather than native `gs://` URIs, which is incompatible with BAA/PHI requirements for 22-minute clinical videos.
+  4. Model Availability (`gemini-3.8-flash` on Vertex): A minimal probe call was attempted to verify if `gemini-3.8-flash` is available in static mode on Vertex AI (`us-east4`). The request:
+     `client.models.generate_content(model="gemini-3.8-flash", contents="Hello, just a test.")`
+     Literal response/error: `Reauthentication is needed. Please run \`gcloud auth application-default login\` to reauthenticate.`
+     Because the environment's Application Default Credentials have expired, it is unverified whether `gemini-3.8-flash` is available on Vertex AI. If it is available, a static-only two-arm comparison (3.6-static vs 3.8-static) remains open as a future task. Migration to the Developer API to enable agentic mode is declined on PHI/BAA grounds.
 * **F-022 (Formal Retractions against Human Gold Standard)**: With the arrival of human-adjudicated ground truth from ACLS Sim Video Review data collection sheets (`fixtures/ground_truth_simvideo2.json`), we formally retract three earlier assertions:
   1. **S3 Acoustic Ground Truth (Five Shocks, Not Four)**: The claim of four defibrillation shocks was incorrect; there are five ($165\text{s}, 388\text{s}, 622\text{s}, 742\text{s}, 879\text{s}$). Sensor S3 missed the shock at $879\text{s}$ because the rising charge tone is absent/degraded in the re-encoded audio (similar to $385.07\text{s}$), yielding an aborted charge detection at low confidence ($0.33$) before the discharge transient.
   2. **"End of Resuscitation Correctly Empty" Retraction**: Death was pronounced at $922\text{s}$. A prior probe concluded no outcome was verbalized; audio energy analysis across $915\text{–}935\text{s}$ confirms robust speech activity right up to $t=922\text{s}$. This represents an LLM recall failure on an explicitly stated, speech-primary clinical event.

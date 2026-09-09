@@ -87,6 +87,8 @@ Owner: human / platform team.  Status: OPEN.  Blocks: nothing (workaround
 in place), but must be resolved before any production deployment.
 
 Q-008 Pin exact Gemini model version strings before the first production run.
+- Note: gemini-3.8-flash is another unpinned moving alias discovered during the agentic video probe, worsening the bit-reproducibility problem.
+
 -latest and -preview aliases make historical runs unreproducible.
   - options: specific immutable model snapshots (e.g. pinned snapshot revisions once frozen by GCP)
   - default: None (must be explicitly pinned by human)
