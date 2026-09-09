@@ -1,4 +1,4 @@
-## Pre-registration: Agentic Video Feasibility (Task 13a)
+## Pre-registration: Agentic Video Feasibility Screening Gate (Task 13a)
 
 ### Prerequisites & Invocation Mechanism (SDK Bypass)
 *   **SDK Upgrade Cancelled**: We will NOT upgrade `google-genai`. Instead, execution will bypass the SDK's `types.Part` Pydantic validation via direct REST calls.
@@ -10,8 +10,10 @@
     *   `responseSchema` = ON for all arms (mandatory).
 
 ### 1. Hypothesis, Mechanism & Expected Prior
-**Hypothesis**: Does agentic video processing (`mediaProcessing="AGENTIC"`) yield superior extraction recall and accuracy on instantaneous events (shocks) compared to fixed-rate frame extraction (`STATIC`), specifically on long-form video?
-**Expected Prior (Predicted Negative)**: A preliminary long-form probe demonstrated that agentic mode consumes massively MORE tokens (~270k) than static mode (~1.3k) on 22-minute video by entering a high-token tool-use loop. Furthermore, Google routes static mode for *frame-level precision*. Therefore, the stated prior is that **agentic arms will LOSE on both temporal MAE and token efficiency**, though it may improve event recall via targeted navigation. We will not tune prompts to rescue agentic if it loses on precision. A predicted-negative is a valid result.
+**Hypothesis**: Per F-008/F-010, the pipeline already assigns candidate generation to the LLM and temporal precision to deterministic sensors, so the only channel where agentic mode could materially matter is RECALL at the P1 harvest / union-of-k stage. This experiment tests whether agentic processing (`mediaProcessing="AGENTIC"`) widens the candidate net compared to fixed-rate frame extraction (`STATIC`), rather than whether it improves timing.
+**Expected Prior**: 
+*   **Token Efficiency**: Agentic token cost is LOAD-DEPENDENT. A paired measurement on `simvideo2.mp4` (1363s) showed that for a trivial prompt, agentic used 425x FEWER tokens than static (292 vs 124,146). However, for an exhaustive extraction prompt, agentic entered a high-token tool-use loop consuming ~2.2x MORE tokens than static (~276,328 vs ~124,126). Static pays a flat full-ingest toll; agentic is cheaper for simple questions but more expensive for exhaustive exploration. *(Retraction: The previous prediction that agentic would strictly lose on token efficiency was based on an invalid unpaired comparison and is hereby retracted. This highlights the value of pre-registering priors.)*
+*   **Temporal Precision**: Google routes static mode for *frame-level precision*. The prior remains that agentic will LOSE on temporal MAE. We will not tune prompts to rescue agentic if it loses on precision.
 
 ### 2. Prior Exposure Disclosure
 Before this design was finalized, a single unstructured, non-schema probe on `simvideo2.mp4` under agentic mode was conducted. It returned a partial reasoning fragment referencing "pads not charging" and a candidate window near "10:00-10:30", but no final shock list was produced and no ground-truth comparison was made. This experiment design was fixed before any ground-truth comparison occurred.
@@ -27,10 +29,9 @@ To rigorously isolate processing mode, the model is held constant at `gemini-3.8
 Agentic responses emit opaque internal reasoning parts alongside the requested output.
 **Contract**: The response parser must iterate over all parts. Parts lacking a `text` key (thought/step parts) **MUST be filtered out**. Remaining text parts will be concatenated and parsed via `json.loads`. Failure to filter will cause internal reasoning to be silently absorbed as data.
 
-### 5. Target & The Ground-Truth Precision Caveat
+### 5. Target & The Ground-Truth Precision Caveat (Screening Gate)
 **Target**: The 5 human-adjudicated shocks. These will be read dynamically from `fixtures/ground_truth_simvideo2.json`, not hardcoded.
-**Ground-Truth Precision**: The ground-truth timestamps have a precision of roughly ±3s. 
-**Stopping Condition**: If the timestamp precision difference (mean absolute error of `Δt`) between Arm A and Arm S is less than the ±3s ground-truth noise floor, I will report "no measurable benefit" for agentic mode's temporal precision and stop.
+**Ground-Truth Precision (Recall-Only Scoping)**: The ground-truth timestamps have a precision of roughly ±3s. Recall is scored at ±3.0s tolerance. Any temporal precision difference below this threshold is unmeasurable annotation noise. Therefore, this experiment scopes claims to **RECALL ONLY**. Temporal MAE will be reported **DESCRIPTIVELY ONLY** and will not be used in the win condition.
 
 ### 6. Evaluation Metrics
 Evaluations will be per-arm, per-draw to capture stochastic spread (`k=5`).
@@ -40,17 +41,20 @@ Evaluations will be per-arm, per-draw to capture stochastic spread (`k=5`).
 |---|---|---|
 | True Positives (Recall @ ±3.0s) | | |
 | False Positives & False Negatives | | |
-| Temporal MAE (s) | | |
+| Temporal MAE (s) (Descriptive Only) | | |
 | totalTokenCount | | |
 | toolUsePromptTokenCount | | |
 | Latency & Cost | | |
 
-### 7. Win, Falsification & Indeterminate Criteria
-*   **Win / Adopt**: Arm A's median True Positive (TP) count across `k=5` draws strictly exceeds Arm S's median TP count by >= 1 shock, AND Arm A's minimum TP count across all 5 draws is >= Arm S's median TP count (ensuring the gain is not an artifact of a single outlier draw), AND Arm A's Temporal MAE stays within the ±3.0s ground-truth noise floor of Arm S. Cherry-picking a "best-of-5" single draw is strictly forbidden.
+### 7. Screening Gate Criteria & Asymmetric Interpretation
+This is a SCREENING GATE, not an accuracy evaluation. Given `n=1` case and `k=5` draws, no outcome can establish production accuracy (refer to Q-017 for the 25-case accuracy standard). The maximum valid claim is a mode preference on a single manikin video.
+
+**Asymmetric Interpretation Rule**:
+*   **Decisive Negative (Falsification)**: If agentic is CLEARLY WORSE or EQUAL to static in True Positive rate. Stop. Do not revisit agentic until GA. *Rationale*: `simvideo2` is the easy case (burned-in timecode, controlled lighting, mechanical CPR, no PHI occlusion). Failure on clean manikin footage generalizes downward to messy real ED footage with high confidence.
 *   **Indeterminate**: Any result that meets neither the Win condition nor the Falsification condition. This will be reported as "no measurable difference" with no recommendation for adoption, and testing will stop. No prompt tuning or re-running will be conducted to break ties.
-*   **Falsification**: If Arm A (AGENTIC) has a higher Temporal MAE (beyond the ±3s floor) or lower True Positive rate than Arm S (STATIC), the precision/recall hypothesis is falsified.
-*   **Maximum Claim Ceiling**: Given n=1 case and k=5 draws, no outcome of this experiment can establish accuracy for production use; the maximum claim available is a mode preference on a single manikin case (see Q-017).
-*   **Cost Ceiling**: $5.00 total across all draws. If projected cost exceeds this, abort.
+*   **Win / Adopt**: Arm A's median True Positive (TP) count across `k=5` draws strictly exceeds Arm S's median TP count by >= 1 shock, AND Arm A's minimum TP count across all 5 draws is >= Arm S's median TP count (ensuring the gain is not an artifact of a single outlier draw). Temporal MAE is descriptive only and excluded from this condition. Cherry-picking a "best-of-5" single draw is strictly forbidden. **If agentic is CLEARLY BETTER, this does NOT license adoption. The ONLY claim permitted is "warrants evaluation on the Q-017 gold set."**
+
+**Cost Ceiling**: ~$0.60 total (~276k agentic + ~124k static per exhaustive call, 5 draws each ~= 2M tokens). Cost is not a deciding factor either way.
 
 ### 8. Future Work
 *   Two-arm static comparison isolating model tier: `gemini-3.6-flash` (STATIC) vs `gemini-3.8-flash` (STATIC).
