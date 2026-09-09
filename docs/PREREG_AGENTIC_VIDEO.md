@@ -45,8 +45,11 @@ Evaluations will be per-arm, per-draw to capture stochastic spread (`k=5`).
 | toolUsePromptTokenCount | | |
 | Latency & Cost | | |
 
-### 7. Falsification Criteria & Cost Ceiling
-*   **Falsification**: If Arm A (AGENTIC) has a higher Temporal MAE (beyond the ±3s floor) or lower True Positive rate than Arm S (STATIC), the precision/recall hypothesis is falsified. 
+### 7. Win, Falsification & Indeterminate Criteria
+*   **Win / Adopt**: Arm A's median True Positive (TP) count across `k=5` draws strictly exceeds Arm S's median TP count by >= 1 shock, AND Arm A's minimum TP count across all 5 draws is >= Arm S's median TP count (ensuring the gain is not an artifact of a single outlier draw), AND Arm A's Temporal MAE stays within the ±3.0s ground-truth noise floor of Arm S. Cherry-picking a "best-of-5" single draw is strictly forbidden.
+*   **Indeterminate**: Any result that meets neither the Win condition nor the Falsification condition. This will be reported as "no measurable difference" with no recommendation for adoption, and testing will stop. No prompt tuning or re-running will be conducted to break ties.
+*   **Falsification**: If Arm A (AGENTIC) has a higher Temporal MAE (beyond the ±3s floor) or lower True Positive rate than Arm S (STATIC), the precision/recall hypothesis is falsified.
+*   **Maximum Claim Ceiling**: Given n=1 case and k=5 draws, no outcome of this experiment can establish accuracy for production use; the maximum claim available is a mode preference on a single manikin case (see Q-017).
 *   **Cost Ceiling**: $5.00 total across all draws. If projected cost exceeds this, abort.
 
 ### 8. Future Work
