@@ -88,6 +88,7 @@ in place), but must be resolved before any production deployment.
 
 Q-008 Pin exact Gemini model version strings before the first production run.
 - Note: gemini-3.8-flash is another unpinned moving alias discovered during the agentic video probe, worsening the bit-reproducibility problem.
+- Note: The `google-genai` SDK version is also unpinned in `pyproject.toml` (currently installed is `2.16.0`). This is a reproducibility hazard matching unpinned model aliases. The SDK must be explicitly pinned before production.
 
 -latest and -preview aliases make historical runs unreproducible.
   - options: specific immutable model snapshots (e.g. pinned snapshot revisions once frozen by GCP)
@@ -241,3 +242,9 @@ Q-022 — Bay Camera DVR Date Format Standardization & Date Resolution (Patient 
 
 ## REDCap Submission (`Q-014`)
 * **REDCap Submission (`Q-014`)**: RESOLVED/OBSOLETE. REDCap API network submission is officially retired. The pipeline output is natively BigQuery (nodepeel.resus_raw).
+
+Q-023 — IRB Locality Gap (BigQuery vs Vertex).
+  - context: The IRB answer for data locality has two parts — BigQuery storage `us-east4` (DECISION 014) vs Vertex inference endpoint `global` (`pipeline/vertex_client.py` default, in use since DEMO-1). The inference locality has never been documented or IRB-reviewed.
+  - owner: human/clinical lead
+  - status: OPEN
+  - blocks: IRB submission (Does NOT block current experiments)
