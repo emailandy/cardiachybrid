@@ -93,7 +93,7 @@ def transient_audio_extract(
     _ACTIVE_TEMP_FILES.add(out_file)
 
     cmd = [
-        "ffmpeg",
+        "ffmpeg", "-nostdin",
         "-y",
         "-i",
         str(vpath),
