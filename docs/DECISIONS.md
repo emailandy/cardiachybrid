@@ -291,3 +291,12 @@ Date: 2026-08-13  Session: Task 12  Decided by: human, agent
 2. **Dictionary Remains the Data Model**: The REDCap data dictionary (`dictionary/instrument.csv`) remains the authoritative data model. `generated/redcap_fields.py` and codegen invariants (I3, I4) continue to enforce dictionary semantics (e.g., 1/0 yesno rules, checkbox iteration, SUBMISSION_COLUMNS completeness).
 3. **Dead Code Removed**: `redcap/client.py`, `redcap/assemble.py`, `tests/test_roundtrip.py`, and `tests/test_assemble.py` were deleted as their output was unconsumed by the pipeline (`scripts/run_case.py` imported but never invoked `assemble_submission`).
 4. **CI Secret Scan Updated**: The REDCap 32-character hex token secret scan was removed from `.github/workflows/ci.yml`.
+
+## 045 — Frozen-Directory Exception for `-nostdin` Test Fix
+Date: 2026-09-09  Session: Task 13a Part 8  Decided by: human
+1. **Commit 39b774f Kept**: We retroactively approve commit `39b774f` which modified `sensors/temp_artifacts.py` line 96 to append the `-nostdin` flag to the `ffmpeg` subprocess arguments.
+2. **Rationale**: Under `pytest`, standard input is mocked or closed. `ffmpeg` by default reads standard input for interactive control, causing it to see a premature EOF and abort extraction, crashing the test suite. 
+3. **Correctness**: Adding `-nostdin` is the documented, correct fix for any `ffmpeg` run as a non-interactive subprocess. It instructs `ffmpeg` to not consume stdin at all, which is the correct behavior for production runs where it has no business reading the pipeline's stdin.
+4. **Scope Status**: `sensors/` is FROZEN. This change was made without prior permission but is approved as a frozen-directory exception because it is a one-line non-interactive-invocation correction with no effect on any sensor threshold, geometry, signal path, or emitted value.
+5. **Verified Unchanged**: NO sensor output changes. Patient 1 regression remains bit-identical, CCF 0.8170, all 11 reporting-tier intervals unchanged (as verified in `docs/STATE.md`).
+6. **Freeze Remains**: The freeze on `sensors/` otherwise remains strictly in force. This exception does not license further edits under `sensors/`.
