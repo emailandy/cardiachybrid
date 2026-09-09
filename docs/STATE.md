@@ -29,6 +29,15 @@ Session summary: Completed Task 8e (Correct S3 record & attribute discrimination
 
 <!-- Updated by the agent as the LAST action of every session. If stale, the next session will redo or skip work. -->
 
+Session summary (Task 13a):
+- Conducted a feasibility probe on agentic video processing via Vertex AI.
+- Found that `google-genai` 2.16.0 exposes `interactions` but it targets the Developer API. Vertex AI `generate_content` rejects the `processing` parameter via strict `types.Part` validation.
+- Confirmed Developer API requires Files API upload, which is incompatible with BAA/PHI rules for clinical video.
+- Aborted the pre-registration and four-arm experiment as agentic processing is unreachable. Documented this as F-023 in `docs/DEMO_FINDINGS.md`.
+- Added an entry to Q-008 noting `gemini-3.8-flash` as a new unpinned moving alias.
+- Attempted minimal probe to check `gemini-3.8-flash` availability on Vertex AI, which resulted in ADC reauthentication error, leaving static availability unverified.
+
+
 
 
 
