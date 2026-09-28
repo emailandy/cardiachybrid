@@ -191,3 +191,14 @@ Because `compute_ccf()` bounds calculations per Q-012 default candidate (c) from
    - **Comparable Pair**: Window 2 ($70.75\text{–}922.0\text{s}$, $\text{GT} = 0.9037$ vs $\text{S1} = 0.8170$) is the accurate, comparable evaluation pair per Q-012 default candidate (c). The resulting CCF error of $0.09$ ($+73.96\text{s}$ excess non-CPR time) is produced by **cancelling errors** (`F-037`): S1 accumulates $+101.52\text{s}$ of unmatched pause duration vs $-41.00\text{s}$ of missed true pause duration (duration recall $50.0\%$), with a $-2.52\text{s}$ boundary double-count and $+15.96\text{s}$ two-measurement gap.
 
 *(Note: All earlier baselines from prior builds are officially superseded by commits `769269f`, `5017dbc`, and `9da9e74` and replaced by this reproducible measurement on current code).*
+
+## 4. LLM Extraction Limits (Agentic vs Static)
+
+* **F-042 [RECALL-ONLY SCOPING]**: LLM Instantaneous-Event Enumeration Ceiling (`gemini-3.8-flash` on `simvideo2.mp4`, $n=1$ manikin case, $k=5$ draws per arm, `responseSchema` ON, scored at tolerance $\pm 3.0\text{s}$ against 5 human-adjudicated shocks, modality=video).
+  * **STATIC Arm**: TP `[3,3,3,3,3]`, median 3, min 3. Near-identical predictions across all five draws.
+  * **AGENTIC Arm**: TP `[3,3,2,3,0]`, median 3, min 0. Draw 5 returned an EMPTY shock list (HTTP 200 with zero shocks, not a refusal).
+  * **Tokens**: STATIC median 126,106 (toolUse 0); AGENTIC median 278,725 (toolUse 264,951), ~2.2x static.
+  * **Performance Limits**: Both modes cap at 3/5 within tolerance and 4/5 detected overall (ignoring timing error). Neither mode found GT 742s. Static is more DETERMINISTIC (tight draw-to-draw spread) but NOT more ACCURATE — same ceiling, same missing shock. The durable result is a measured ceiling on LLM instantaneous-event enumeration on this footage, not an "agentic lost" result.
+  * **Architectural Support**: Every LLM failure observed here is exactly the failure class the pipeline already assigns to deterministic sensors. The GT 165s boundary/timing error is adjudicated by S1/S3. The GT 742s omission is recovered by S3 acoustically at 742.21s (5.7x peak-to-median RMS transient, F-009). This reproduces F-008/F-010 on a newer model tier and independently supports the sensors-first architecture.
+  * **Screening-Gate Ceiling (Q-017)**: Given $n=1$ manikin case and $k=5$, this is a screening-gate observation, NOT an accuracy claim. The accuracy standard remains Q-017 (25 cases, two independent abstractors, third-rater adjudication). Do not cite these numbers as sensor or model accuracy.
+  * **Pre-Registration Enforcement**: The Decisive Negative branch was selected mechanically per `docs/PREREG_AGENTIC_VIDEO.md`: the win condition required median gain >=1 AND Arm A min >= Arm S median; observed gain was 0 and min 0 vs required 3, so both clauses failed.
