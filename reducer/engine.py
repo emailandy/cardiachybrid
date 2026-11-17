@@ -15,6 +15,7 @@ from codegen.yamlio import load_yaml
 import generated.redcap_fields as rf
 import generated.branching_compiled as bc
 from generated.models import EventStream, Event, Interval, CoverageNote
+from reducer.transforms import to_redcap_mm_ss
 
 
 @dataclass(slots=True)
@@ -258,11 +259,15 @@ def _execute_rule(
     if rule_type == 'const_null':
         return [_emit_fv(f_name, None, '', 'REDUCER_DERIVED', [], fields_spec, is_null=True, routed=routed)]
 
+    min_dur_raw = rule.get('min_duration_s')
+    min_dur_f = float(min_dur_raw) if min_dur_raw is not None else None
     if items is None:
-        items = _filter_items(stream, et, where=where)
+        items = _filter_items(stream, et, where=where, min_dur=min_dur_f)
+    tf_name = rule.get('transform')
 
-    if rule_type in ('first_of', 'last_of'):
-        target_item = items[0] if (rule_type == 'first_of' and items) else items[-1] if items else None
+    if rule_type in ('first_of', 'last_of', 'nth_of'):
+        idx_target = int(rule.get('index', 0)) if rule_type == 'nth_of' else (0 if rule_type == 'first_of' else -1)
+        target_item = items[idx_target] if (items and -len(items) <= idx_target < len(items)) else None
         if not target_item:
             if _check_coverage_degraded(stream, rule.get('coverage_channels', [])):
                 return [_emit_fv(f_name, None, 'Unable to determine', 'REDUCER_DERIVED', ['stream_coverage'], fields_spec, is_null=True, routed=True, abstained=True, abstain_reason=_derive_abstain_reason(fields_spec.get(f_name), '', cause='coverage_degraded'))]
@@ -270,17 +275,21 @@ def _execute_rule(
                 if duration_s is None:
                     return [_emit_fv(f_name, None, 'Unable to determine', 'REDUCER_DERIVED', ['fallback_end_of_video'], fields_spec, is_null=True, routed=False, abstained=True, abstain_reason=_derive_abstain_reason(fields_spec.get(f_name), '', cause='end_of_video'))]
                 return [_emit_fv(f_name, duration_s, str(duration_s), 'REDUCER_DERIVED', ['fallback_end_of_video'], fields_spec, is_null=False, routed=routed)]
+            ind_key = rule.get('indicated_not_done_key') or f'{f_name}_indicated_not_done'
+            if tf_name == 'to_redcap_mm_ss' and stream.fields and getattr(stream.fields, ind_key, False):
+                return [_emit_fv(f_name, '00:00', '00:00', 'REDUCER_DERIVED', ['stream_absence'], fields_spec, is_null=False, routed=routed)]
             fv = _emit_fv(f_name, None, '', 'REDUCER_DERIVED', [], fields_spec, is_null=True, routed=routed); fv.confidence = 1.0
             return [fv]
-        emit_key = rule.get('emit')
-        ids = [_get_item_id(target_item)]
-        if emit_key in ('t_start_s', 'timestamp_s', 'timestamp', None):
-            ts = getattr(target_item, 'timestamp_s', getattr(target_item, 't_start_s', None))
-            return [_emit_fv(f_name, ts, str(ts), 'REDUCER_DERIVED', ids, fields_spec, routed=routed)]
+        emit_key, ids = rule.get('emit'), [_get_item_id(target_item)]
+        if emit_key in ('t_start_s', 't_end_s', 'timestamp_s', 'timestamp', None):
+            ts = getattr(target_item, 't_end_s', None) if emit_key == 't_end_s' else getattr(target_item, 'timestamp_s', getattr(target_item, 't_start_s', None))
+            out_v = to_redcap_mm_ss(ts) if tf_name == 'to_redcap_mm_ss' else ts
+            return [_emit_fv(f_name, out_v, str(out_v) if out_v is not None else '', 'REDUCER_DERIVED', ids, fields_spec, is_null=(out_v is None), routed=routed)]
         val = target_item.attributes.get(emit_key)
         if val is None:
             return [_emit_fv(f_name, None, '', 'REDUCER_DERIVED', ids, fields_spec, is_null=True, abstained=True, abstain_reason=_derive_abstain_reason(fields_spec.get(f_name), str(emit_key or ''), target_item, stream=stream), routed=routed)]
-        return [_emit_fv(f_name, val, str(val), 'REDUCER_DERIVED', ids, fields_spec, is_null=False, routed=routed)]
+        out_v = to_redcap_mm_ss(val) if tf_name == 'to_redcap_mm_ss' else val
+        return [_emit_fv(f_name, out_v, str(out_v), 'REDUCER_DERIVED', ids, fields_spec, is_null=False, routed=routed)]
 
     if rule_type == 'nth_distinct_attribute':
         emit_key, n = rule.get('emit', ''), int(rule.get('n', 1))
@@ -289,27 +298,37 @@ def _execute_rule(
         for it in items:
             v = it.attributes.get(emit_key)
             if v is not None and str(v) not in seen:
-                seen.add(str(v))
-                distinct_vals.append((v, _get_item_id(it)))
+                seen.add(str(v)); distinct_vals.append((v, _get_item_id(it)))
         if len(distinct_vals) >= n:
             v, i_id = distinct_vals[n - 1]
             return [_emit_fv(f_name, v, str(v), 'REDUCER_DERIVED', [i_id], fields_spec, routed=routed)]
         return [_emit_fv(f_name, None, '', 'REDUCER_DERIVED', [], fields_spec, is_null=True, abstained=True, abstain_reason=_derive_abstain_reason(fields_spec.get(f_name), str(emit_key or ''), cause='nth_distinct', found_count=len(distinct_vals), required_count=n), routed=routed)]
 
+    if rule_type == 'join_distinct_attr':
+        emit_key = rule.get('emit', '')
+        vals: list[str] = []
+        ids_list: list[str] = []
+        for it in items:
+            v = it.attributes.get(emit_key)
+            if v is not None and str(v).strip() and str(v).strip() not in vals:
+                vals.append(str(v).strip()); ids_list.append(_get_item_id(it))
+        joined = ', '.join(vals) if vals else None
+        return [_emit_fv(f_name, joined, joined or '', 'REDUCER_DERIVED', ids_list, fields_spec, is_null=(joined is None), routed=routed)]
+
     if rule_type == 'gate_3way':
         if items:
-            ids = [_get_item_id(it) for it in items]
-            return [_emit_fv(f_name, '1', 'Yes', 'REDUCER_DERIVED', ids, fields_spec, routed=routed)]
+            return [_emit_fv(f_name, '1', 'Yes', 'REDUCER_DERIVED', [_get_item_id(it) for it in items], fields_spec, routed=routed)]
         if _check_coverage_degraded(stream, rule.get('coverage_channels', [])):
             val = None if rule.get('no_utd_code') == 'abstain' else '3'
             return [_emit_fv(f_name, val, 'Unable to determine', 'REDUCER_DERIVED', ['stream_coverage'], fields_spec, is_null=(val is None), routed=True if val is None else routed, abstained=True, abstain_reason=_derive_abstain_reason(fields_spec.get(f_name), '', cause='coverage_degraded'))]
         return [_emit_fv(f_name, '2', 'No', 'REDUCER_DERIVED', ['stream_absence'], fields_spec, routed=routed)]
 
-    if rule_type == 'gate_yesno':
+    if rule_type in ('gate_yesno', 'count_gte'):
         f_spec = fields_spec.get(f_name)
-        if not f_spec or f_spec.field_type != 'yesno':
+        if rule_type == 'gate_yesno' and (not f_spec or f_spec.field_type != 'yesno'):
             raise ValueError(f'Field {f_name!r} must be yesno for gate_yesno')
-        val = '1' if items else '0'
+        thresh = int(rule.get('threshold', 1)) if rule_type == 'count_gte' else 1
+        val = '1' if len(items) >= thresh else '0'
         label = 'Yes' if val == '1' else 'No'
         ids = [_get_item_id(it) for it in items] if items else ['stream_absence']
         return [_emit_fv(f_name, val, label, 'REDUCER_DERIVED', ids, fields_spec, routed=routed)]
@@ -333,28 +352,30 @@ def _execute_rule(
         f_spec = fields_spec.get(f_name)
         if not f_spec or f_spec.field_type != 'checkbox':
             return []
-        target_item = items[item_idx] if item_idx < len(items) else (items[0] if items else None)
-        if not target_item:
-            res: list[FieldValue] = []
-            for code, label in f_spec.choices.items():
-                full_col = f'{f_name}___{code}'
-                res.append(_emit_fv(full_col, None, '', 'REDUCER_DERIVED', [], fields_spec, is_null=True, routed=routed))
-            return res
+        target_items = [items[item_idx]] if (rule.get('repeat_group') and item_idx < len(items)) else items
         emit_key = rule.get('emit', '')
-        selected = target_item.attributes.get(emit_key, [])
-        if not isinstance(selected, (list, set, tuple)):
-            selected = [selected]
-        selected_set_lower = {str(x).lower() for x in selected}
+        selected_set_lower: set[str] = set()
+        for it in target_items:
+            sel = it.attributes.get(emit_key, [])
+            for x in (sel if isinstance(sel, (list, set, tuple)) else [sel]):
+                if x is not None and str(x).strip():
+                    selected_set_lower.add(str(x).lower())
+        if stream.fields and emit_key:
+            cf_sel = getattr(stream.fields, emit_key, None)
+            if cf_sel is not None:
+                for x in (cf_sel if isinstance(cf_sel, (list, set, tuple)) else [cf_sel]):
+                    if x is not None and str(x).strip():
+                        selected_set_lower.add(str(x).lower())
+        if not target_items and not selected_set_lower:
+            return [_emit_fv(f'{f_name}___{code}', None, '', 'REDUCER_DERIVED', [], fields_spec, is_null=True, routed=routed) for code in f_spec.choices]
         suppress_codes = set(rule.get('suppress_codes', [])) | set(f_spec.suppress_codes)
         # Q-003 INTERIM DEFAULT: mccd_obstacles obesity/cachexia hard-suppressed per GOV-07 via suppress_codes. A one-line registry change flips it.
-        ids = [_get_item_id(target_item)]
-        res = []
+        ids = [_get_item_id(it) for it in target_items] if target_items else ['case_fields']
+        res: list[FieldValue] = []
         for code, label in f_spec.choices.items():
-            full_col = f'{f_name}___{code}'
             is_sel = (code.lower() in selected_set_lower or str(label).lower() in selected_set_lower)
             val = '0' if (code in suppress_codes) else ('1' if is_sel else '0')
-            lbl = 'Checked' if val == '1' else 'Unchecked'
-            res.append(_emit_fv(full_col, val, lbl, 'REDUCER_DERIVED', ids, fields_spec, routed=routed))
+            res.append(_emit_fv(f'{f_name}___{code}', val, 'Checked' if val == '1' else 'Unchecked', 'REDUCER_DERIVED', ids, fields_spec, routed=routed))
         return res
 
     if rule_type == 'notes':
@@ -364,69 +385,45 @@ def _execute_rule(
     if rule_type == 'team_score':
         # Q-006 INTERIM DEFAULT: TEAM autonomy threshold defaults to standard routing. A one-line registry change flips it.
         val = '1' if items else '0'
-        ids = [_get_item_id(it) for it in items] if items else []
-        return [_emit_fv(f_name, val, val, 'REDUCER_DERIVED', ids, fields_spec, routed=routed)]
+        return [_emit_fv(f_name, val, val, 'REDUCER_DERIVED', [_get_item_id(it) for it in items] if items else [], fields_spec, routed=routed)]
 
     if rule_type == 'conditional_text':
         # Q-005 INTERIM DEFAULT: intub_assist bougie + fiberoptic defaults to bougie precedence. A one-line registry change flips it.
-        gate_expr = rule.get('gate', '')
-        target_item = items[item_idx] if item_idx < len(items) else (items[0] if items else None)
+        gate_expr, target_item = rule.get('gate', ''), (items[item_idx] if item_idx < len(items) else (items[0] if items else None))
         if target_item and (not gate_expr or _evaluate_gate(gate_expr, target_item.attributes)):
-            emit_key = rule.get('emit', '')
-            val = target_item.attributes.get(emit_key, '')
-            ids = [_get_item_id(target_item)]
-            return [_emit_fv(f_name, val if val else None, str(val), 'REDUCER_DERIVED', ids, fields_spec, is_null=not bool(val), routed=routed)]
+            val = target_item.attributes.get(rule.get('emit', ''), '')
+            return [_emit_fv(f_name, val if val else None, str(val), 'REDUCER_DERIVED', [_get_item_id(target_item)], fields_spec, is_null=not bool(val), routed=routed)]
         default_val = rule.get('default_when_gated_null')
         return [_emit_fv(f_name, default_val, str(default_val) if default_val else '', 'REDUCER_DERIVED', [], fields_spec, is_null=(default_val is None), routed=routed)]
 
     return []
 
 
-def _process_repeating_group(
-    group: dict[str, Any],
-    stream: EventStream,
-    fields_spec: dict[str, rf.FieldSpec],
-) -> list[FieldValue]:
+def _process_repeating_group(group: dict[str, Any], stream: EventStream, fields_spec: dict[str, rf.FieldSpec]) -> list[FieldValue]:
     # Q-001 INTERIM DEFAULT: repeating group truncation policy when count > max defaults to 'longest_duration'. A one-line registry change flips it.
     # Q-002 INTERIM DEFAULT: new_pad_position when repositioned twice defaults to 'last'. A one-line registry change flips it.
-    g_name = group.get('name', '')
-    max_count = int(group.get('max', 100))
-    min_dur = group.get('min_duration_s')
-    min_dur_f = float(min_dur) if min_dur is not None else None
+    max_count, min_dur = int(group.get('max', 100)), group.get('min_duration_s')
     et = group.get('event_type') or group.get('interval_type')
-
-    items = _filter_items(stream, et, min_dur=min_dur_f)
-    true_count = len(items)
-    is_overflow = true_count > max_count
-
+    items = _filter_items(stream, et, min_dur=float(min_dur) if min_dur is not None else None)
+    true_count, is_overflow = len(items), len(items) > max_count
     if is_overflow:
-        items.sort(
-            key=lambda x: ((x.t_end_s - x.t_start_s) if isinstance(x, Interval) and x.t_end_s else 0.0),
-            reverse=True,
-        )
-        items = items[:max_count]
-        items.sort(key=lambda x: getattr(x, 'timestamp_s', getattr(x, 't_start_s', 0.0)))
+        items.sort(key=lambda x: ((x.t_end_s - x.t_start_s) if isinstance(x, Interval) and x.t_end_s else 0.0), reverse=True)
+        items = sorted(items[:max_count], key=lambda x: getattr(x, 'timestamp_s', getattr(x, 't_start_s', 0.0)))
 
     res: list[FieldValue] = []
-    cnt_field = group.get('count_field')
-    if cnt_field:
+    if cnt_field := group.get('count_field'):
         ovr_val = getattr(stream.fields, cnt_field, None) if stream.fields else None
         c_val = str(ovr_val) if ovr_val is not None else str(len(items))
         res.append(_emit_fv(cnt_field, c_val, c_val, 'REDUCER_DERIVED', [_get_item_id(it) for it in items], fields_spec, routed=is_overflow))
-
-    ov_field = group.get('overflow_note_field')
-    if ov_field:
+    if ov_field := group.get('overflow_note_field'):
         if is_overflow:
-            ov_val = f'Overflow: true count was {true_count}'
-            res.append(_emit_fv(ov_field, ov_val, str(ov_val), 'REDUCER_DERIVED', [], fields_spec, is_null=False, routed=True))
+            res.append(_emit_fv(ov_field, f'Overflow: true count was {true_count}', f'Overflow: true count was {true_count}', 'REDUCER_DERIVED', [], fields_spec, is_null=False, routed=True))
         else:
             res.append(_emit_fv(ov_field, None, '', 'REDUCER_DERIVED', [], fields_spec, is_null=True, abstained=True, abstain_reason=_derive_abstain_reason(fields_spec.get(ov_field), '', cause='requires_p5'), routed=is_overflow))
-
     for idx in range(1, max_count + 1):
         target_items = [items[idx - 1]] if idx <= len(items) else []
         for rule in group.get('fields', []):
-            f_rule = dict(rule)
-            res.extend(_execute_rule(f_rule, stream, fields_spec, items=target_items, item_idx=idx - 1, routed=is_overflow))
+            res.extend(_execute_rule(dict(rule), stream, fields_spec, items=target_items, item_idx=idx - 1, routed=is_overflow))
     return res
 
 
@@ -435,12 +432,15 @@ def reduce_stream(
     registry: dict[str, Any] | None = None,
     fields_spec: dict[str, rf.FieldSpec] | None = None,
     duration_s: float | None = None,
+    predicates: dict[str, Any] | None = None,
 ) -> tuple[list[FieldValue], list[Repair], list[Flag]]:
     """Reduces an EventStream into field values, repair records, and flags."""
     if registry is None:
         registry = load_yaml(Path('mapping/registry.yaml'))
     if fields_spec is None:
         fields_spec = rf.FIELDS
+    if predicates is None:
+        predicates = bc.PREDICATES
 
     for item in stream.events + stream.intervals:
         _enrich_item_attributes(item)
@@ -449,16 +449,10 @@ def reduce_stream(
     repairs: list[Repair] = []
     flags: list[Flag] = []
 
-    group_managed = {
-        g.get('count_field') for g in registry.get('groups', []) if g.get('count_field')
-    } | {
-        g.get('overflow_note_field') for g in registry.get('groups', []) if g.get('overflow_note_field')
-    }
+    group_managed = {g.get('count_field') for g in registry.get('groups', []) if g.get('count_field')} | {g.get('overflow_note_field') for g in registry.get('groups', []) if g.get('overflow_note_field')}
     for sec in registry.get('sections', []):
         for rule in sec.get('fields', []):
-            if rule.get('field') in group_managed:
-                continue
-            if rule.get('rule') and not rule.get('repeat_group'):
+            if rule.get('field') not in group_managed and rule.get('rule') and not rule.get('repeat_group'):
                 values.extend(_execute_rule(rule, stream, fields_spec, duration_s=duration_s))
 
     for group in registry.get('groups', []):
@@ -470,16 +464,22 @@ def reduce_stream(
         if fv.source_event_ids:
             fv.ensemble_spread_s = max((spread_map.get(i_id, 0.0) for i_id in fv.source_event_ids), default=0.0)
         val = fv.value if (not fv.is_null and fv.value is not None) else ''
-        record[fv.export_column] = val
-        record[fv.field_name] = val
+        record[fv.export_column] = record[fv.field_name] = val
 
-    for fv in values:
-        pred = bc.PREDICATES.get(fv.field_name) or bc.PREDICATES.get(fv.export_column) or bc.PREDICATES.get(fv.field_name.split('___')[0]) or bc.PREDICATES.get(fv.export_column.split('___')[0])
-        if pred and not pred(record):
-            fv.branching_satisfied = False
-            if not fv.is_null and fv.value is not None:
-                repairs.append(Repair(field_name=fv.field_name, old_value=fv.value, reason='branching_predicate_false'))
-                fv.is_null, fv.value, fv.value_label = True, None, ''
+    for _ in range(8):
+        any_repaired = False
+        for fv in values:
+            pred = predicates.get(fv.field_name) or predicates.get(fv.export_column) or predicates.get(fv.field_name.split('___')[0]) or predicates.get(fv.export_column.split('___')[0])
+            if pred and not pred(record):
+                if fv.branching_satisfied or not fv.is_null or fv.value is not None:
+                    any_repaired = True
+                fv.branching_satisfied = False
+                if not fv.is_null and fv.value is not None:
+                    repairs.append(Repair(field_name=fv.field_name, old_value=fv.value, reason='branching_predicate_false'))
+                    fv.is_null, fv.value, fv.value_label = True, None, ''
+                record[fv.export_column] = record[fv.field_name] = ''
+        if not any_repaired:
+            break
 
     for interval in stream.intervals:
         if interval.t_end_s is not None and interval.t_end_s < interval.t_start_s:

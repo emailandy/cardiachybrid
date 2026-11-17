@@ -1,0 +1,158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "case_id": "ACLS sim recording 2-20240115_092315-Meeting Recording.mp4",
+  "video_local_path": "tests/video/acls_sim_recording_2.mp4",
+  "video_duration_s": 1054.57,
+  "t0_iso": "2023-12-08T07:54:17",
+  "activation_date": "2023-12-08",
+  "room_id": "NSUH ED Trauma A",
+  "reviewer": "Ramraj",
+  "review_date": "2024-04-06",
+  "attending_md": "Panosian",
+  "resident_md": "Kong",
+  "patient_age_yr": 71,
+  "arrest_location": "Home",
+  "note": "Human gold standard annotations derived directly from ACLS Sim Video Review - Excel Data Collection Sheets.xlsx (Sheet 2: Patient 2, Room A, 12/8/2023). T0 = 2023-12-08T07:54:17 verified by Sensor S5 3-point burned-in CCTV OCR at t=10s (07:54:27.106 AM), t=300s (07:59:17.455 AM), and t=600s (08:04:17.468 AM) with max_drift_s = 0.362s (<= 2.0s tolerance).",
+  "provenance": "human_adjudicated",
+  "s5_clock_anchor": {
+    "t0_iso": "2023-12-08T07:54:17",
+    "source": "burned_in",
+    "confidence": 0.98,
+    "max_drift_s": 0.362,
+    "samples": [
+      {
+        "video_time_s": 10.0,
+        "wall_clock_iso": "2023-12-08T07:54:27.106000+00:00",
+        "raw_string": "12/8/2023 07:54:27.106 AM",
+        "frame": 160
+      },
+      {
+        "video_time_s": 300.0,
+        "wall_clock_iso": "2023-12-08T07:59:17.455000+00:00",
+        "raw_string": "12/8/2023 07:59:17.455 AM",
+        "frame": 4800
+      },
+      {
+        "video_time_s": 600.0,
+        "wall_clock_iso": "2023-12-08T08:04:17.468000+00:00",
+        "raw_string": "12/8/2023 08:04:17.468 AM",
+        "frame": 9600
+      }
+    ]
+  },
+  "shocks": [
+    {
+      "timestamp_s": 474.0,
+      "wall_clock": "08:02:11",
+      "is_shock": true,
+      "rhythm_preceding": "VF",
+      "rhythm_check_s": 461.0,
+      "rhythm_check_wall_clock": "08:01:58",
+      "provenance": "human_adjudicated"
+    }
+  ],
+  "ccis": [
+    {
+      "start_s": 110.0,
+      "end_s": 118.0,
+      "duration_s": 8.0,
+      "wall_clock_start": "07:56:07",
+      "wall_clock_end": "07:56:15",
+      "cause": "Bed transfer & initial PEA rhythm check",
+      "provenance": "human_adjudicated"
+    },
+    {
+      "start_s": 223.0,
+      "end_s": 235.0,
+      "duration_s": 12.0,
+      "wall_clock_start": "07:58:00",
+      "wall_clock_end": "07:58:12",
+      "cause": "Rhythm check #2 (PEA) — prolonged pause >10s",
+      "provenance": "human_adjudicated"
+    },
+    {
+      "start_s": 332.0,
+      "end_s": 373.0,
+      "duration_s": 41.0,
+      "wall_clock_start": "07:59:49",
+      "wall_clock_end": "08:00:30",
+      "cause": "LUCAS mechanical CPR backplate placement — prolonged pause >10s (41s)",
+      "provenance": "human_adjudicated"
+    },
+    {
+      "start_s": 450.0,
+      "end_s": 483.0,
+      "duration_s": 33.0,
+      "wall_clock_start": "08:01:47",
+      "wall_clock_end": "08:02:20",
+      "cause": "LUCAS upper assembly lock (08:02:07), VF rhythm check (08:01:58), and 1st Shock (08:02:11) — prolonged pause >10s (33s)",
+      "provenance": "human_adjudicated"
+    },
+    {
+      "start_s": 593.0,
+      "end_s": 596.0,
+      "duration_s": 3.0,
+      "wall_clock_start": "08:04:10",
+      "wall_clock_end": "08:04:13",
+      "cause": "Rhythm check #4 confirming ROSC",
+      "provenance": "human_adjudicated"
+    }
+  ],
+  "active_resuscitation_window_s": [
+    13.0,
+    596.0
+  ],
+  "ccf_summary": {
+    "ccf": 0.834,
+    "cpr_duration_s": 486.0,
+    "denominator_s": 583.0,
+    "t_first_s": 13.0,
+    "t_last_s": 596.0,
+    "provenance": "human_adjudicated"
+  },
+  "clinical_milestones": {
+    "first_team_member_enters_s": 0.0,
+    "first_team_member_enters_wall_clock": "07:54:17",
+    "patient_enters_room_s": 13.0,
+    "patient_enters_room_wall_clock": "07:54:30",
+    "ems_handoff_window_s": [45.0, 70.0],
+    "ems_handoff_wall_clock": ["07:55:02", "07:55:27"],
+    "bed_transfer_complete_s": 110.0,
+    "bed_transfer_wall_clock": "07:56:07",
+    "initial_ed_rhythm": "PEA",
+    "initial_ed_rhythm_s": 118.0,
+    "initial_ed_rhythm_wall_clock": "07:56:15",
+    "ett_confirmation": "auscultation_and_etco2",
+    "ett_confirmation_s": 138.0,
+    "ett_confirmation_wall_clock": "07:56:35",
+    "ett_placed_by": "EMS",
+    "ed_airway_attempts": 0,
+    "compression_mode_arrival": "manual",
+    "ed_placed_lucas": true,
+    "lucas_placement_window_s": [337.0, 470.0],
+    "lucas_placement_wall_clock": ["07:59:54", "08:02:07"],
+    "ed_pads_applied": true,
+    "pads_source": "ED",
+    "rhythm_checks": [
+      {"timestamp_s": 118.0, "wall_clock": "07:56:15", "rhythm": "PEA"},
+      {"timestamp_s": 225.0, "wall_clock": "07:58:02", "rhythm": "PEA"},
+      {"timestamp_s": 461.0, "wall_clock": "08:01:58", "rhythm": "VF"},
+      {"timestamp_s": 596.0, "wall_clock": "08:04:13", "rhythm": "ROSC"}
+    ],
+    "epi_doses_s": [153.0, 334.0, 514.0],
+    "epi_doses_wall_clock": ["07:56:50", "07:59:51", "08:02:51"],
+    "other_meds_s": [],
+    "rosc": true,
+    "rosc_s": 596.0,
+    "rosc_wall_clock": "08:04:13",
+    "rosc_vitals": {
+      "hr_bpm": 60,
+      "bp_mmhg": "155/76",
+      "spo2_pct": 89,
+      "etco2_mmhg": 9
+    },
+    "death_pronounced": false,
+    "death_pronounced_s": null,
+    "provenance": "human_adjudicated"
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "id": "job-1fe5ea68",
+  "status": "done",
+  "error": null,
+  "model": "gemini-4-argon",
+  "k": 3,
+  "progress_pct": 100,
+  "stages": [
+    {
+      "key": "prepare",
+      "label": "Prepare video \u00b7 GCS URI, local copy & duration",
+      "status": "done",
+      "detail": "gs://videval/cardiac/uploads/Ai-CARES_TrialRUN_case1_8SEPT26_IPad.MOV \u00b7 455.8s \u00b7 1 windows",
+      "t_start": 1793587083.3177977,
+      "t_end": 1793587084.8791032
+    },
+    {
+      "key": "s5",
+      "label": "Sensor S5 \u00b7 burned-in CCTV clock T\u2080 or actual playback duration anchor",
+      "status": "done",
+      "detail": "No burned-in CCTV clock \u2014 anchored to actual video playback duration (00:00 \u2013 07:36 \u00b7 455.8s)",
+      "t_start": 1793587084.8798065,
+      "t_end": 1793587085.5872552
+    },
+    {
+      "key": "sensors",
+      "label": "Sensors S1\u2013S4 & S7a LLM Audio Transcript \u00b7 chronological event order",
+      "status": "done",
+      "detail": "S7a Transcript: 32 utterances (11 ordered milestones mapped to 00:00\u201307:36)",
+      "t_start": 1793587085.5881438,
+      "t_end": 1793587086.491363
+    },
+    {
+      "key": "p1",
+      "label": "Pass 1 \u00b7 windowed video harvest with audio transcript",
+      "status": "done",
+      "detail": "3 gemini-4-argon calls over 1 windows (with S7a transcript)",
+      "t_start": 1793587086.4923744,
+      "t_end": 1793587086.502131
+    },
+    {
+      "key": "merge",
+      "label": "Merge windows \u00b7 cluster draws, de-duplicate & playback/transcript reconcile",
+      "status": "done",
+      "detail": "15 chronological events, 2 intervals (anchored 00:00\u201307:36)",
+      "t_start": 1793587086.5028093,
+      "t_end": 1793587086.5052733
+    },
+    {
+      "key": "spatial",
+      "label": "3D Bounding Boxes & Re-ID \u00b7 volumetric cuboids, overlap seams & polygons",
+      "status": "done",
+      "detail": "114 frames \u00b7 585 boxes \u00b7 8 identities",
+      "t_start": 1793587086.5058565,
+      "t_end": 1793587086.6164496
+    },
+    {
+      "key": "p345",
+      "label": "Passes 3\u20135 \u00b7 adjudication, TEAM rubric & notes",
+      "status": "done",
+      "detail": "10 gemini-4-argon calls (P3, P4a, P4b, P5\u00d77)",
+      "t_start": 1793587086.6172874,
+      "t_end": 1793587278.7046194
+    },
+    {
+      "key": "reduce",
+      "label": "AI-CARES REDCap reducer \u00b7 99 variables",
+      "status": "done",
+      "detail": "63 REDCap variables populated",
+      "t_start": 1793587278.705955,
+      "t_end": 1793587278.793934
+    }
+  ],
+  "log": [
+    "[00:51:01] Live engine run \u00b7 model gemini-4-argon \u00b7 k=3 \u00b7 Case #1 \u00b7 prompt_set 2b6988545630",
+    "[00:51:07] s7a_transcript: extracted 3.3 MB 16kHz audio track for gemini-4-argon",
+    "[00:51:10] \u21bb s7a_transcript_order: TLS handshake hiccup (local cert helper) \u2014 auto-retrying, retry 1/6 in 1s",
+    "[00:52:40] s7a_transcript: 32 utterances & 11 chronological events mapped",
+    "[00:59:43] p1_win_0_draw_0 [0s\u2192456s]: 8 events, 2 intervals",
+    "[01:01:16] p1_win_0_draw_1 [0s\u2192456s]: 9 events, 2 intervals",
+    "[01:01:16] p1_win_0_draw_2 [0s\u2192456s]: 8 events, 2 intervals",
+    "[01:02:02] spatial: 114 frames sampled every 4s for 3D bounding-box & Re-ID generation",
+    "[01:03:06] spatial_batch_1/10: 37 3D boxes, 4 persistent IDs",
+    "[01:06:24] spatial_batch_2/10: 50 3D boxes, 8 persistent IDs",
+    "[01:07:18] spatial_batch_3/10: 69 3D boxes, 8 persistent IDs",
+    "[02:38:03] \u21bb Resuming job from on-disk checkpoint after Vertex AI socket stall on spatial_batch_3",
+    "[02:38:03] Live engine run \u00b7 model gemini-4-argon \u00b7 k=3 \u00b7 Case #1 \u00b7 prompt_set 2b6988545630",
+    "[02:38:06] s7a_transcript: loaded cached 32 utterances & 11 chronological events from checkpoint",
+    "[02:38:06] p1_win_0_draw_0 [0s\u2192456s]: 8 events, 2 intervals",
+    "[02:38:06] p1_win_0_draw_1 [0s\u2192456s]: 9 events, 2 intervals",
+    "[02:38:06] p1_win_0_draw_2 [0s\u2192456s]: 8 events, 2 intervals",
+    "[02:38:06] spatial: 114 frames sampled every 4s for 3D bounding-box & Re-ID generation",
+    "[02:38:06] spatial_batch_1/10: 37 3D boxes, 4 persistent IDs",
+    "[02:38:06] spatial_batch_2/10: 50 3D boxes, 8 persistent IDs",
+    "[02:38:06] spatial_batch_3/10: 69 3D boxes, 8 persistent IDs",
+    "[02:38:06] spatial_batch_4/10: 72 3D boxes, 8 persistent IDs",
+    "[02:38:06] spatial_batch_5/10: 71 3D boxes, 8 persistent IDs",
+    "[02:38:06] spatial_batch_6/10: 65 3D boxes, 8 persistent IDs",
+    "[02:38:06] spatial_batch_7/10: 68 3D boxes, 8 persistent IDs",
+    "[02:38:06] spatial_batch_8/10: 63 3D boxes, 8 persistent IDs",
+    "[02:38:06] spatial_batch_9/10: 60 3D boxes, 8 persistent IDs",
+    "[02:38:06] spatial_batch_10/10: 30 3D boxes, 8 persistent IDs",
+    "[02:41:19] \u2713 Completed in 196s \u2192 LIVE-AI-CARES-TRIALRUN--024118"
+  ],
+  "calls_done": 3,
+  "calls_total": 3,
+  "elapsed_s": 195.8,
+  "result_record_id": "LIVE-AI-CARES-TRIALRUN--024118",
+  "record_id": "",
+  "simulation_number": 1,
+  "video_path": "gs://videval/cardiac/Ai-CARES_TrialRUN_case1_8SEPT26 IPad.MOV",
+  "resolved_video_uri": "gs://videval/cardiac/uploads/Ai-CARES_TrialRUN_case1_8SEPT26_IPad.MOV"
+}

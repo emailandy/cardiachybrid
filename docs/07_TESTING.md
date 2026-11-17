@@ -21,13 +21,13 @@ Our verification suite explicitly prevents seven historical silent-degradation t
 
 | # | Silent-Degradation Trap | Prevention Mechanism & Test Assertion | Authoritative Finding / Task |
 | :---: | :--- | :--- | :--- |
-| **1** | Stale REDCap dictionary without rehash | `scripts/check_invariants.sh` checks `I1`: asserts `dict_version.txt == sha256sum(instrument.csv)[:16]`. Halts if dictionary changed without rehash. | `I1` ([D03](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D03.md)) |
-| **2** | Missing prompt templates or anchor cards | `prompt_set_sha(strict=True)` raises `FileNotFoundError` immediately if any of the 5 pass templates or 39 anchor cards are missing. Never skips missing files. | [A01](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/A01.md) |
-| **3** | Undeclared placeholder variables in prompts | `validate_template_placeholders()` parses every `{var}` token in templates against `_PLACEHOLDERS.yaml`, failing on undeclared variables (`I4`). | `I4` ([A01](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/A01.md)) |
-| **4** | Literal REDCap field names in prompt text | `assert_no_field_names()` regex-scans prompt templates to ensure zero database column names (`num_cci_v2`, etc.) leak into LLM prompts (`I5`). | `I5` ([A01](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/A01.md)) |
-| **5** | Silent boolean mapping to radio code `'2'` | `_map_vocab()` (`reducer/engine.py`) restricts boolean `'yes'`/`'no'` mappings strictly to yesno fields, preventing booleans from corrupting non-yesno radios (`F-001`). | `F-001` ([D05](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D05.md)) |
-| **6** | Omission of ungated attributes in JSON Schema | Marking ungated attributes in the JSON Schema `required` array prevents silent field omission and doubles `auto_accepted` yield (**`132` vs. `243`/`221`/`216`**, `F-002`, `F-011`). | `F-002`, `F-011` ([D14](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D14.md)) |
-| **7** | Silent API 400 errors during REDCap submission | `redcap/client.py` captures HTTP 400 validation failures, parses error body, attaches to `quarantine_reasons`, and fails loudly without retry ([D11](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D11.md)). | [D11](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D11.md) |
+| **1** | Stale REDCap dictionary without rehash | `scripts/check_invariants.sh` checks `I1`: asserts `dict_version.txt == sha256sum(instrument.csv)[:16]`. Halts if dictionary changed without rehash. | `I1` ([D03](tasks/D03.md)) |
+| **2** | Missing prompt templates or anchor cards | `prompt_set_sha(strict=True)` raises `FileNotFoundError` immediately if any of the 5 pass templates or 39 anchor cards are missing. Never skips missing files. | [A01](tasks/A01.md) |
+| **3** | Undeclared placeholder variables in prompts | `validate_template_placeholders()` parses every `{var}` token in templates against `_PLACEHOLDERS.yaml`, failing on undeclared variables (`I4`). | `I4` ([A01](tasks/A01.md)) |
+| **4** | Literal REDCap field names in prompt text | `assert_no_field_names()` regex-scans prompt templates to ensure zero database column names (`num_cci_v2`, etc.) leak into LLM prompts (`I5`). | `I5` ([A01](tasks/A01.md)) |
+| **5** | Silent boolean mapping to radio code `'2'` | `_map_vocab()` (`reducer/engine.py`) restricts boolean `'yes'`/`'no'` mappings strictly to yesno fields, preventing booleans from corrupting non-yesno radios (`F-001`). | `F-001` ([D05](tasks/D05.md)) |
+| **6** | Omission of ungated attributes in JSON Schema | Marking ungated attributes in the JSON Schema `required` array prevents silent field omission and doubles `auto_accepted` yield (**`132` vs. `243`/`221`/`216`**, `F-002`, `F-011`). | `F-002`, `F-011` ([D14](tasks/D14.md)) |
+| **7** | Silent API 400 errors during REDCap submission | `redcap/client.py` captures HTTP 400 validation failures, parses error body, attaches to `quarantine_reasons`, and fails loudly without retry ([D11](tasks/D11.md)). | [D11](tasks/D11.md) |
 
 ---
 
@@ -59,7 +59,7 @@ Every PR and CI run executes `bash scripts/check_invariants.sh` to enforce six n
 
 ---
 
-## 4. Synthetic Maximal Fixture (`fixtures/synthetic_maximal.py`, [D12](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D12.md))
+## 4. Synthetic Maximal Fixture (`fixtures/synthetic_maximal.py`, [D12](tasks/D12.md))
 
 To verify Reducer Engine behavior under maximum clinical load, `fixtures/synthetic_maximal.py` dynamically constructs a maximal event stream (`build_event_stream()`):
 * **Dynamic Generation**: Derived directly from `FIELDS` without hand-coded literals or hard-coded counts.
@@ -69,7 +69,7 @@ To verify Reducer Engine behavior under maximum clinical load, `fixtures/synthet
 
 ---
 
-## 5. Clinical Reference Case (`fixtures/golden_case_01.py`, [D12](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D12.md))
+## 5. Clinical Reference Case (`fixtures/golden_case_01.py`, [D12](tasks/D12.md))
 
 `golden_case_01.py` implements a clinically realistic 22-minute Out-of-Hospital Cardiac Arrest (`OHCA`) resuscitation narrative in the ED:
 * **Clinical Scenario**: 58yo male OHCA, 12 CPR interruptions, 3 defibrillation shocks, 2 advanced airway attempts, 1 ROSC episode, a visual crowding occlusion (`11:00–11:30`), and a low-confidence arterial line reading (`14:22`).
@@ -96,8 +96,8 @@ To verify Reducer Engine behavior under maximum clinical load, `fixtures/synthet
 
 The integration test suite (`tests/`) isolates unit verification from live infrastructure requirements:
 
-1. **BigQuery DDL & View Integration (`tests/test_audit_views_integration.py`, [D07](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D07.md))**: Verifies local SQL generation (`emit_bq_ddl()`, `emit_audit_views_sql()`) and asserts schema parity against `nodepeel` datasets (`resus_raw`, `resus_curated`).
-2. **REDCap Round-Trip Integration (`tests/test_roundtrip.py`, [D13](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D13.md))**: Offline unit tests verify payload JSON dictionary set-equality (`1,891 keys`, `test_assemble.py`). Live round-trip tests against physical REDCap API servers are **NOT BUILT / SKIPPED OFFLINE** ([D13](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D13.md), Q-014).
+1. **BigQuery DDL & View Integration (`tests/test_audit_views_integration.py`, [D07](tasks/D07.md))**: Verifies local SQL generation (`emit_bq_ddl()`, `emit_audit_views_sql()`) and asserts schema parity against `nodepeel` datasets (`resus_raw`, `resus_curated`).
+2. **REDCap Round-Trip Integration (`tests/test_roundtrip.py`, [D13](tasks/D13.md))**: Offline unit tests verify payload JSON dictionary set-equality (`1,891 keys`, `test_assemble.py`). Live round-trip tests against physical REDCap API servers are **NOT BUILT / SKIPPED OFFLINE** ([D13](tasks/D13.md), Q-014).
 3. **Execution Summary**: All **150 unit tests across 17 test suites** pass 100% cleanly in offline CI (`150 passed, 8 deselected`).
 
 ---

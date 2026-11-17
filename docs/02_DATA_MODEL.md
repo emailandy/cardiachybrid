@@ -22,7 +22,7 @@ Every number in this table is derived directly from executable codebase artifact
 
 ---
 
-## 2. BigQuery Physical Schema (`resus_raw` — 13 Tables, [D07](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D07.md))
+## 2. BigQuery Physical Schema (`resus_raw` — 13 Tables, [D07](tasks/D07.md))
 
 All physical database tables are deployed into the `resus_raw` dataset. Raw PHI and verbatim evidence strings are strictly confined to this dataset.
 
@@ -46,7 +46,7 @@ All physical database tables are deployed into the `resus_raw` dataset. Raw PHI 
 
 ## 3. Four Field States (`fact_redcap_field.state` / `FieldState`)
 
-Every reducer-emitted field value (`FieldValue`) carries an explicit `state` enum tag that dictates its downstream handling in the Confidence Router ([D09](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D09.md)):
+Every reducer-emitted field value (`FieldValue`) carries an explicit `state` enum tag that dictates its downstream handling in the Confidence Router ([D09](tasks/D09.md)):
 
 ```
                        +-----------------------------------+

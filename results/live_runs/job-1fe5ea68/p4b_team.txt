@@ -1,0 +1,24 @@
+{"score": 8,
+ "placement": "No consensus-rated calibration anchors are available for this department (Q-015). This case is therefore scored in absolute terms without comparative reference. Because absolute scoring is less well calibrated than comparative placement, there is moderate uncertainty around this rating (+/- 1 point). Coverage is complete for audio and video across the 455.8s recording, though simulation rules required verbalization of airway bagging, medication pushes, and vital signs without physical monitor waveforms or defibrillator pads.",
+ "strengths": [
+   {
+     "t": 119.5,
+     "observation": "The Team Leader openly verbalizes a structured review of reversible causes from 119.5s to 191.5s and explicitly invites team input ('is there any other suggestions?'), fostering a flattened hierarchy where the Compressor contributes relevant clinical history at 168.0s ('And she was having diarrhea before'), proposes bilateral lung auscultation to verify airway placement at 191.5s, and suggests a point-of-care glucose check at 248.5s."
+   },
+   {
+     "t": 225.5,
+     "observation": "The team executes a tightly coordinated pulse and rhythm check with clear closed-loop communication: the Team Leader announces the check at 225.5s, compressions are paused at 229.0s while the carotid pulse is palpated at 229.5s, the facilitator reports no pulse at 233.5s, and the Team Leader immediately directs resumption of compressions at 235.5s ('So continue compressions. She's still in PEA') followed by a confirmed epinephrine push at 243.5s ('Gave epinephrine')."
+   }
+ ],
+ "deficiencies": [
+   {
+     "t": 245.5,
+     "observation": "The Team Leader proposes adjunct therapies using tentative, non-directed phrasing—suggesting sodium bicarbonate at 245.5s ('Uh, we could give sodium bicarbonate') and again at 351.0s ('We could do an amp of sodium bicarbonate'), as well as IV fluids at 393.5s ('We can give fluids')—without assigning the task to the medication provider or obtaining a closed-loop readback or completion confirmation."
+   },
+   {
+     "t": 62.0,
+     "observation": "Following the handoff at 62.0s, role allocation begins informally among team members ('Do I do compressions or airway?') before the Team Leader assumes direction at 67.5s and orders compressions at 75.5s, contributing to an 18.0s delay before chest compressions begin at 80.0s; similarly, at 351.0s the Team Leader announces a pulse check while concurrently musing about sodium bicarbonate, resulting in a 15.0s lag before compressions are paused for palpation at 366.0s."
+   }
+ ],
+ "justification": "Scored in absolute terms without departmental calibration anchors (introducing moderate calibration uncertainty), this team demonstrates strong overall coordination, composure, and psychological safety meriting a score of 8. The Team Leader maintains a calm demeanor, verbalizes clinical reasoning clearly, and actively solicits team input, which empowers the Compressor to contribute critical diagnostic and monitoring suggestions at 168.0s, 191.5s, and 248.5s. Core epinephrine administrations (106.0s, 243.5s) and the compression pause at 229.0s–235.5s feature clear orders and closed-loop confirmations. Performance is held back from the top of the scale by tentative, unclosed communication when considering adjunct therapies (sodium bicarbonate at 245.5s and 351.0s; fluids at 393.5s) and minor delays in initial role assignment (62.0s–80.0s) and executing the pulse check announced at 351.0s.",
+ "one_point_higher": "To earn a 9, the Team Leader would need to issue explicit, directed orders rather than tentative suggestions for adjunct therapies (such as sodium bicarbonate at 245.5s/351.0s and IV fluids at 393.5s) with closed-loop readback and completion confirmation from the medication nurse, and immediately assign roles at 62.0s to initiate compressions without delay."}

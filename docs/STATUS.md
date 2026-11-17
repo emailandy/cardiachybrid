@@ -111,7 +111,7 @@ No new implementation work should be started in this repository until these exte
 ---
 
 ## 7. DEMO — Live Verification & Methodological Results (DEMO-1 & DEMO-2)
-Live end-to-end execution of the pipeline against clinical simulation video `simvideo2.mp4` (`1363.78s`) is documented in detail in [`docs/DEMO_FINDINGS.md`](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/DEMO_FINDINGS.md). Key takeaways include:
+Live end-to-end execution of the pipeline against clinical simulation video `simvideo2.mp4` (`1363.78s`) is documented in detail in [`docs/DEMO_FINDINGS.md`](DEMO_FINDINGS.md). Key takeaways include:
 * **End-to-End Functional Verification**: Successfully processed raw video through 14 model calls (`gemini-3.6-flash`, `gemini-3.1-pro-preview`, SHA `7eefcd6e9698d28e`) into 1,879 REDCap fields and BigQuery curated views with zero audit hard gate violations.
 * **Abstention Fidelity**: 100% of ~100 ROSC vital columns and ~60 A-line columns returned cleanly unpopulated/UTD without hallucinating numerical values from illegible monitors.
 * **Methodological Discovery (VLM Observation Boundary)**: Forced-choice 5-second block-by-block questioning is **100% stable and reproducible for sustained visual states** (chest compression interruptions), but **exhibits severe instability and false-positive flooding for instantaneous audio/visual events** (defibrillation shocks).

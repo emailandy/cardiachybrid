@@ -1,0 +1,5 @@
+Notable observations: The patient remained in non-shockable rhythms throughout the resuscitation (PEA at 0.0s, 82.0s, and 235.0s; normal sinus rhythm upon ROSC at 369.0s). No defibrillation, synchronized cardioversion, or external pacing was attempted.
+
+Abstentions: `rhythm_check.pads_source` at 91.0s and 235.0s is `unable_to_determine` (abstained) because no physical defibrillator pads or ECG cables were visibly attached to the simulation mannequin; all rhythms were verbalized from the simulation scenario.
+
+Coverage limitations: From 0.0s–455.8s, the wall patient monitor was powered off/blank and the portable defibrillator on the left cart was not connected to the mannequin; all cardiac rhythms and vital signs were provided verbally by the simulation facilitator.

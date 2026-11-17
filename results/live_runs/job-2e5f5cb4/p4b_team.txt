@@ -1,0 +1,28 @@
+```json
+{
+  "score": 8,
+  "placement": "No consensus-rated anchor cases exist for this department (Q-015). This case is scored in absolute terms without comparative reference; because absolute scoring is less well calibrated than comparative placement, there is wider uncertainty around the exact integer rating, though the evidence strongly supports an upper-tier score (8/10) rather than mid-scale.",
+  "strengths": [
+    {
+      "t": 82.0,
+      "observation": "Clear shared mental model and closed-loop coordination during initial resuscitation: the Team Leader explicitly states the rhythm ('she's currently in PEA still, so we can't shock') and prioritizes both airway placement and 1 mg epinephrine, which the Medication RN verbally announces at 103.5s ('So I'm going to give meds, one milligram of epinephrine') and the Team Leader confirms at 108.5s ('Okay, so one of epi's given')."
+    },
+    {
+      "t": 173.0,
+      "observation": "Collaborative diagnostic problem-solving and proactive solicitation of team input: after reviewing reversible causes, the Team Leader explicitly asks 'does anybody have any other suggestions?', which directly empowers the Airway MD at 190.5s to identify a safety gap ('if we could listen to lung sounds to confirm placement') and at 250.0s to request a point-of-care glucose."
+    }
+  ],
+  "deficiencies": [
+    {
+      "t": 246.0,
+      "observation": "Unclosed communication loops on tentative medication orders: the Team Leader floats giving sodium bicarbonate twice ('Um we can give sodium bicarbonate' at 246.0s and 'Could do an amp of sodium bicarbonate' at 351.0s) and orders IV fluids post-ROSC ('Give fluids' at 389.0s) without directing the order to the Medication RN or receiving any verbal readback or confirmation of administration."
+    },
+    {
+      "t": 108.5,
+      "observation": "Delayed coordination of airway confirmation and absence of compressor rotation: although the Team Leader announces 'We have our airway, we're currently bagging... airway's in' at 108.5s, no one coordinates auscultation to verify placement until prompted by the Airway MD 82 seconds later (190.5s), and the team never coordinates a compressor switch during the 2-minute pauses at 229.0s or 365.5s."
+    }
+  ],
+  "justification": "Scored in absolute terms without calibration anchors (wider calibration uncertainty noted, though full audio/video coverage was available). The team demonstrated strong composure, role clarity (assigned immediately at 62.0s), and highly coordinated peri-pause choreography, keeping the two rhythm/pulse check pauses to 7.0s (228.5s–235.5s) and 6.0s (365.5s–371.5s). The Team Leader maintained a calm, inclusive climate that actively invited team members to catch omissions (such as lung auscultation at 190.5s and point-of-care glucose at 250.0s). The score is held at 8 rather than 9–10 due to hedging on secondary medication orders (sodium bicarbonate at 246.0s and 351.0s, and IV fluids at 389.0s) that went unacknowledged and unconfirmed, as well as the lack of proactive compressor rotation across two 2-minute CPR cycles.",
+  "one_point_higher": "To earn a 9, the Team Leader would need to issue directed, definitive orders for secondary interventions (sodium bicarbonate at 246.0s/351.0s and IV fluids at 389.0s) with explicit closed-loop readback from the Medication RN, and the team would need to coordinate compressor fatigue checks or switches during the 2-minute pulse check pauses at 229.0s and 365.5s."
+}
+```

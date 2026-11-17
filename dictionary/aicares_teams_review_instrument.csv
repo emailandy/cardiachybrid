@@ -1,0 +1,20 @@
+"Variable / Field Name","Form Name","Section Header","Field Type","Field Label","Choices, Calculations, OR Slider Labels","Field Note","Text Validation Type OR Show Slider Number","Text Validation Min","Text Validation Max",Identifier?,"Branching Logic (Show field only if...)","Required Field?","Custom Alignment","Question Number (surveys only)","Matrix Group Name","Matrix Ranking?","Field Annotation"
+reviewer_name_team_v2,teams_review_ai,,text,"Name of team member entering AI data",,,,,,y,,y,,,,,
+review_teams_date_v2,teams_review_ai,,text,"Review Date",,,date_dmy,,,,,y,,,,,
+team1_v2_v2,teams_review_ai,"LEADERSHIP: It is assumed that the leader is either designated or has emerged - if no leader is apparent please select 'Never/Hardly Ever' to questions 1 and 2. ",radio,"1. The team leader let the team know what was expected of them through direction and command.","0, Never/Hardly Ever | 1, Seldom | 2, About as often as not | 3, Often | 4, Always/ Nearly always",,,,,,,y,,,team_v2_v2,,
+team2_v2_v2,teams_review_ai,,radio,"2. The team leader maintained a global perspective.","0, Never/Hardly Ever | 1, Seldom | 2, About as often as not | 3, Often | 4, Always/ Nearly always",,,,,,,y,,,team_v2_v2,,"Monitoring clinical procedures and the environment? Remaining 'hands off' ass applicable? Appropriate delegation?"
+team3_v3_v2,teams_review_ai,"TEAM WORK: Ratings should include the team as a whole i.e. the leader and the team as a collective (to a greater or lesser extent).",radio,"3. The team communicated effectively.","0, Never/Hardly Ever | 1, Seldom | 2, About as often as not | 3, Often | 4, Always/ Nearly always",,,,,,,y,,,team_v3_v2,,"verbal, non-verbal and written forms of communication?"
+team4_v3_v2,teams_review_ai,,radio,"4. The team worked together to complete tasks in a timely manner.","0, Never/Hardly Ever | 1, Seldom | 2, About as often as not | 3, Often | 4, Always/ Nearly always",,,,,,,y,,,team_v3_v2,,
+team5_v3_v2,teams_review_ai,,radio,"5. The team acted with composure and control.","0, Never/Hardly Ever | 1, Seldom | 2, About as often as not | 3, Often | 4, Always/ Nearly always",,,,,,,y,,,team_v3_v2,,"applicable emotions? conflict management issues?"
+team6_v3_v2,teams_review_ai,,radio,"6.The team morale was positive.","0, Never/Hardly Ever | 1, Seldom | 2, About as often as not | 3, Often | 4, Always/ Nearly always",,,,,,,y,,,team_v3_v2,,"appropriate support, confidence, spirit, optimism, determination?"
+team7_v3_v2,teams_review_ai,,radio,"7. The team adapted to changing situations.","0, Never/Hardly Ever | 1, Seldom | 2, About as often as not | 3, Often | 4, Always/ Nearly always",,,,,,,y,,,team_v3_v2,,
+team8_v3_v2,teams_review_ai,,radio,"8. The team monitored and reassess the situation.","0, Never/Hardly Ever | 1, Seldom | 2, About as often as not | 3, Often | 4, Always/ Nearly always",,,,,,,y,,,team_v3_v2,,
+team9_v3_v2,teams_review_ai,,radio,"9. The team anticipated potential actions.","0, Never/Hardly Ever | 1, Seldom | 2, About as often as not | 3, Often | 4, Always/ Nearly always",,,,,,,y,,,team_v3_v2,,
+team10_v3_v2,teams_review_ai,"Task Management",radio,"10. The team prioritized tasks.","0, Never/Hardly Ever | 1, Seldom | 2, About as often as not | 3, Often | 4, Always/ Nearly always",,,,,,,y,,,team_v4_v2,,
+team11_v3_v2,teams_review_ai,,radio,"11. The team followed approved standards/guidelines.","0, Never/Hardly Ever | 1, Seldom | 2, About as often as not | 3, Often | 4, Always/ Nearly always",,,,,,,y,,,team_v4_v2,,
+team12_v2_v2,teams_review_ai,"VIDEO REVIEW: TEAM Ratings Tool
+
+Please evaluate the predominant team leader.
+
+If there were multiple leaders in a resuscitation please choose the leader that was in that position for the longest duration of the resuscitation.",radio,"12. Global rating","1, 1 (Poor) | 2, 2 | 3, 3 | 4, 4 | 5, 5 | 6, 6 | 7, 7 | 8, 8 | 9, 9 | 10, 10 (Exceptional)",,,,,,,y,,,team_global_rating_v2_v2,,
+general_comments_v2,teams_review_ai,,notes,"General Comments ",,,,,,,,y,,,,,

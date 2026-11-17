@@ -1,0 +1,7 @@
+No airway device was in place on arrival. At 110.0s, the team leader verbally announced airway placement and ongoing bag-valve-mask ventilation ("We have our airway, we're currently bagging... airway's in"). At 204.0s, following a prompt from the compressor at 191.0s to auscultate lung sounds, a provider auscultated the chest and the facilitator verbally confirmed "You hear bilateral breath sounds." At 393.0s, the team leader ordered a post-ROSC chest X-ray to confirm tube placement.
+
+Abstentions: None.
+
+Flags: None.
+
+Coverage limitations: This is a manikin simulation where the facilitator instructed the team (0.0s–13.0s) to use a supraglottic airway (LMA) and either physically bag or verbalize bagging; physical laryngoscopy or tube insertion mechanics were partially mimed and relied on verbal confirmation. Patient monitor screens were illegible or dark throughout (0.0s–455.8s), so capnography (PCO2 of 40 at 368.5s) and SpO2 (94% at 368.5s) were provided verbally by the facilitator.

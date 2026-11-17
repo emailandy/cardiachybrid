@@ -1,0 +1,5 @@
+Notable observations: The patient remained in non-shockable rhythms throughout the arrest (PEA recognized by the team leader at 82.0s and 235.0s; ROSC with normal sinus rhythm announced at 369.0s and 389.0s). No defibrillation pads were applied, and no shocks, synchronized cardioversion, or external pacing were performed.
+
+Abstentions: For rhythm checks at 82.0s, 235.0s, and 389.0s, pad/lead source is unable to be determined (abstained at 235.0s) because no defibrillator pads or ECG leads were physically applied to the simulation mannequin; rhythms were stated verbally from the facilitator handoff or static monitor.
+
+Coverage limitations: Low-fidelity mannequin simulation (0.0–455.8s) with empty device_audio and monitor_ocr sensor tracks (t_precision_s >= 2.0s). Wall monitors are off and the portable Zoll monitor is static, angled away, and never connected.

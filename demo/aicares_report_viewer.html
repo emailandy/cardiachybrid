@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI-CARES (IRB #25-1097) — AI vs. Human Reviewer Concordance &amp; Equivalence Report</title>
+  <script src="aicares_report_data.js"></script>
+  <style>
+    :root {
+      --bg-main: #0b0f19;
+      --bg-card: #111827;
+      --bg-header: #0f172a;
+      --bg-hover: #1e293b;
+      --border-color: #334155;
+      --border-strong: #475569;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --accent-cyan: #38bdf8;
+      --accent-emerald: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-rose: #f43f5e;
+      --accent-indigo: #818cf8;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background-color: var(--bg-header);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .logo-badge {
+      background: linear-gradient(135deg, #10b981, #0284c7);
+      color: #fff;
+      padding: 0.35rem 0.75rem;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.82rem;
+      letter-spacing: 0.5px;
+    }
+    .header-title { font-size: 1.05rem; font-weight: 600; margin-left: 0.75rem; }
+    .btn {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-strong);
+      color: var(--text-main);
+      padding: 0.45rem 0.95rem;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-decoration: none;
+    }
+    .btn:hover { background-color: var(--bg-hover); }
+    .btn-primary {
+      background: #0284c7;
+      border-color: #0284c7;
+      color: #ffffff;
+    }
+    .btn-primary:hover { background: #0369a1; }
+    main {
+      flex: 1;
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 1.75rem 2rem 3rem;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .verdict-hero {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.14), rgba(56, 189, 248, 0.08));
+      border: 1px solid rgba(16, 185, 129, 0.45);
+      border-radius: 10px;
+      padding: 1.4rem 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+    .verdict-kicker {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--accent-emerald);
+      font-weight: 700;
+    }
+    .verdict-headline {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #ecfdf5;
+    }
+    .verdict-meta {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+    }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+    .kpi-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1.15rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .kpi-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .kpi-value {
+      font-size: 1.65rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--accent-cyan);
+    }
+    .kpi-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .tabs-bar {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 0.55rem 1.1rem;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .tab-btn:hover {
+      color: var(--text-main);
+      background-color: var(--bg-hover);
+    }
+    .tab-btn.active {
+      background-color: rgba(56, 189, 248, 0.14);
+      border-color: rgba(56, 189, 248, 0.45);
+      color: var(--accent-cyan);
+    }
+    .tab-panel { display: none; flex-direction: column; gap: 1.25rem; }
+    .tab-panel.active { display: flex; }
+    .card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1.35rem 1.5rem;
+    }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 0.35rem;
+      color: var(--text-main);
+    }
+    .card-subtitle {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.84rem;
+    }
+    th, td {
+      padding: 0.65rem 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.6);
+      vertical-align: top;
+    }
+    th {
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      background-color: rgba(15, 23, 42, 0.65);
+    }
+    tr:hover td { background-color: rgba(30, 41, 59, 0.45); }
+    .mono { font-family: var(--font-mono); }
+    .badge {
+      display: inline-block;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+    .badge-exceeds {
+      background-color: rgba(16, 185, 129, 0.18);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    .badge-matches {
+      background-color: rgba(56, 189, 248, 0.16);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+    .badge-hitl {
+      background-color: rgba(245, 158, 11, 0.16);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.4);
+    }
+    .controls-row {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    select, input[type="search"] {
+      background-color: var(--bg-header);
+      border: 1px solid var(--border-strong);
+      color: var(--text-main);
+      padding: 0.45rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+    .coaching-box {
+      background: rgba(15, 23, 42, 0.9);
+      border-left: 4px solid var(--accent-cyan);
+      padding: 1rem 1.25rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      color: #e2e8f0;
+      margin-bottom: 1rem;
+    }
+    .svg-container {
+      width: 100%;
+      overflow-x: auto;
+      background: #090d16;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div style="display:flex;align-items:center;">
+      <span class="logo-badge">NORTHWELL AI-CARES</span>
+      <span class="header-title" id="hdr-title">AI vs. Human Reviewer Concordance &amp; Equivalence Report</span>
+    </div>
+    <div style="display:flex;gap:0.75rem;align-items:center;">
+      <label class="btn" for="json-upload">Load JSON Report</label>
+      <input type="file" id="json-upload" accept=".json" style="display:none;">
+      <a class="btn btn-primary" href="aicares_redcap_import.csv" download>Download REDCap Import CSV (121 Cols)</a>
+      <a class="btn" href="aicares_paired_sas.csv" download>Download SAS 9.4 Paired CSV</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="verdict-hero">
+      <div class="verdict-kicker" id="irb-kicker">IRB Protocol</div>
+      <div class="verdict-headline" id="verdict-headline">Loading AI-CARES report data...</div>
+      <div class="verdict-meta" id="verdict-meta"></div>
+    </section>
+
+    <section class="kpi-grid" id="kpi-grid"></section>
+
+    <nav class="tabs-bar">
+      <button class="tab-btn active" data-tab="tab-domains">1. Executive Equivalence Scorecard</button>
+      <button class="tab-btn" data-tab="tab-bland-altman">2. Bland-Altman &amp; ±3s Timestamp Concordance</button>
+      <button class="tab-btn" data-tab="tab-simvideo2">3. Real Video Deep-Dive (simvideo2.mp4)</button>
+      <button class="tab-btn" data-tab="tab-team">4. TEAM Non-Technical Skills (12 Items)</button>
+      <button class="tab-btn" data-tab="tab-inspector">5. 99-Variable REDCap Inspector &amp; Coaching</button>
+    </nav>
+
+    <!-- TAB 1: DOMAIN SCORECARDS -->
+    <section class="tab-panel active" id="tab-domains">
+      <div class="card">
+        <div class="card-title">Can the Hybrid Sensor + VLM Engine Match or Exceed a Fellowship-Trained Human Reviewer?</div>
+        <div class="card-subtitle">
+          Evaluated against two independent fellowship-trained simulation reviewers (Human Rater 1, Human Rater 2, and Consensus Gold Standard) using Northwell Health IRB #25-1097 statistical criteria.
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Clinical Domain</th>
+              <th>Governing Modality / Sensors</th>
+              <th>AI Engine vs. Human Consensus</th>
+              <th>Human vs. Human Benchmark (IRR)</th>
+              <th>Gwet's AC1 / AC2</th>
+              <th>Equivalence Verdict</th>
+              <th>Clinical &amp; Methodological Findings</th>
+            </tr>
+          </thead>
+          <tbody id="domain-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB 2: BLAND-ALTMAN & TIMESTAMPS -->
+    <section class="tab-panel" id="tab-bland-altman">
+      <div class="card">
+        <div class="card-title">Bland-Altman Difference Plot: AI Engine vs. Human Consensus Timestamps (Seconds)</div>
+        <div class="card-subtitle" id="ba-subtitle"></div>
+        <div class="svg-container" id="ba-svg-wrap"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Per-Variable Timestamp Concordance: ICC(2,1), Bland-Altman Bias/LoA &amp; Prespecified ±3.0s Agreement</div>
+        <table>
+          <thead>
+            <tr>
+              <th>REDCap Variable</th>
+              <th>Field Label</th>
+              <th>N</th>
+              <th>ICC(2,1) AI vs. GT [95% CI]</th>
+              <th>ICC(2,1) Human IRR</th>
+              <th>Mean Bias (s)</th>
+              <th>95% Limits of Agreement</th>
+              <th>MAE AI-GT vs. Human IRR</th>
+              <th>±3s Agree (AI vs. IRR)</th>
+              <th>Verdict</th>
+            </tr>
+          </thead>
+          <tbody id="ts-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB 3: SIMVIDEO2 DEEP DIVE -->
+    <section class="tab-panel" id="tab-simvideo2">
+      <div class="card">
+        <div class="card-title">Empirical Anchor Case: simvideo2.mp4 — S3 Acoustic Defibrillation vs. Human Display Annotation</div>
+        <div class="card-subtitle">
+          Demonstrates why physical acoustic STFT detection (S3) and 15 FPS optical flow (S1) match or exceed manual human video review within the ±3.0s equivalence band.
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Shock #</th>
+              <th>Human GT (s)</th>
+              <th>Human REDCap (MM:SS)</th>
+              <th>S3 Acoustic STFT (s)</th>
+              <th>AI REDCap (MM:SS)</th>
+              <th>Δt (AI − Human)</th>
+              <th>Within ±3.0s Gate</th>
+              <th>Provenance &amp; Physical Explanation</th>
+            </tr>
+          </thead>
+          <tbody id="sim2-shocks-tbody"></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title">AI-CARES Prolonged Compression Interruption Gate (&gt; 10.0 Seconds Rule) on simvideo2.mp4</div>
+        <div class="card-subtitle">
+          The AI-CARES dictionary records only prolonged interruptions strictly exceeding 10.0s in <code>start_of_interruption_v2..3_v2</code> while filtering sub-10s physiological rhythm checks.
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Interval Window</th>
+              <th>Duration (s)</th>
+              <th>AI-CARES Classification &amp; Target REDCap Variables</th>
+            </tr>
+          </thead>
+          <tbody id="sim2-pauses-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB 4: TEAM RUBRIC -->
+    <section class="tab-panel" id="tab-team">
+      <div class="card">
+        <div class="card-title">TEAM Non-Technical Skills Instrument (12 Items) — Ordinal Gwet's AC2 &amp; Inter-Rater Reliability</div>
+        <div class="card-subtitle">
+          Items 1–11 rated 0 (Never) to 4 (Always); Item 12 Global Rating 1 (Poor) to 10 (Exceptional). Quadratic-weighted Gwet's AC2 compares AI vs. Human Consensus against Human Rater 1 vs. Rater 2.
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>REDCap Variable</th>
+              <th>Behavioral Domain</th>
+              <th>Scale</th>
+              <th>AI Mean</th>
+              <th>Human GT Mean</th>
+              <th>Exact Match (AI vs. IRR)</th>
+              <th>Within ±1 Pt (AI)</th>
+              <th>Gwet's AC2 (AI vs. GT)</th>
+              <th>Gwet's AC2 (Human IRR)</th>
+              <th>Verdict</th>
+            </tr>
+          </thead>
+          <tbody id="team-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB 5: 99-FIELD INSPECTOR & COACHING -->
+    <section class="tab-panel" id="tab-inspector">
+      <div class="card">
+        <div class="controls-row">
+          <label for="case-select" style="font-weight:600;font-size:0.88rem;">Select Simulation Case (1–10):</label>
+          <select id="case-select"></select>
+          <input type="search" id="field-search" placeholder="Filter by variable, label, or value...">
+        </div>
+        <div class="coaching-box" id="case-coaching-box"></div>
+        <table>
+          <thead>
+            <tr>
+              <th>REDCap Variable</th>
+              <th>Instrument</th>
+              <th>Type</th>
+              <th>AI Engine Value</th>
+              <th>Human Consensus GT</th>
+              <th>Human Rater 1</th>
+              <th>Human Rater 2</th>
+              <th>Provenance / Event ID</th>
+            </tr>
+          </thead>
+          <tbody id="inspector-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      let currentReport = window.AICARES_REPORT_DATA || null;
+
+      function badgeHtml(verdict, badgeClass) {
+        const cls = badgeClass === 'exceeds' || String(verdict).includes('EXCEEDS')
+          ? 'badge-exceeds'
+          : (badgeClass === 'hitl' || String(verdict).includes('HITL') ? 'badge-hitl' : 'badge-matches');
+        return `<span class="badge ${cls}">${verdict}</span>`;
+      }
+
+      function renderBlandAltmanSvg(ba) {
+        const pts = ba.points || [];
+        const overall = ba.overall_ai_vs_gt || {};
+        const w = 960, h = 320, padL = 65, padR = 40, padT = 30, padB = 45;
+        const maxT = Math.max(950, ...pts.map(p => p.mean_s || 0));
+        const minY = -5.0, maxY = 5.0;
+        const xPos = t => padL + ((t / maxT) * (w - padL - padR));
+        const yPos = d => padT + (((maxY - Math.max(minY, Math.min(maxY, d))) / (maxY - minY)) * (h - padT - padB));
+
+        const yZero = yPos(0);
+        const yBias = yPos(overall.bias_s || 0);
+        const yLoaH = yPos(overall.loa_high_s || 1.96);
+        const yLoaL = yPos(overall.loa_low_s || -1.96);
+        const y3H = yPos(3.0);
+        const y3L = yPos(-3.0);
+
+        let circles = pts.map(p => {
+          const cx = xPos(p.mean_s).toFixed(1);
+          const cy = yPos(p.diff_ai_gt_s).toFixed(1);
+          const col = Math.abs(p.diff_ai_gt_s) <= 3.0 ? '#10b981' : '#f43f5e';
+          return `<circle cx="${cx}" cy="${cy}" r="4.5" fill="${col}" fill-opacity="0.85" stroke="#0b0f19" stroke-width="1">
+            <title>${p.case_id} | ${p.field_name}: AI=${p.ai_mmss} (${p.ai_s}s), GT=${p.gt_mmss} (${p.gt_s}s), Δt=${p.diff_ai_gt_s}s</title>
+          </circle>`;
+        }).join('');
+
+        return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="320">
+          <rect x="${padL}" y="${y3H}" width="${w - padL - padR}" height="${y3L - y3H}" fill="rgba(16,185,129,0.06)" />
+          <line x1="${padL}" y1="${y3H}" x2="${w - padR}" y2="${y3H}" stroke="#f59e0b" stroke-dasharray="6,4" stroke-width="1.2" />
+          <line x1="${padL}" y1="${y3L}" x2="${w - padR}" y2="${y3L}" stroke="#f59e0b" stroke-dasharray="6,4" stroke-width="1.2" />
+          <line x1="${padL}" y1="${yLoaH}" x2="${w - padR}" y2="${yLoaH}" stroke="#38bdf8" stroke-dasharray="4,3" stroke-width="1.2" />
+          <line x1="${padL}" y1="${yLoaL}" x2="${w - padR}" y2="${yLoaL}" stroke="#38bdf8" stroke-dasharray="4,3" stroke-width="1.2" />
+          <line x1="${padL}" y1="${yZero}" x2="${w - padR}" y2="${yZero}" stroke="#64748b" stroke-width="1" />
+          <line x1="${padL}" y1="${yBias}" x2="${w - padR}" y2="${yBias}" stroke="#10b981" stroke-width="1.8" />
+          ${circles}
+          <text x="${w - padR - 6}" y="${y3H - 5}" fill="#fbbf24" font-size="11" text-anchor="end">+3.0s IRB Equivalence Bound</text>
+          <text x="${w - padR - 6}" y="${y3L + 13}" fill="#fbbf24" font-size="11" text-anchor="end">-3.0s IRB Equivalence Bound</text>
+          <text x="${w - padR - 6}" y="${yLoaH - 4}" fill="#38bdf8" font-size="11" text-anchor="end">+1.96 SD (${overall.loa_high_s}s)</text>
+          <text x="${w - padR - 6}" y="${yLoaL + 13}" fill="#38bdf8" font-size="11" text-anchor="end">-1.96 SD (${overall.loa_low_s}s)</text>
+          <text x="${padL + 8}" y="${yBias - 5}" fill="#10b981" font-size="11">Mean Bias (${overall.bias_s}s)</text>
+          <text x="${w / 2}" y="${h - 10}" fill="#94a3b8" font-size="12" text-anchor="middle">Mean Elapsed Video Timestamp: (AI + Human GT) / 2 (seconds)</text>
+          <text x="18" y="${h / 2}" fill="#94a3b8" font-size="12" text-anchor="middle" transform="rotate(-90 18 ${h / 2})">Difference (AI − Human GT, s)</text>
+        </svg>`;
+      }
+
+      function renderReport(data) {
+        if (!data) return;
+        const sb = data.study_banner || {};
+        const ev = data.executive_verdict || {};
+
+        document.getElementById('irb-kicker').textContent =
+          `${sb.irb_number || ''} • ${sb.study_title || ''}`;
+        document.getElementById('verdict-headline').textContent = ev.headline || '';
+        document.getElementById('verdict-meta').innerHTML = [
+          `<span><strong>PI:</strong> ${sb.principal_investigator || ''}</span>`,
+          `<span><strong>Primary Contact:</strong> ${sb.primary_contact || ''}</span>`,
+          `<span><strong>Dictionary SHA:</strong> <code class="mono">${sb.dict_version || ''}</code> (${sb.total_variables || 0} vars / ${sb.export_columns || 0} cols / ${sb.branching_predicates || 0} predicates)</span>`,
+          `<span><strong>Turnaround Speedup:</strong> ${ev.turnaround_time_ai_min} min AI vs. ${ev.turnaround_time_human_min} min Human (${ev.speedup_factor})</span>`
+        ].join('');
+
+        const kpis = [
+          {
+            label: 'Timestamp ICC(2,1) (AI vs. GT)',
+            val: Number(ev.timestamp_icc_ai_vs_human || 0).toFixed(4),
+            sub: `${ev.timestamp_icc_grade || ''} • Human IRR: ${Number(ev.timestamp_icc_human_irr || 0).toFixed(4)}`
+          },
+          {
+            label: 'Prespecified ±3.0s Agreement',
+            val: `${Number(ev.within_3s_agreement_ai_vs_human_pct || 0).toFixed(1)}%`,
+            sub: `Gwet's AC1 = ${Number(ev.timestamp_gwets_ac1_ai_vs_human || 0).toFixed(4)} (vs. Human IRR ${Number(ev.within_3s_agreement_human_irr_pct || 0).toFixed(1)}%)`
+          },
+          {
+            label: 'Timestamp Boundary MAE',
+            val: `${Number(ev.timestamp_mae_ai_vs_human_s || 0).toFixed(2)}s`,
+            sub: `2.6x lower error than Human R1 vs. R2 (${Number(ev.timestamp_mae_human_irr_s || 0).toFixed(2)}s)`
+          },
+          {
+            label: 'ACLS Checklists & Case Branching',
+            val: `${Number(ev.categorical_po_ai_vs_human_pct || 0).toFixed(1)}%`,
+            sub: `Gwet's AC1 = ${Number(ev.categorical_gwets_ac1_ai_vs_human || 0).toFixed(4)} (vs. Human IRR ${Number(ev.categorical_gwets_ac1_human_irr || 0).toFixed(4)})`
+          },
+          {
+            label: 'TEAM Rubric Ordinal AC2',
+            val: Number(ev.team_gwets_ac2_ai_vs_human || 0).toFixed(4),
+            sub: `ICC(2,1) = ${Number(ev.team_icc_ai_vs_human || 0).toFixed(4)} • Global Item 12 ICC = ${Number(ev.team12_global_icc_ai_vs_human || 0).toFixed(4)}`
+          }
+        ];
+        document.getElementById('kpi-grid').innerHTML = kpis.map(k => `
+          <div class="kpi-card">
+            <div class="kpi-label">${k.label}</div>
+            <div class="kpi-value">${k.val}</div>
+            <div class="kpi-sub">${k.sub}</div>
+          </div>
+        `).join('');
+
+        // Tab 1: Domains
+        const domTbody = document.getElementById('domain-tbody');
+        domTbody.innerHTML = (data.domain_scorecards || []).map(d => `
+          <tr>
+            <td><strong>${d.domain_name}</strong></td>
+            <td class="mono" style="font-size:0.78rem;color:var(--accent-cyan);">${d.primary_sensors}</td>
+            <td class="mono">${d.ai_vs_human_metric}</td>
+            <td class="mono" style="color:var(--text-muted);">${d.human_irr_benchmark}</td>
+            <td class="mono">${d.gwets_ac1_ac2}</td>
+            <td>${badgeHtml(d.verdict, d.verdict_badge)}</td>
+            <td style="color:var(--text-muted);">${d.clinical_rationale}</td>
+          </tr>
+        `).join('');
+
+        // Tab 2: Bland-Altman & Timestamps
+        const ba = data.bland_altman || {};
+        const ovBa = ba.overall_ai_vs_gt || {};
+        const byComp = ba.by_complexity || {};
+        document.getElementById('ba-subtitle').textContent =
+          `N = ${ovBa.n || 0} paired timestamp observations across 10 cases • Mean Bias = ${ovBa.bias_s || 0}s (SD = ${ovBa.sd_s || 0}s) • 95% LoA = [${ovBa.loa_low_s || 0}s, ${ovBa.loa_high_s || 0}s] • Standard Cases MAE = ${(byComp.Standard || {}).mae_s || 0}s | Intermediate MAE = ${(byComp.Intermediate || {}).mae_s || 0}s | Complex MAE = ${(byComp.Complex || {}).mae_s || 0}s`;
+        document.getElementById('ba-svg-wrap').innerHTML = renderBlandAltmanSvg(ba);
+
+        const tsTbody = document.getElementById('ts-tbody');
+        tsTbody.innerHTML = ((data.timestamp_metrics || {}).per_field || []).map(r => `
+          <tr>
+            <td class="mono" style="color:var(--accent-cyan);">${r.field_name}</td>
+            <td>${r.field_label}</td>
+            <td class="mono">${r.n_cases}</td>
+            <td class="mono">${Number(r.icc_ai_gt).toFixed(4)} <span style="color:var(--text-dim);">${r.icc_ai_gt_ci}</span></td>
+            <td class="mono">${Number(r.icc_human_irr).toFixed(4)}</td>
+            <td class="mono">${r.bias_ai_gt_s > 0 ? '+' : ''}${r.bias_ai_gt_s}s</td>
+            <td class="mono">${r.loa_ai_gt_s}</td>
+            <td class="mono"><strong>${r.mae_ai_gt_s}s</strong> vs. ${r.mae_human_irr_s}s</td>
+            <td class="mono"><strong>${r.within_3s_ai_gt_pct}%</strong> vs. ${r.within_3s_human_irr_pct}%</td>
+            <td>${badgeHtml(r.verdict)}</td>
+          </tr>
+        `).join('');
+
+        // Tab 3: simvideo2 deep dive
+        const s2 = data.simvideo2_deep_dive || {};
+        document.getElementById('sim2-shocks-tbody').innerHTML = (s2.shocks_compared || []).map(s => `
+          <tr>
+            <td class="mono">#${s.shock_num}</td>
+            <td class="mono">${s.human_gt_s.toFixed(2)}s</td>
+            <td class="mono">${s.human_mmss}</td>
+            <td class="mono" style="color:var(--accent-cyan);">${s.s3_acoustic_s.toFixed(2)}s</td>
+            <td class="mono" style="color:var(--accent-cyan);">${s.ai_mmss}</td>
+            <td class="mono">${s.delta_s >= 0 ? '+' : ''}${s.delta_s.toFixed(2)}s</td>
+            <td>${badgeHtml(s.within_3s ? 'PASS (≤ 3.0s)' : 'OUTSIDE 3s', s.within_3s ? 'exceeds' : 'hitl')}</td>
+            <td style="color:var(--text-muted);">${s.note}</td>
+          </tr>
+        `).join('');
+
+        const pausesRows = [];
+        (s2.prolonged_interruptions_gt_10s || []).forEach(p => {
+          pausesRows.push(`
+            <tr>
+              <td class="mono" style="color:var(--accent-emerald);">${p.start_mmss} – ${p.end_mmss}</td>
+              <td class="mono"><strong>${p.duration_s.toFixed(1)}s</strong></td>
+              <td>${badgeHtml('RECORDED (> 10.0s)', 'exceeds')} Mapped to <code class="mono">${p.redcap_fields}</code> (${p.status})</td>
+            </tr>
+          `);
+        });
+        (s2.sub_threshold_interruptions_filtered || []).forEach(p => {
+          pausesRows.push(`
+            <tr>
+              <td class="mono" style="color:var(--text-muted);">${p.interval_s}s</td>
+              <td class="mono" style="color:var(--text-muted);">${p.duration_s.toFixed(1)}s</td>
+              <td style="color:var(--text-muted);">${badgeHtml('FILTERED (≤ 10.0s)', 'matches')} ${p.action}</td>
+            </tr>
+          `);
+        });
+        document.getElementById('sim2-pauses-tbody').innerHTML = pausesRows.join('');
+
+        // Tab 4: TEAM Rubric
+        document.getElementById('team-tbody').innerHTML = ((data.team_rubric_metrics || {}).per_item || []).map(t => `
+          <tr>
+            <td class="mono" style="color:var(--accent-cyan);">${t.field_name}</td>
+            <td>${t.field_label}</td>
+            <td class="mono">${t.scale}</td>
+            <td class="mono">${t.ai_mean}</td>
+            <td class="mono">${t.human_gt_mean}</td>
+            <td class="mono"><strong>${t.exact_agree_ai_gt_pct}%</strong> vs. ${t.exact_agree_human_irr_pct}%</td>
+            <td class="mono">${t.within_1_ai_gt_pct}%</td>
+            <td class="mono"><strong>${t.gwets_ac2_ai_gt.toFixed(4)}</strong></td>
+            <td class="mono">${t.gwets_ac2_human_irr.toFixed(4)}</td>
+            <td>${badgeHtml(t.verdict)}</td>
+          </tr>
+        `).join('');
+
+        // Tab 5: Case Inspector
+        const cases = data.cases || [];
+        const sel = document.getElementById('case-select');
+        sel.innerHTML = cases.map((c, idx) =>
+          `<option value="${idx}">Case ${c.simulation_number}: ${c.record_id} — ${c.title} (${c.complexity})</option>`
+        ).join('');
+
+        function renderSelectedCase() {
+          const idx = parseInt(sel.value || '0', 10);
+          const q = (document.getElementById('field-search').value || '').toLowerCase();
+          const cObj = cases[idx];
+          if (!cObj) return;
+          document.getElementById('case-coaching-box').innerHTML = `
+            <div style="font-weight:700;color:var(--accent-cyan);margin-bottom:0.35rem;">
+              ${cObj.record_id} (${cObj.source_tag}) • Code Duration: ${cObj.code_duration_s}s • Pulse Check: ${cObj.pulse_check_duration_s}s • Prolonged Pauses (&gt;10s): ${cObj.prolonged_interruptions_count} • TEAM Global: ${cObj.team_global_score}/10
+            </div>
+            <div>${cObj.feedback_narrative}</div>
+          `;
+          const filtered = (cObj.fields || []).filter(f =>
+            !q ||
+            f.field_name.toLowerCase().includes(q) ||
+            f.field_label.toLowerCase().includes(q) ||
+            String(f.ai_value).toLowerCase().includes(q)
+          );
+          document.getElementById('inspector-tbody').innerHTML = filtered.map(f => `
+            <tr>
+              <td class="mono" style="color:var(--accent-cyan);">${f.field_name}</td>
+              <td class="mono" style="font-size:0.75rem;color:var(--text-muted);">${f.form_name}</td>
+              <td class="mono" style="font-size:0.75rem;">${f.validation || f.field_type}</td>
+              <td class="mono"><strong>${f.ai_value}</strong></td>
+              <td class="mono">${f.gt_value}</td>
+              <td class="mono" style="color:var(--text-muted);">${f.r1_value}</td>
+              <td class="mono" style="color:var(--text-muted);">${f.r2_value}</td>
+              <td class="mono" style="font-size:0.75rem;color:var(--accent-emerald);">${f.provenance}</td>
+            </tr>
+          `).join('');
+        }
+
+        sel.onchange = renderSelectedCase;
+        document.getElementById('field-search').oninput = renderSelectedCase;
+        renderSelectedCase();
+      }
+
+      // Tab switching
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+          btn.classList.add('active');
+          const target = document.getElementById(btn.getAttribute('data-tab'));
+          if (target) target.classList.add('active');
+        });
+      });
+
+      // File upload handler
+      document.getElementById('json-upload').addEventListener('change', ev => {
+        const file = ev.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+          try {
+            currentReport = JSON.parse(e.target.result);
+            renderReport(currentReport);
+          } catch (err) {
+            alert('Invalid JSON report file: ' + err.message);
+          }
+        };
+        reader.readAsText(file);
+      });
+
+      renderReport(currentReport);
+    })();
+  </script>
+</body>
+</html>

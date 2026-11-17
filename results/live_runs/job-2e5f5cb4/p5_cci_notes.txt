@@ -1,0 +1,7 @@
+Notable observations: Manual chest compressions began at 81.0s. During the pause from 228.5s to 235.5s (carotid pulse check and PEA rhythm confirmation), the same provider resumed compressions without switching roles. Compressions stopped at 365.5s for a radial pulse check, during which the facilitator announced a pulse at 369.0s (ROSC), terminating compressions.
+
+Abstentions: For rhythm checks at 82.0s and 235.0s, pads_source is unable_to_determine (abstained at 235.0s) because no defibrillator pads or ECG leads were physically applied to the simulation mannequin; rhythm was stated verbally from facilitator cues.
+
+Flags: None.
+
+Coverage limitations: Sensor tracks S1 (compressions_active), S2 (device_audio), and S4 (monitor_ocr) were absent; all boundaries were self-detected from video/audio (t_precision_s >= 2.0s). Wall monitors were off and the portable monitor was unconnected and not legible.

@@ -1,0 +1,28 @@
+```json
+{
+  "score": 8,
+  "placement": "No consensus-rated calibration anchors are available for this department (Q-015). Scoring is performed in absolute terms, which carries inherent calibration uncertainty compared to comparative anchor placement.",
+  "strengths": [
+    {
+      "t": 82.0,
+      "observation": "The team leader establishes a clear shared mental model immediately after CPR initiation (80.0s), verbalizing the non-shockable PEA rhythm, prioritizing concurrent airway placement and 1 mg epinephrine administration, and subsequently summarizing progress at 109.0s ('1 of epinephrine is given, we have our airway, we're currently bagging, we're doing CPR') before reviewing reversible causes at 119.0s."
+    },
+    {
+      "t": 191.0,
+      "observation": "Psychological safety and proactive team member followership are demonstrated when the compressor speaks up to ask 'Could we listen to lung sounds to confirm placement?' (191.0s), leading directly to bilateral chest auscultation at 201.0s–204.5s, and again at 250.0s when the compressor prompts for a point-of-care glucose and diagnostic labs."
+    }
+  ],
+  "deficiencies": [
+    {
+      "t": 228.5,
+      "observation": "A single provider in black scrubs performs continuous manual chest compressions from 80.0s until 366.0s (286 seconds / ~4 minutes 46 seconds) without rotating compressors during the 2-minute pulse check pause at 228.5s–235.5s."
+    },
+    {
+      "t": 245.5,
+      "observation": "Incomplete closed-loop communication regarding adjunct medications: the team leader suggests sodium bicarbonate twice ('We could give sodium bicarbonate' at 245.5s and 'We could do an amp of sodium bicarbonate' at 351.0s) as tentative statements rather than directed orders, resulting in no verbal readback, acknowledgment, or administration from the medication nurse."
+    }
+  ],
+  "justification": "Scored in absolute terms without comparative calibration anchors, introducing moderate calibration uncertainty; note also that per facilitator rules (0.0s–13.0s), monitor readings, bagging, and IV pushes were verbalized rather than physically instrumented. Within this simulation context, the team demonstrated strong coordination, calm composure, and highly effective communication. Role assignment occurred immediately at 62.0s, compressions began at 80.0s, and the single mid-arrest pulse check interruption (228.5s–235.5s) was tightly coordinated and kept to 7.0 seconds before immediate resumption of compressions and closed-loop epinephrine administration (243.5s). The team leader frequently summarized clinical status and H's and T's aloud, while team members actively contributed diagnostic and safety checks. The rating is held at 8 rather than higher due to the absence of compressor rotation across nearly five minutes of manual CPR and unclosed communication loops when proposing sodium bicarbonate.",
+  "one_point_higher": "To earn a 9, the team would need to execute a coordinated compressor switch at the 228.5s pulse check to prevent provider fatigue and convert tentative medication suggestions (such as sodium bicarbonate at 245.5s and 351.0s) into explicit, directed orders with verbal readback and completion confirmation from the medication nurse."
+}
+```

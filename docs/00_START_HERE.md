@@ -53,7 +53,7 @@ bash scripts/check_invariants.sh
 pytest -q -m "not integration"
 ```
 
-Where a sensor or capability is not yet built in Phase 1, it is explicitly documented and linked to its tracking task file in `docs/tasks/` (e.g., [D00](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D00.md), [A03b](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/A03b.md)).
+Where a sensor or capability is not yet built in Phase 1, it is explicitly documented and linked to its tracking task file in `docs/tasks/` (e.g., [D00](tasks/D00.md), [A03b](tasks/A03b.md)).
 
 ---
 Last verified: 2026-08-13 against dict_version e7c08437adcef4a5, prompt_set_sha 2b6988545630a115

@@ -1,0 +1,7 @@
+Observations: The patient remained in non-shockable PEA throughout the arrest until ROSC (normal sinus rhythm) at 368.5s. At 83.0s, the team leader confirmed PEA and stated the rhythm was non-shockable. No defibrillator pad placement, charging, defibrillation, cardioversion, or external pacing occurred during the simulation.
+
+Abstentions: Defibrillator pad source (`unable_to_determine`) at rhythm checks (233.5s, 368.5s, 390.5s) because pad cabling source is not visible on the mannequin.
+
+Flags & Sensor Disputes: All device audio candidates for defibrillation shock and aborted charge across 0.0–455.8s are false positives triggered by periodic vital-sign monitor alarm chimes; the defibrillator on the left cart was never operated.
+
+Coverage: The wall monitor was off and the left cart defibrillator screen was too small and low-contrast for OCR; all rhythms were supplied verbally by the facilitator.

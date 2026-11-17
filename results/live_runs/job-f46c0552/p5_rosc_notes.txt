@@ -1,0 +1,5 @@
+1. Return of spontaneous circulation (ROSC) was achieved at 368.5s during a manual left carotid pulse check and remained sustained through the end of the recording at 455.8s. Upon ROSC confirmation, the simulation facilitator verbally reported repeat vital signs: heart rate 110 bpm, blood pressure 95/77 mmHg, respiratory rate 14 breaths/min, SpO2 94%, PCO2 40 mmHg, and normal sinus rhythm.
+2. No abstentions in this section.
+3. No adjudication flags raised for the ROSC interval.
+4. Coverage limitations: The wall monitor screen was off and the cart monitor screen was too small and low-contrast for OCR legibility; ROSC rhythm and post-ROSC vital signs were supplied verbally by the simulation facilitator. S2 compression audio artifacts at 366.9–371.2s and 432.7–435.7s were false positives caused by room speech and applause after compressions had permanently ceased at 365.5s.
+5. No truncation occurred.

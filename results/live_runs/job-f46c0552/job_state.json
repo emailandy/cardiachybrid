@@ -1,0 +1,92 @@
+{
+  "id": "job-f46c0552",
+  "status": "done",
+  "error": null,
+  "model": "gemini-4-argon",
+  "k": 3,
+  "progress_pct": 100,
+  "stages": [
+    {
+      "key": "prepare",
+      "label": "Prepare video \u00b7 GCS URI, local copy & duration",
+      "status": "done",
+      "detail": "gs://videval/cardiac/uploads/Ai-CARES_TrialRUN_case1_8SEPT26_IPad.MOV \u00b7 455.8s \u00b7 1 windows",
+      "t_start": 1793577570.16,
+      "t_end": 1793579362.6239421
+    },
+    {
+      "key": "s5",
+      "label": "Sensor S5 \u00b7 burned-in CCTV clock T\u2080 or actual playback duration anchor",
+      "status": "done",
+      "detail": "No burned-in CCTV clock \u2014 anchored to actual video playback duration (00:00 \u2013 07:36 \u00b7 455.8s)",
+      "t_start": 1793577570.16,
+      "t_end": 1793579362.6239436
+    },
+    {
+      "key": "sensors",
+      "label": "Sensors S1\u2013S4 & S7a LLM Audio Transcript \u00b7 chronological event order",
+      "status": "done",
+      "detail": "S7a Transcript: 20 utterances (10 ordered milestones) \u00b7 S1 0 compression runs / 0 pauses \u00b7 S3 13 shocks",
+      "t_start": 1793577570.16,
+      "t_end": 1793579362.623944
+    },
+    {
+      "key": "p1",
+      "label": "Pass 1 \u00b7 windowed video harvest with audio transcript",
+      "status": "done",
+      "detail": "3 gemini-4-argon calls over 1 windows (with S7a transcript)",
+      "t_start": 1793577570.16,
+      "t_end": 1793579362.6239445
+    },
+    {
+      "key": "merge",
+      "label": "Merge windows \u00b7 cluster draws, de-duplicate & playback/transcript reconcile",
+      "status": "done",
+      "detail": "15 chronological events, 3 intervals (anchored 00:00\u201307:36)",
+      "t_start": 1793577570.16,
+      "t_end": 1793579362.6239448
+    },
+    {
+      "key": "spatial",
+      "label": "3D Bounding Boxes & Re-ID \u00b7 volumetric cuboids, overlap seams & polygons",
+      "status": "done",
+      "detail": "114 frames \u00b7 585 boxes \u00b7 8 identities",
+      "t_start": 1793577570.16,
+      "t_end": 1793579362.623945
+    },
+    {
+      "key": "p345",
+      "label": "Passes 3\u20135 \u00b7 adjudication, TEAM rubric & notes",
+      "status": "done",
+      "detail": "10 gemini-4-argon calls (P3, P4a, P4b, P5\u00d77)",
+      "t_start": 1793579362.8031235,
+      "t_end": 1793579612.7991958
+    },
+    {
+      "key": "reduce",
+      "label": "AI-CARES REDCap reducer \u00b7 99 variables",
+      "status": "done",
+      "detail": "66 REDCap variables populated",
+      "t_start": 1793579612.7992046,
+      "t_end": 1793579612.8617556
+    }
+  ],
+  "log": [
+    "[23:59:30] Live engine run \u00b7 model gemini-4-argon \u00b7 k=3 \u00b7 Case #1 \u00b7 prompt_set 2b6988545630",
+    "[00:01:06] s7a_transcript: 20 utterances & 10 chronological events mapped",
+    "[00:07:39] p1_win_0_draw_0 [0s\u2192456s]: 8 events, 3 intervals",
+    "[00:08:06] p1_win_0_draw_1 [0s\u2192456s]: 8 events, 3 intervals",
+    "[00:08:45] p1_win_0_draw_2 [0s\u2192456s]: 8 events, 2 intervals",
+    "[00:16:39] spatial: 114 frames \u00b7 585 boxes \u00b7 8 persistent identities",
+    "[00:33:32] Passes 3\u20135 completed (10 gemini-4-argon calls)",
+    "[00:33:32] \u2713 Completed \u2192 LIVE-AI-CARES-TRIALRUN--003332 (66 REDCap variables populated)"
+  ],
+  "calls_done": 3,
+  "calls_total": 3,
+  "elapsed_s": 2042.7,
+  "result_record_id": "LIVE-AI-CARES-TRIALRUN--003332",
+  "record_id": "",
+  "simulation_number": 1,
+  "video_path": "gs://videval/cardiac/Ai-CARES_TrialRUN_case1_8SEPT26 IPad.MOV",
+  "resolved_video_uri": "gs://videval/cardiac/uploads/Ai-CARES_TrialRUN_case1_8SEPT26_IPad.MOV"
+}

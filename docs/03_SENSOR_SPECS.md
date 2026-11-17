@@ -3,7 +3,7 @@
 This specification defines the algorithmic architecture, output schemas, downstream variable dependencies, calibration procedures, failure modes, degraded fallbacks, and clinical validation targets for the seven deterministic multimodal sensors (`S1–S7`).
 
 > [!IMPORTANT]
-> **Phase 1 Implementation Scope**: All physical streaming sensor hardware ingestion pipelines (`S1–S7`) are **NOT BUILT** in Phase 1 ([D00](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D00.md)). Sensor S3 acoustic signal processing parameters were evaluated offline against clinical simulation audio in our empirical probe (`F-009`).
+> **Phase 1 Implementation Scope**: All physical streaming sensor hardware ingestion pipelines (`S1–S7`) are **NOT BUILT** in Phase 1 ([D00](tasks/D00.md)). Sensor S3 acoustic signal processing parameters were evaluated offline against clinical simulation audio in our empirical probe (`F-009`).
 
 ---
 
@@ -55,7 +55,7 @@ def detect_cpr_motion(vy_signal: list[float], fps: float = 30.0) -> list[dict]:
 * **Failure Modes**: Provider crowding over the chest, rapid camera panning, blankets obscuring ROI.
 * **Degraded Behavior**: When S1 optical flow fails or is occluded, temporal boundary adjudication defers to audio cadence (`S2`) or LLM block querying (`F-006`, `F-010`).
 * **Validation Target**: Temporal boundary accuracy `<= 0.5s` against dual-annotated human optical flow ground truth.
-* **Built Status**: **NOT BUILT** in Phase 1 ([D00](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D00.md)).
+* **Built Status**: **NOT BUILT** in Phase 1 ([D00](tasks/D00.md)).
 
 ---
 
@@ -102,7 +102,7 @@ def detect_audio_cadence(audio_16k: list[float], sr: int = 16000) -> list[dict]:
 * **Failure Modes**: Loud vocalizations, mechanical chest compression device (`MCCD`) motor whine, alarms.
 * **Degraded Behavior**: Emits `confidence=0.0` when SNR `< 3.0 dB`, deferring to S1 or LLM.
 * **Validation Target**: Cadence accuracy `+/- 5 cpm` against reference metronome.
-* **Built Status**: **NOT BUILT** in Phase 1 ([D00](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D00.md)).
+* **Built Status**: **NOT BUILT** in Phase 1 ([D00](tasks/D00.md)).
 
 ---
 
@@ -167,7 +167,7 @@ def detect_defib_shocks(audio_16k: list[float], sr: int = 16000) -> list[dict]:
 * **Failure Modes**: Siren noise masking tones; non-standard defibrillator manufacturer tones.
 * **Degraded Behavior**: When acoustic SNR `< 5.0`, defers shock adjudication to LLM Union-of-k draws (`F-008`).
 * **Validation Target**: `0` false positives on calibration set; timing accuracy `<= 0.2s`.
-* **Built Status**: Offline probe and windowed adjudicator validated (`F-009`, `F-013`); streaming pipeline **NOT BUILT** in Phase 1 ([D00](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D00.md)).
+* **Built Status**: Offline probe and windowed adjudicator validated (`F-009`, `F-013`); streaming pipeline **NOT BUILT** in Phase 1 ([D00](tasks/D00.md)).
 
 ---
 
@@ -217,7 +217,7 @@ def ingest_monitor_ocr(frame_roi: list[list[int]], timestamp_s: float) -> dict:
 * **Failure Modes**: Provider standing in front of monitor; screen glare; low video bitrate.
 * **Degraded Behavior**: Emits `state="utd"`, `modality="monitor_ocr"`, and `abstain_reason="Monitor display occluded"`.
 * **Validation Target**: Numeric OCR accuracy `>= 98%` on unobstructed frames.
-* **Built Status**: **NOT BUILT** in Phase 1 ([D00](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D00.md)).
+* **Built Status**: **NOT BUILT** in Phase 1 ([D00](tasks/D00.md)).
 
 ---
 
@@ -258,7 +258,7 @@ def compute_clock_offset(video_markers: list[float], clock_markers: list[float])
 * **Degraded Behavior**: Assumes nominal `fps=30` linear clock without drift correction (`confidence=0.80`).
 * **Validation Target**: Inter-stream temporal synchronization `<= 0.5s` (`±0.5s` sub-second precision floor; empirical OCR reads carry millisecond timestamps such as `07:56:06.630`).
 * **Clinical Precision & Drift Notes**: In `simvideo2.mp4`, Sample 1 (`t=10s`) projects T0 at `.630`, while samples 2 and 3 (`t=300s, 600s`) project at `.072` and `.081` (agreeing to within 9ms). The ~450ms difference at `t=10s` is a decode-position rounding artifact rather than true clock drift. If S5 reports drift near the `2.0s` threshold on another case, inspect the first sample first.
-* **Built Status**: **BUILT** in Phase 2 ([S01](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/S01.md)).
+* **Built Status**: **BUILT** in Phase 2 ([S01](tasks/S01.md)).
 
 ---
 
@@ -307,7 +307,7 @@ def detect_visual_occlusion(frame_roi: list[list[int]], timestamp_s: float) -> d
 * **Failure Modes**: Partial translucency (e.g., clear sterile drapes misclassified as occlusion).
 * **Degraded Behavior (`F-012`)**: When Sensor S6 is unbuilt, coverage notes lack specific degradation issue types. Under our rigorous cause-based abstention derivation, **47 of 63 unpopulated clinical fields correctly fall back to branch 5 (`"no evidence observed"`)** rather than receiving a speculative or field-name-keyed explanation (`F-012`). As framed in our demonstration: *"Sixty-three fields say 'unable to determine.' Forty-seven of them say only that — no evidence observed. The system knows it didn't see something; it doesn't yet know why, because the coverage sensor isn't built. When it is, each of those rows will name a channel and a timestamp range you can check against the video yourself."*
 * **Validation Target**: 100% recall of visual occlusions `>= 5.0s`.
-* **Built Status**: **NOT BUILT** in Phase 1 (`F-012`, [D00](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D00.md)).
+* **Built Status**: **NOT BUILT** in Phase 1 (`F-012`, [D00](tasks/D00.md)).
 
 ---
 
@@ -358,7 +358,7 @@ def transcribe_diarized_utterances(audio_16k: list[float], sr: int = 16000) -> l
 * **Failure Modes**: Simultaneous overlapping speech; PPE/mask acoustic attenuation.
 * **Degraded Behavior**: Without S7, diarized ASR-dependent metrics emit `NULL` with `null_reason="requires S7 diarized ASR"` (`D10`).
 * **Validation Target**: Word error rate (`WER`) `<= 15%`, speaker diarization error rate (`DER`) `<= 10%`.
-* **Built Status**: **NOT BUILT** in Phase 1 ([D00](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D00.md)).
+* **Built Status**: **NOT BUILT** in Phase 1 ([D00](tasks/D00.md)).
 
 ---
 Last verified: 2026-08-13 against dict_version e7c08437adcef4a5, prompt_set_sha 2b6988545630a115

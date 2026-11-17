@@ -1,0 +1,207 @@
+# mapping/aicares_registry.yaml — Northwell Health AI-CARES (IRB #25-1097)
+# Canonical EventStream -> AI-CARES REDCap instruments (technical_skills_review_ai + teams_review_ai)
+# 99 variables (121 export columns, 119 importable columns, 50 branching expressions)
+version: 1
+dict_version: "e4d0ddb49011f072"
+
+defaults:
+  source_class: AI_DIRECT
+  difficulty: MEDIUM
+  coverage_channels: [visual, speech]
+
+# ═══ NEVER AI-POPULATED / SYSTEM / SERVER-COMPUTED (9 fields) ════════════════
+never_ai:
+  - field: record_id
+    source_class: SYSTEM
+    difficulty: NOT_EXTRACTABLE
+  - field: date_review_v2
+    source_class: HUMAN_ONLY
+    difficulty: NOT_EXTRACTABLE
+  - field: reviewer_name_v2
+    source_class: HUMAN_ONLY
+    difficulty: NOT_EXTRACTABLE
+  - field: date_v2
+    source_class: HUMAN_ONLY
+    difficulty: NOT_EXTRACTABLE
+  - field: time_note_v2
+    source_class: DESCRIPTIVE
+    difficulty: NOT_EXTRACTABLE
+  - field: duration_pulse_v2
+    source_class: REDCAP_CALC
+    note: "Server-computed: time_pulse_end_v2 - time_pulse_v2"
+  - field: code_duration_seconds_v2
+    source_class: REDCAP_CALC
+    note: "Server-computed: max(time_rosc_v2, time_death_v2) - time_video_start_v2"
+  - field: reviewer_name_team_v2
+    source_class: HUMAN_ONLY
+    difficulty: NOT_EXTRACTABLE
+  - field: review_teams_date_v2
+    source_class: HUMAN_ONLY
+    difficulty: NOT_EXTRACTABLE
+
+# ═══ SECTIONS (6) ════════════════════════════════════════════════════════════
+sections:
+
+- name: simulation_and_initial_timestamps
+  fields:
+  - {field: simulation_number_v2, rule: case_field, key: simulation_number,
+     source_class: AI_DERIVED, difficulty: LOW}
+  - {field: time_video_start_v2, rule: first_of, event_type: patient_enters_room,
+     emit: t_start_s, transform: to_redcap_mm_ss, difficulty: LOW}
+  - {field: reversible_causes_v2, rule: case_field, key: reversible_causes_verbalized,
+     source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: airway_arrival_v2, rule: case_field, key: airway_in_place_on_arrival,
+     source_class: AI_DERIVED, difficulty: LOW}
+  - {field: time_airway_v2, rule: first_of, event_type: airway_attempt,
+     emit: t_start_s, transform: to_redcap_mm_ss, difficulty: MEDIUM}
+  - {field: pulseless_recognition_v2, rule: first_of, event_type: pulse_check,
+     emit: t_start_s, transform: to_redcap_mm_ss, difficulty: LOW}
+  - {field: time_compressions_v2, rule: first_of, event_type: compression_active_start,
+     emit: t_start_s, transform: to_redcap_mm_ss, difficulty: LOW}
+
+- name: medications_and_vascular_access
+  fields:
+  - {field: admin_epi_time_v2, rule: first_of, event_type: medication_administration,
+     where: {drug: epinephrine}, emit: t_start_s, transform: to_redcap_mm_ss, difficulty: LOW}
+  - {field: total_epi_v2, rule: count, event_type: medication_administration,
+     where: {drug: epinephrine}, source_class: AI_DERIVED, difficulty: LOW}
+  - {field: time_bicarb_v2, rule: first_of, event_type: medication_administration,
+     where: {drug: sodium_bicarbonate}, emit: t_start_s, transform: to_redcap_mm_ss, difficulty: LOW}
+  - {field: total_bicarb_v2, rule: count, event_type: medication_administration,
+     where: {drug: sodium_bicarbonate}, source_class: AI_DERIVED, difficulty: LOW}
+  - {field: time_calcium_v2, rule: first_of, event_type: medication_administration,
+     where: {drug: calcium}, emit: t_start_s, transform: to_redcap_mm_ss, difficulty: LOW}
+  - {field: total_calcium_v2, rule: count, event_type: medication_administration,
+     where: {drug: calcium}, source_class: AI_DERIVED, difficulty: LOW}
+  - {field: anti_arrythmic_given_v2, rule: gate_yesno, event_type: medication_administration,
+     where: {is_antiarrhythmic: true}, source_class: AI_DERIVED, difficulty: LOW}
+  - {field: time_antiarrhythmic_v2, rule: first_of, event_type: medication_administration,
+     where: {is_antiarrhythmic: true}, emit: t_start_s, transform: to_redcap_mm_ss, difficulty: LOW}
+  - {field: anti_arrythmic_med_v2, rule: checkbox, kind: checkbox,
+     event_type: medication_administration, where: {is_antiarrhythmic: true},
+     emit: antiarrhythmic_codes, difficulty: MEDIUM}
+  - {field: other_anti_arrhythmic_v2, rule: conditional_text,
+     event_type: medication_administration, where: {is_antiarrhythmic: true},
+     gate: "other_antiarrhythmic_name != ''", emit: other_antiarrhythmic_name, difficulty: MEDIUM}
+  - {field: anti_arrythmic_doses_v2, rule: count, event_type: medication_administration,
+     where: {is_antiarrhythmic: true}, source_class: AI_DERIVED, difficulty: LOW}
+  - {field: time_iv_io_v2, rule: first_of, event_type: vascular_access,
+     emit: t_start_s, transform: to_redcap_mm_ss, difficulty: MEDIUM}
+  - {field: other_meds_v2, rule: gate_yesno, event_type: medication_administration,
+     where: {is_other_med: true}, source_class: AI_DERIVED, difficulty: LOW}
+  - {field: other_meds_given_v2, rule: join_distinct_attr, event_type: medication_administration,
+     where: {is_other_med: true}, emit: drug_display_name, difficulty: MEDIUM}
+  - {field: time_other_med_v2, rule: first_of, event_type: medication_administration,
+     where: {is_other_med: true}, emit: t_start_s, transform: to_redcap_mm_ss, difficulty: LOW}
+  - {field: other_med_considered_v2, rule: case_field, key: other_med_considered,
+     source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: other_med_considered_list_v2, rule: case_field, key: other_med_considered_list,
+     source_class: AI_DERIVED, difficulty: MEDIUM}
+
+- name: rhythm_defib_and_appropriateness
+  fields:
+  - {field: time_rhythm_analysis_v2, rule: first_of, event_type: rhythm_check,
+     emit: t_start_s, transform: to_redcap_mm_ss, difficulty: LOW}
+  - {field: first_rhythm_v2, rule: first_of, event_type: rhythm_check,
+     emit: aicares_rhythm_code, difficulty: MEDIUM}
+  - {field: rhythm_recognized_v2, rule: case_field, key: all_shockable_rhythms_recognized,
+     source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: rhythm_recogonized_no_v2, rule: case_field, key: rhythm_recognized_no_explanation,
+     source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: shocks_admin_v2, rule: gate_yesno, event_type: defibrillation_shock,
+     source_class: AI_DERIVED, difficulty: LOW}
+  - {field: if_no_please_explain_v2, rule: case_field, key: shocks_not_admin_explanation,
+     source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: time_defib_v2, rule: first_of, event_type: defibrillation_shock,
+     emit: t_start_s, transform: to_redcap_mm_ss, difficulty: LOW}
+  - {field: clears_before_analyzing_an_v2, rule: case_field, key: clears_before_all_shocks,
+     source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: synchronized_cardioversion_v2, rule: case_field, key: synchronized_cardioversion_performed,
+     source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: external_pacing_indicated_v2, rule: case_field, key: external_pacing_performed,
+     source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: administers_appropriate_v2, rule: checkbox, kind: checkbox,
+     event_type: rhythm_check, emit: appropriate_drug_codes, difficulty: MEDIUM}
+  - {field: other_v2, rule: case_field, key: appropriate_other_text,
+     source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: inappropriate_admin_v2, rule: checkbox, kind: checkbox,
+     event_type: rhythm_check, emit: inappropriate_drug_codes, difficulty: MEDIUM}
+  - {field: other2_v2, rule: case_field, key: inappropriate_other_text,
+     source_class: AI_DERIVED, difficulty: MEDIUM}
+
+- name: pulse_checks_interruptions_and_outcomes
+  fields:
+  - {field: time_pulse_v2, rule: first_of, event_type: pulse_check,
+     emit: t_start_s, transform: to_redcap_mm_ss, difficulty: LOW}
+  - {field: time_pulse_end_v2, rule: first_of, event_type: pulse_check,
+     emit: t_end_s, transform: to_redcap_mm_ss, difficulty: LOW}
+  - {field: interruption_compression_v2, rule: count_gte, event_type: cci,
+     min_duration_s: 10.0, threshold: 1, source_class: AI_DERIVED, difficulty: LOW}
+  - {field: start_of_interruption_v2, rule: nth_of, event_type: cci,
+     min_duration_s: 10.0, index: 0, emit: t_start_s, transform: to_redcap_mm_ss, difficulty: LOW}
+  - {field: end_of_interruption_v2, rule: nth_of, event_type: cci,
+     min_duration_s: 10.0, index: 0, emit: t_end_s, transform: to_redcap_mm_ss, difficulty: LOW}
+  - {field: interruption_2_v2, rule: count_gte, event_type: cci,
+     min_duration_s: 10.0, threshold: 2, source_class: AI_DERIVED, difficulty: LOW}
+  - {field: start_of_interruption_2_v2, rule: nth_of, event_type: cci,
+     min_duration_s: 10.0, index: 1, emit: t_start_s, transform: to_redcap_mm_ss, difficulty: LOW}
+  - {field: end_of_interruption_2_v2, rule: nth_of, event_type: cci,
+     min_duration_s: 10.0, index: 1, emit: t_end_s, transform: to_redcap_mm_ss, difficulty: LOW}
+  - {field: interruption_3_v2, rule: count_gte, event_type: cci,
+     min_duration_s: 10.0, threshold: 3, source_class: AI_DERIVED, difficulty: LOW}
+  - {field: start_of_interruption_3_v2, rule: nth_of, event_type: cci,
+     min_duration_s: 10.0, index: 2, emit: t_start_s, transform: to_redcap_mm_ss, difficulty: LOW}
+  - {field: end_of_interruption_3_v2, rule: nth_of, event_type: cci,
+     min_duration_s: 10.0, index: 2, emit: t_end_s, transform: to_redcap_mm_ss, difficulty: LOW}
+  - {field: interruption_4_v2, rule: count_gte, event_type: cci,
+     min_duration_s: 10.0, threshold: 4, source_class: AI_DERIVED, difficulty: LOW}
+  - {field: interruptions_total_v2, rule: count, event_type: cci,
+     min_duration_s: 10.0, source_class: AI_DERIVED, difficulty: LOW}
+  - {field: interruption_compression_explain_v2, rule: case_field,
+     key: prolonged_interruption_explanation, source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: time_rosc_v2, rule: first_of, event_type: rosc_detected,
+     emit: t_start_s, transform: to_redcap_mm_ss, difficulty: LOW}
+  - {field: time_death_v2, rule: first_of, event_type: death_pronounced,
+     emit: t_start_s, transform: to_redcap_mm_ss, difficulty: LOW}
+
+- name: supplemental_case_specific_questions
+  fields:
+  - {field: case3_q1_v2, rule: case_field, key: case3_q1, source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: case3_q2_v2, rule: case_field, key: case3_q2, source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: case4_q1_v2, rule: case_field, key: case4_q1, source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: case4_q2_v2, rule: case_field, key: case4_q2, source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: case5_q1_v2, rule: case_field, key: case5_q1, source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: case5_q2_v2, rule: case_field, key: case5_q2, source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: case7_q1_v2, rule: case_field, key: case7_q1, source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: case8_q1_v2, rule: case_field, key: case8_q1, source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: case8_q2_v2, rule: case_field, key: case8_q2, source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: case8_q3_v2, rule: case_field, key: case8_q3, source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: case8_q4_v2, rule: case_field, key: case8_q4, source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: case9_q1_v2, rule: case_field, key: case9_q1, source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: case9_q2_v2, rule: case_field, key: case9_q2, source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: case9_q3_v2, rule: case_field, key: case9_q3, source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: case9_q4_v2, rule: case_field, key: case9_q4, source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: case9_q5_v2, rule: case_field, key: case9_q5, source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: case9_q6_v2, rule: case_field, key: case9_q6, source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: case10_q1_v2, rule: case_field, key: case10_q1, source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: case10_q2_v2, rule: case_field, key: case10_q2, source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: case10_q3_v2, rule: case_field, key: case10_q3, source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: case10_q4_v2, rule: case_field, key: case10_q4, source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: comments_v2, rule: case_field, key: technical_comments, source_class: AI_DERIVED, difficulty: MEDIUM}
+  - {field: feedback_narrative_v2, rule: case_field, key: feedback_narrative, source_class: AI_DERIVED, difficulty: HIGH}
+
+- name: teams_review_ai
+  fields:
+  - {field: team1_v2_v2, rule: case_field, key: team1_score, source_class: AI_DERIVED, difficulty: HIGH}
+  - {field: team2_v2_v2, rule: case_field, key: team2_score, source_class: AI_DERIVED, difficulty: HIGH}
+  - {field: team3_v3_v2, rule: case_field, key: team3_score, source_class: AI_DERIVED, difficulty: HIGH}
+  - {field: team4_v3_v2, rule: case_field, key: team4_score, source_class: AI_DERIVED, difficulty: HIGH}
+  - {field: team5_v3_v2, rule: case_field, key: team5_score, source_class: AI_DERIVED, difficulty: HIGH}
+  - {field: team6_v3_v2, rule: case_field, key: team6_score, source_class: AI_DERIVED, difficulty: HIGH}
+  - {field: team7_v3_v2, rule: case_field, key: team7_score, source_class: AI_DERIVED, difficulty: HIGH}
+  - {field: team8_v3_v2, rule: case_field, key: team8_score, source_class: AI_DERIVED, difficulty: HIGH}
+  - {field: team9_v3_v2, rule: case_field, key: team9_score, source_class: AI_DERIVED, difficulty: HIGH}
+  - {field: team10_v3_v2, rule: case_field, key: team10_score, source_class: AI_DERIVED, difficulty: HIGH}
+  - {field: team11_v3_v2, rule: case_field, key: team11_score, source_class: AI_DERIVED, difficulty: HIGH}
+  - {field: team12_v2_v2, rule: case_field, key: team12_global, source_class: AI_DERIVED, difficulty: HIGH}
+  - {field: general_comments_v2, rule: case_field, key: team_general_comments, source_class: AI_DERIVED, difficulty: HIGH}

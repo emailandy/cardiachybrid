@@ -31,7 +31,7 @@ from prompts.builder import (
     _all_anchor_event_types,
 )
 from prompts.registry import prompt_set_sha, get_model_binding
-from pipeline.vertex_client import VertexClient
+from pipeline.vertex_client import VertexClient, resolve_gcp_project
 
 logging.basicConfig(
     level=logging.INFO,
@@ -284,7 +284,8 @@ def run_live(args: argparse.Namespace, duration_s: float) -> None:
     print("  - Why this matters: If any of these columns come back populated, the model is hallucinating numbers it cannot see.\n")
 
     log_path = Path(".resus_qc_tmp/calls.jsonl") if getattr(args, "log_calls", False) else None
-    vc = VertexClient(project="nodepeel", location="global", log_path=log_path)
+    active_project = resolve_gcp_project(getattr(args, "project", None))
+    vc = VertexClient(project=active_project, location="global", log_path=log_path)
 
     sensor_result = None
     sensor_runner = None
@@ -600,8 +601,8 @@ def run_live(args: argparse.Namespace, duration_s: float) -> None:
         print("\n[BigQuery Write Path]")
         from pipeline.bq_writer import write_run
         run_id_to_write = getattr(args, "run_id", None) or f"run_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
-        write_run(case_id=args.case_id, run_id=run_id_to_write, stream=combined_stream, field_values=fvs, raw_dataset="resus_raw")
-        print(f"✓ Successfully loaded run {run_id_to_write} to nodepeel.resus_raw in BigQuery.")
+        write_run(case_id=args.case_id, run_id=run_id_to_write, stream=combined_stream, field_values=fvs, raw_dataset="resus_raw", project=active_project)
+        print(f"✓ Successfully loaded run {run_id_to_write} to {active_project}.resus_raw in BigQuery.")
 
     out_path = Path(args.out) if getattr(args, "out", None) else (Path(".resus_qc_tmp") / "case.json")
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -612,6 +613,7 @@ def run_live(args: argparse.Namespace, duration_s: float) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description="run_case.py runner for resus_qc (DEMO-1)")
     parser.add_argument("--case-id", default="DEMO-1", help="Case ID to run")
+    parser.add_argument("--project", default=None, help="GCP Project ID (defaults to GOOGLE_CLOUD_PROJECT / gcloud config)")
     parser.add_argument("--video", default="gs://videval/cardiac/simvideo2.mp4", help="GCS URI of video")
     parser.add_argument("--dry-run", action="store_true", help="Assemble prompts, snapshot, zero API calls")
     parser.add_argument("--no-bq", action="store_true", help="Disable writing results to BigQuery")

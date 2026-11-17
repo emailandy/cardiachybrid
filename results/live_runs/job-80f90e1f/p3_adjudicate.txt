@@ -1,0 +1,97 @@
+```json
+{
+  "events": [],
+  "case_fields": {
+    "arrest_location": {
+      "value": null,
+      "abstain": true,
+      "abstain_reason": "No input events, sensor tracks, or coverage windows were provided in Inputs.",
+      "evidence": []
+    },
+    "recording_started_late": {
+      "value": null,
+      "abstain": true,
+      "abstain_reason": "No input events, sensor tracks, or coverage windows were provided in Inputs.",
+      "evidence": []
+    },
+    "cpr_in_progress_upon_arrival": {
+      "value": null,
+      "abstain": true,
+      "abstain_reason": "No input events, sensor tracks, or coverage windows were provided in Inputs.",
+      "evidence": []
+    },
+    "brought_by_ems": {
+      "value": null,
+      "abstain": true,
+      "abstain_reason": "No input events, sensor tracks, or coverage windows were provided in Inputs.",
+      "evidence": []
+    },
+    "adv_airway_on_arrival": {
+      "value": null,
+      "abstain": true,
+      "abstain_reason": "No input events, sensor tracks, or coverage windows were provided in Inputs.",
+      "evidence": []
+    },
+    "ems_pads_switched": {
+      "value": null,
+      "abstain": true,
+      "abstain_reason": "No input events, sensor tracks, or coverage windows were provided in Inputs.",
+      "evidence": []
+    },
+    "mccd_ed_provenance": {
+      "value": null,
+      "abstain": true,
+      "abstain_reason": "No input events, sensor tracks, or coverage windows were provided in Inputs.",
+      "evidence": []
+    },
+    "ed_mccd_outcome": {
+      "value": null,
+      "abstain": true,
+      "abstain_reason": "No input events, sensor tracks, or coverage windows were provided in Inputs.",
+      "evidence": []
+    },
+    "dnr_basis": {
+      "value": null,
+      "abstain": true,
+      "abstain_reason": "No input events, sensor tracks, or coverage windows were provided in Inputs.",
+      "evidence": []
+    }
+  },
+  "coverage_summary": {
+    "intervals": [],
+    "channel_adequacy": {
+      "speech": {
+        "adequate": false,
+        "reason": "No coverage windows or input data provided."
+      },
+      "visual": {
+        "adequate": false,
+        "reason": "No coverage windows or input data provided."
+      },
+      "monitor": {
+        "adequate": false,
+        "reason": "No coverage windows or input data provided."
+      },
+      "airway": {
+        "adequate": false,
+        "reason": "No coverage windows or input data provided."
+      }
+    }
+  },
+  "merges": [],
+  "repairs": [],
+  "flags": [
+    {
+      "flag_type": "MISSING_INPUT_DATA",
+      "reason": "The Inputs block is empty; no chunk-level events, sensor tracks, or coverage notes were supplied for adjudication."
+    }
+  ],
+  "unresolved": [
+    {
+      "attribute": "all_case_fields_and_events",
+      "reason": "No input payload was provided in the prompt; human or pipeline verification required to supply Pass 1/Pass 2 event logs and coverage windows.",
+      "review_interval_s": null
+    }
+  ]
+}
+```

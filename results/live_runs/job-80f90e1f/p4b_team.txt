@@ -1,0 +1,10 @@
+{
+  "score": null,
+  "abstain": true,
+  "abstain_reason": "Both the CASE and OBJECTIVE METRICS sections are completely empty; no video, audio, sensor tracks, event logs, or computable metrics were provided from which to observe team performance.",
+  "placement": "No consensus-rated calibration anchor cases are available for this department (Q-015), so comparative placement between anchors cannot be performed and scoring would have to be done in absolute terms with reduced calibration. However, because the CASE and OBJECTIVE METRICS sections contain zero data, even an absolute placement cannot be substantiated by evidence, resulting in maximum uncertainty.",
+  "strengths": [],
+  "deficiencies": [],
+  "justification": "Abstaining from a numeric global teamwork score because no observational evidence (speech, device audio, visual observations, or sensor tracks) is present in the CASE section and no metrics are present in the OBJECTIVE METRICS section. In addition, no departmental calibration anchors exist (Q-015), which widens uncertainty for absolute scoring. Per the Prime Directive and Abstention policy, the absence of metrics and case events must be treated strictly as absence of information rather than poor performance, and no timestamps or clinical observations may be fabricated. (If a numeric value on the 1–10 scale were strictly required under complete uncertainty, the middle of the scale—5—would be preferred per calibration guidance, with maximum uncertainty explicitly noted.)",
+  "one_point_higher": "To support a valid global rating or a one-point increase, concrete multimodal evidence in the CASE section (verifiable timestamps with verbatim closed-loop communication, clear role assignment, coordinated task execution, and composed adaptation) and/or populated objective coordination metrics would need to be present in the record."
+}

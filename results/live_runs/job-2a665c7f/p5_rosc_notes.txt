@@ -1,0 +1,5 @@
+At 366.0s, compressions stopped for a pulse check and the team leader asked if a pulse was present; at 369.0s, the simulation facilitator verbally announced ROSC ("You guys have a pulse!") and stated post-ROSC vital signs (HR 110, BP 95/77, RR 14, SpO2 94%, PCO2 40, normal sinus rhythm). Compressions remained stopped through the end of the recording at 455.8s.
+
+Abstentions: For the pulse check at 366.0s–372.0s preceding ROSC, anatomical location was abstained because the check was performed verbally with the facilitator while a provider rested a hand on the mannequin's left shoulder/upper arm without palpating a distinct pulse site.
+
+Coverage limitations: 0.0s–455.8s: The wall monitor was powered off/blank and the defibrillator was unconnected; all ROSC findings, rhythms, and vital signs were delivered verbally by the facilitator.

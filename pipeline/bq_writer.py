@@ -10,12 +10,13 @@ from datetime import datetime
 from typing import Any
 
 from google.cloud import bigquery
+from pipeline.vertex_client import resolve_gcp_project
 
 logger = logging.getLogger(__name__)
 
 
-def get_bq_client(project: str = "nodepeel") -> bigquery.Client:
-    return bigquery.Client(project=project)
+def get_bq_client(project: str | None = None) -> bigquery.Client:
+    return bigquery.Client(project=resolve_gcp_project(project))
 
 
 def _to_json_str(obj: Any) -> str:

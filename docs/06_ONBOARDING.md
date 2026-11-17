@@ -31,7 +31,7 @@ pytest -q -m "not integration"
 
 ## 2. Week 1 Curricula: Deep-Dive Architecture & Reference Case
 
-During your first week, you will explore the 909 dictionary fields (`FIELDS`), the 5-pass prompt sequence, and the 22-minute clinical reference case (`golden_case_01.py`, [D12](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D12.md)).
+During your first week, you will explore the 909 dictionary fields (`FIELDS`), the 5-pass prompt sequence, and the 22-minute clinical reference case (`golden_case_01.py`, [D12](tasks/D12.md)).
 
 1. **Inspect `generated.redcap_fields.FIELDS`**: Examine the 909 dictionary fields, note their `source_class` (`AI_DIRECT`, `AI_DERIVED`, etc.), and see how repeating groups are defined (`defib`: 30, `cci`: 30, `airway`: 8, `rosc`: 20, `vent_delay`: 5).
 2. **Execute `golden_case_01.py`**: Run the clinical reference case and inspect the 7-column routing table across the 1,879 reducer-emitted fields:
@@ -45,7 +45,7 @@ During your first week, you will explore the 909 dictionary fields (`FIELDS`), t
 
 ---
 
-## 3. Your First Task: Adding or Editing an Anchor Card ([A03](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/A03.md))
+## 3. Your First Task: Adding or Editing an Anchor Card ([A03](tasks/A03.md))
 
 When modifying an event extraction rule or adding positive/negative boundary examples to an anchor card in `prompts/anchors/`:
 
@@ -60,7 +60,7 @@ When modifying an event extraction rule or adding positive/negative boundary exa
 
 1. **Edit the Target Anchor Card**: Open `prompts/anchors/<event_type>.yaml` and update `positive_examples` or `negative_examples` using clear, clinical ED resuscitation scenarios.
 2. **Verify Anchor Library Parity (`I6`)**: Run `python scripts/check_anchors.py --strict` to assert that all 39 required anchor cards are valid and contain no syntax errors.
-3. **Verify Prompt Checksum Integrity**: Ensure `prompt_set_sha(strict=True)` (`12280b94c0c134e8`) remains reproducible and raises no missing-file exceptions ([A01](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/A01.md)).
+3. **Verify Prompt Checksum Integrity**: Ensure `prompt_set_sha(strict=True)` (`12280b94c0c134e8`) remains reproducible and raises no missing-file exceptions ([A01](tasks/A01.md)).
 4. **Execute Regression Suite**: Run `pytest -q` to verify that your changes do not break downstream prompt assembly (`build_p1`, `build_p3` in `prompts/builder.py`).
 
 ---
@@ -96,7 +96,7 @@ In `dictionary/instrument.csv`, while the vast majority of Version 2 fields end 
 **Never guess or append `_v2` to these field names!** Always inspect `generated.redcap_fields.FIELDS`.
 
 ### Tripwire 3: Never Hand-Type a Field Name (`I5`, `assert_no_field_names`)
-Never hand-type a REDCap column literal (`num_cci_v2`, `defib_shock_time_1`, etc.) into prompt templates, Python business logic, or SQL strings. Always reference field symbols from `generated.redcap_fields.FIELDS` or use dynamic schema generators (`codegen/emit_sql.py`, [D07](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D07.md)). Hand-typing literals causes silent typo defects and fails invariant `I5`.
+Never hand-type a REDCap column literal (`num_cci_v2`, `defib_shock_time_1`, etc.) into prompt templates, Python business logic, or SQL strings. Always reference field symbols from `generated.redcap_fields.FIELDS` or use dynamic schema generators (`codegen/emit_sql.py`, [D07](tasks/D07.md)). Hand-typing literals causes silent typo defects and fails invariant `I5`.
 
 ### Tripwire 4: The LLM Never Counts (`F-008`, `F-010`)
 Never prompt an LLM to count how many defibrillation shocks, airway attempts, or CPR interruptions occurred in a case (`F-008`). Our 5-call replication probe showed a **20% replication rate** for shock counting (`F-008`), and Pro models performed worse than Flash (`F-010`). The LLM extracts candidate event intervals; deterministic physical sensors (`S1–S7`) and the Reducer Engine (`D05`) count occurrences and unroll repeating instruments.

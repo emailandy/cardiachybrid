@@ -1,11 +1,47 @@
 """Vertex AI client wrapper using google-genai SDK with strict config mapping and logging."""
 
 import json
+import os
+import subprocess
 import time
 from pathlib import Path
 from typing import Any, Optional
+
+os.environ.setdefault("GOOGLE_API_USE_CLIENT_CERTIFICATE", "false")
+
 from google import genai
 from google.genai import types
+
+
+def resolve_gcp_project(explicit_project: Optional[str] = None) -> str:
+    """Resolves the active GCP project ID from explicit argument, environment variables, ADC, or gcloud CLI."""
+    if explicit_project and explicit_project.strip():
+        return explicit_project.strip()
+    for env_key in ("GOOGLE_CLOUD_PROJECT", "GCP_PROJECT", "GCLOUD_PROJECT", "CLOUDSDK_CORE_PROJECT"):
+        val = os.environ.get(env_key, "").strip()
+        if val:
+            return val
+    try:
+        import google.auth
+        _, adc_project = google.auth.default()
+        if adc_project and str(adc_project).strip():
+            return str(adc_project).strip()
+    except Exception:
+        pass
+    try:
+        res = subprocess.run(
+            ["gcloud", "config", "get-value", "project"],
+            capture_output=True,
+            text=True,
+            timeout=3.0,
+            check=False,
+        )
+        proj = (res.stdout or "").strip()
+        if proj and proj != "(unset)":
+            return proj
+    except Exception:
+        pass
+    return "nodepeel"
 
 
 def map_thinking_config(thinking_str: str) -> types.ThinkingConfig:
@@ -42,10 +78,16 @@ def log_call(log_path: Path, record: dict[str, Any]) -> None:
 
 
 class VertexClient:
-    def __init__(self, project: str = "nodepeel", location: str = "global", log_path: Optional[Path] = None) -> None:
-        self.project = project
-        self.location = location
-        self.client = genai.Client(vertexai=True, project=project, location=location)
+    def __init__(self, project: Optional[str] = None, location: str = "global", log_path: Optional[Path] = None) -> None:
+        resolved_project = resolve_gcp_project(project)
+        self.project = resolved_project
+        self.location = location or os.environ.get("GOOGLE_CLOUD_LOCATION", "global")
+        self.client = genai.Client(
+            vertexai=True,
+            project=self.project,
+            location=self.location,
+            http_options=types.HttpOptions(timeout=240000),
+        )
         self.log_path = log_path
 
     def generate(

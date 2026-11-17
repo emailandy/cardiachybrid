@@ -100,14 +100,13 @@ def slugify(text: str) -> str:
 
 def load_dictionary(path: Path) -> Dict[str, FieldSpec]:
     raw = path.read_bytes().decode("utf-8-sig")
-    try:
-        dialect = csv.Sniffer().sniff(raw[:8192], delimiters=",\t")
-    except csv.Error:
-        dialect = csv.excel
-        
-    rdr = csv.DictReader(io.StringIO(raw), dialect=dialect)
+    rdr = csv.DictReader(io.StringIO(raw), dialect=csv.excel)
     if not rdr.fieldnames or len(rdr.fieldnames) < 10:
-        rdr = csv.DictReader(io.StringIO(raw), dialect=csv.excel)
+        try:
+            dialect = csv.Sniffer().sniff(raw[:8192], delimiters=",\t")
+        except csv.Error:
+            dialect = csv.excel
+        rdr = csv.DictReader(io.StringIO(raw), dialect=dialect)
         
     fieldnames = rdr.fieldnames
     if not fieldnames:

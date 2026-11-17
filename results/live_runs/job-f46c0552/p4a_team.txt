@@ -1,0 +1,178 @@
+# TEAM RATINGS — ITEMS 1 THROUGH 11
+
+## LEADERSHIP & METRIC CONTEXT
+- **Evaluated Leader**: `TEAM_LEADER` held leadership for 100% of the case (7 of 9 directive utterances; role stability was stable and leadership did not change).
+- **Objective Metrics Handling**: `closed_loop_completion_rate` (`NULL`), `median_peri_shock_pause_s` (`NULL`, zero shocks delivered in this non-shockable PEA arrest), and the unpopulated `chest_compression_fraction` placeholder are treated strictly as absence of computed metric information, never as zero.
+- **Modality Coverage**: Only the diarized speech transcript and mapped clinical milestone log are available in this record; raw audio prosody and visual video tracks are absent.
+
+---
+
+### Item 1: Leadership — Direction and Command
+*(The team leader let the team know what was expected of them through direction and command)*
+
+1. `positive_evidence[]`:
+   - `{t: 62.5, quote_or_description: "TEAM_LEADER: \"Okay, you can do compressions, I'll do airway, meds, I'll be the provider.\""}`
+   - `{t: 75.0, quote_or_description: "TEAM_LEADER: \"So compressions... start compressions.\""}`
+   - `{t: 82.5, quote_or_description: "TEAM_LEADER: \"She's currently in PEA still, so we can't shock. We need to push 1 of epinephrine while we're getting the airway.\""}`
+   - `{t: 238.0, quote_or_description: "TEAM_LEADER: \"Continue compressions, she's still in PEA. We can give another push of epinephrine.\""}`
+2. `negative_evidence[]`:
+   - `{t: 62.5, quote_or_description: "TEAM_LEADER: \"Okay, you can do compressions, I'll do airway, meds, I'll be the provider.\" — Initial role delegation is verbally ambiguous regarding who is assigned medications versus airway and provider duties."}`
+   - `{t: 351.0, quote_or_description: "TEAM_LEADER: \"Could do an amp of sodium bicarbonate, I'm sure she's got some acidosis going on.\" — Stated as an undirected musing rather than an explicit command, resulting in no action or readback."}`
+3. `relative_placement`: No consensus-rated anchor cases exist for this department (Q-015); placed in the middle-to-upper-middle range on an absolute basis.
+4. `score`: `3`
+5. `justification`: `TEAM_LEADER` held the leadership role throughout the entire case without handover and issued clear, timely directives to initiate compressions (`t: 75.0`), administer epinephrine and establish an airway (`t: 82.5`), and resume compressions with repeat epinephrine after checking the pulse (`t: 238.0`). However, a score of 4 is precluded by the ambiguous phrasing of initial role assignments (`t: 62.5`) and tentative, undirected phrasing regarding sodium bicarbonate (`t: 351.0`). Because no department calibration anchors exist, there is calibration uncertainty, and the middle of the scale (`3`) is preferred.
+
+---
+
+### Item 2: Leadership — Global Perspective
+*(The team leader maintained a global perspective, monitoring clinical procedures and the environment)*
+
+1. `positive_evidence[]`:
+   - `{t: 108.5, quote_or_description: "TEAM_LEADER: \"Okay, so 1 of epi's given, we have our airway, we're currently bagging, we're doing CPR. Airway's in.\""}`
+   - `{t: 119.0, quote_or_description: "TEAM_LEADER: \"As far as H's and T's, she could be hypoxic, she could have any type of clot or thrombus with her emphysema breathing history, PE. Does she have a cardiac history?\""}`
+   - `{t: 225.0, quote_or_description: "TEAM_LEADER: \"We can say it's about two minutes, so let's do a pulse check and see where rhythm's at. Does she have a pulse?\""}`
+   - `{t: 351.0, quote_or_description: "TEAM_LEADER: \"It's about two minutes, we can check a pulse again. Do we have a pulse?\""}`
+2. `negative_evidence[]`:
+   - `{t: 62.5, quote_or_description: "TEAM_LEADER: \"Okay, you can do compressions, I'll do airway, meds, I'll be the provider.\" — Leader verbally assumes hands-on airway responsibility initially rather than delegating to remain completely hands-off."}`
+   - `{t: 191.0, quote_or_description: "COMPRESSOR: \"Maybe we could listen to lung sounds to confirm placement.\" — Airway confirmation was prompted by the compressor rather than proactively tracked by the leader after placement at t=110.0."}`
+3. `relative_placement`: No consensus-rated anchor cases exist for this department (Q-015); placed in the middle range on an absolute basis.
+4. `score`: `3`
+5. `justification`: `TEAM_LEADER` demonstrated macro-level situational awareness by verbally summarizing active interventions (`t: 108.5`), leading a structured evaluation of reversible causes (`t: 119.0`), and tracking two-minute reassessment intervals (`t: 225.0`, `t: 351.0`). Negatives include the leader verbally taking on the airway role at `t: 62.5` and needing a prompt from `COMPRESSOR` at `t: 191.0` to confirm airway placement. Uncertainty is explicitly noted due to the lack of calibration anchors and the absence of a visual track to verify physical hands-off positioning, supporting a middle-of-the-scale score of `3`.
+
+---
+
+### Item 3: Teamwork — Effective Communication
+*(The team communicated effectively, including verbal, non-verbal, and closed-loop communication)*
+
+1. `positive_evidence[]`:
+   - `{t: 103.5, quote_or_description: "MED_RN: \"I'm going to give meds, 1 milligram of epinephrine.\" followed at t=108.5 by TEAM_LEADER: \"Okay, so 1 of epi's given...\""}`
+   - `{t: 168.0, quote_or_description: "AIRWAY_MD: \"And she was having diarrhea before... so that makes sense for electrolyte derangements.\""}`
+   - `{t: 191.0, quote_or_description: "COMPRESSOR: \"Maybe we could listen to lung sounds to confirm placement.\" followed at t=197.5 by MED_RN: \"All right, listening... You hear bilateral breath sounds.\""}`
+   - `{t: 244.0, quote_or_description: "MED_RN: \"Gave epinephrine.\" — Explicit verbal completion report following the leader's directive at t=238.0."}`
+2. `negative_evidence[]`:
+   - `{t: 270.0, quote_or_description: "TEAM_LEADER: \"We can do like CBC, CMP, I would do a troponin, do an ABG and just see what her oxygen status was before, do a D-dimer.\" — Broadcast without directed recipient or verbal readback."}`
+   - `{t: 351.0, quote_or_description: "TEAM_LEADER: \"Could do an amp of sodium bicarbonate, I'm sure she's got some acidosis going on.\" — Unacknowledged verbal suggestion with no closed-loop response."}`
+3. `relative_placement`: No consensus-rated anchor cases exist for this department (Q-015); placed in the middle range on an absolute basis.
+4. `score`: `3`
+5. `justification`: The team demonstrated clear verbal callouts for epinephrine administration (`t: 103.5`, `t: 108.5`, `t: 244.0`), cross-monitoring by `COMPRESSOR` (`t: 191.0`) with direct verbal acknowledgment by `MED_RN` (`t: 197.5`), and collaborative input from `AIRWAY_MD` (`t: 168.0`). However, laboratory and sodium bicarbonate proposals (`t: 270.0`, `t: 351.0`) lacked directed assignment and closed-loop readback. Given these mixed observations, non-computable automated closed-loop metrics (`NULL`), and the absence of calibration anchors, uncertainty is noted and a middle score of `3` is assigned.
+
+---
+
+### Item 4: Teamwork — Working Together to Complete Tasks in a Timely Manner
+*(The team worked together to complete tasks in a timely manner)*
+
+1. `positive_evidence[]`:
+   - `{t: 80.0, quote_or_description: "Chest compressions initiated on the manikin at t=80.0, 5.0 seconds after the leader's directive at t=75.0 (\"So compressions... start compressions.\")."}`
+   - `{t: 105.0, quote_or_description: "Epinephrine 1 mg IV administered at t=105.0 (MED_RN at t=103.5: \"I'm going to give meds, 1 milligram of epinephrine.\"), 22.5 seconds after the order at t=82.5."}`
+   - `{t: 110.0, quote_or_description: "Airway placed and bagging underway by t=110.0 (TEAM_LEADER at t=108.5: \"we have our airway, we're currently bagging, we're doing CPR. Airway's in.\")."}`
+   - `{t: 244.0, quote_or_description: "MED_RN: \"Gave epinephrine.\" — Repeat epinephrine completed 6.0 seconds after the leader's order at t=238.0."}`
+2. `negative_evidence[]`:
+   - `{t: 204.0, quote_or_description: "Airway confirmation via auscultation (MED_RN at t=197.5: \"All right, listening... You hear bilateral breath sounds.\") was delayed until 94.0 seconds after airway placement at t=110.0."}`
+3. `relative_placement`: No consensus-rated anchor cases exist for this department (Q-015); placed in the middle-to-upper-middle range on an absolute basis.
+4. `score`: `3`
+5. `justification`: Initial resuscitation tasks—including chest compression onset (`t: 80.0`), initial epinephrine administration (`t: 105.0`), airway insertion (`t: 110.0`), and repeat epinephrine administration (`t: 244.0`)—were executed rapidly and in parallel. However, auscultation to confirm airway placement (`t: 204.0`) was delayed by 94.0 seconds after insertion (`t: 110.0`). With no calibration anchors available, uncertainty is explicitly stated and a score of `3` is assigned.
+
+---
+
+### Item 5: Teamwork — Acting with Composure and Control
+*(The team acted with composure and control)*
+
+1. `positive_evidence[]`:
+   - `{t: 108.5, quote_or_description: "TEAM_LEADER: \"Okay, so 1 of epi's given, we have our airway, we're currently bagging, we're doing CPR. Airway's in.\" — Orderly verbal recap of concurrent interventions."}`
+   - `{t: 191.0, quote_or_description: "COMPRESSOR: \"Maybe we could listen to lung sounds to confirm placement.\" followed at t=197.5 by MED_RN: \"All right, listening... You hear bilateral breath sounds.\" — Measured, constructive exchange during ongoing CPR."}`
+2. `negative_evidence[]`:
+   - `[]`
+3. `relative_placement`: Unobservable in key paralinguistic and visual modalities; no consensus-rated anchor cases exist for this department (Q-015).
+4. `score`: `null` (`abstain: true`, `abstain_reason`: `"Raw audio prosody (vocal tone, volume, speech rate under stress) and visual video tracks (physical composure, body language, equipment handling) are absent from the text-only transcript."`)
+5. `justification`: While the diarized text shows orderly verbal turn-taking (`t: 108.5`, `t: 191.0`, `t: 197.5`) and zero verbal indicators of panic, evaluating emotional composure and physical control requires observing vocal prosody and physical demeanor, which are unavailable in a text-only transcript. Per the Prime Directive and Coverage Caveat, unobservable behaviour is abstained rather than inferred or scored with false precision.
+
+---
+
+### Item 6: Teamwork — Team Morale
+*(The team morale was positive, e.g., support, confidence, spirit, optimism)*
+
+1. `positive_evidence[]`:
+   - `[]`
+2. `negative_evidence[]`:
+   - `[]`
+3. `relative_placement`: Unobservable from the provided transcript channel; no consensus-rated anchor cases exist for this department (Q-015).
+4. `score`: `null` (`abstain: true`, `abstain_reason`: `"Visual non-verbal cues and raw audio vocal tone are absent from the text transcript, and zero explicit verbal expressions of morale, praise, or encouragement occur across the 20 diarized utterances."`)
+5. `justification`: Across the 20 diarized utterances, all speech is strictly task-focused with neither positive nor negative morale statements, and the visual and paralinguistic audio channels needed to observe team spirit, affect, and non-verbal support are absent. Under the Evidence Gates and Coverage Caveat, we abstain (`null`) rather than scoring low on the absence of observable evidence.
+
+---
+
+### Item 7: Teamwork — Adapting to Changing Situations
+*(The team adapted to changing situations, such as deterioration, new information, or ROSC)*
+
+1. `positive_evidence[]`:
+   - `{t: 168.0, quote_or_description: "AIRWAY_MD: \"And she was having diarrhea before... so that makes sense for electrolyte derangements.\" — Incorporates pre-arrival gastrointestinal history into the active differential diagnosis."}`
+   - `{t: 238.0, quote_or_description: "TEAM_LEADER: \"Continue compressions, she's still in PEA. We can give another push of epinephrine.\" — Adapts immediately to persistent absence of pulse reported at t=236.0."}`
+   - `{t: 393.0, quote_or_description: "TEAM_LEADER: \"We can give fluids, she's dehydrated most likely... We'll do the fluids see if that improves it. Pulm, cardiology should be consulted. I would get an EKG, CT head, chest X-ray to confirm the ET tube and everything.\" — Transitions care plan to post-resuscitation stabilization after ROSC is announced at t=368.5."}`
+2. `negative_evidence[]`:
+   - `{t: 393.0, quote_or_description: "TEAM_LEADER: \"...chest X-ray to confirm the ET tube and everything.\" — Refers to confirming an endotracheal tube despite the facilitator specifying LMA placement at t=0.0."}`
+3. `relative_placement`: No consensus-rated anchor cases exist for this department (Q-015); placed in the middle range on an absolute basis.
+4. `score`: `3`
+5. `justification`: The team adapted appropriately to clinical transitions, including integrating pre-hospital history into reversible-cause analysis (`t: 168.0`), continuing the PEA resuscitation cycle when pulselessness persisted (`t: 238.0`), and shifting immediately to post-ROSC stabilization, fluids, imaging, and specialty consultations (`t: 393.0`) after pulse return (`t: 368.5`). A minor discrepancy occurred at `t: 393.0` when the leader referenced an ET tube rather than the LMA. Given the lack of department calibration anchors, uncertainty is noted and a middle score of `3` is assigned.
+
+---
+
+### Item 8: Teamwork — Monitoring and Reassessing the Situation
+*(The team monitored and reassessed the situation)*
+
+1. `positive_evidence[]`:
+   - `{t: 191.0, quote_or_description: "COMPRESSOR: \"Maybe we could listen to lung sounds to confirm placement.\" followed at t=197.5 by MED_RN: \"All right, listening... You hear bilateral breath sounds.\""}`
+   - `{t: 225.0, quote_or_description: "TEAM_LEADER: \"We can say it's about two minutes, so let's do a pulse check and see where rhythm's at. Does she have a pulse?\""}`
+   - `{t: 250.0, quote_or_description: "COMPRESSOR: \"Can we get a point-of-care glucose? We don't have labs back, but your point-of-care glucose is within normal range.\""}`
+   - `{t: 351.0, quote_or_description: "TEAM_LEADER: \"It's about two minutes, we can check a pulse again. Do we have a pulse?\""}`
+2. `negative_evidence[]`:
+   - `{t: 204.0, quote_or_description: "Auscultation to confirm bilateral breath sounds occurred at t=204.0, 94.0 seconds after the airway was reported in place at t=110.0."}`
+3. `relative_placement`: No consensus-rated anchor cases exist for this department (Q-015); placed in the middle-to-upper-middle range on an absolute basis.
+4. `score`: `3`
+5. `justification`: The team consistently monitored resuscitation intervals with scheduled two-minute pulse and rhythm reassessments (`t: 225.0`, `t: 351.0`), checked point-of-care glucose (`t: 250.0`), and verified bilateral breath sounds (`t: 191.0`, `t: 197.5`). Because initial airway confirmation was delayed by 94.0 seconds (`t: 204.0` vs `t: 110.0`) and no calibration anchors are available, a middle-of-the-scale score of `3` is assigned with explicit calibration uncertainty.
+
+---
+
+### Item 9: Teamwork — Anticipating Potential Actions
+*(The team anticipated potential actions)*
+
+1. `positive_evidence[]`:
+   - `{t: 119.0, quote_or_description: "TEAM_LEADER: \"As far as H's and T's, she could be hypoxic, she could have any type of clot or thrombus with her emphysema breathing history, PE. Does she have a cardiac history?\""}`
+   - `{t: 270.0, quote_or_description: "TEAM_LEADER: \"We can do like CBC, CMP, I would do a troponin, do an ABG and just see what her oxygen status was before, do a D-dimer.\""}`
+   - `{t: 351.0, quote_or_description: "TEAM_LEADER: \"Could do an amp of sodium bicarbonate, I'm sure she's got some acidosis going on.\""}`
+   - `{t: 393.0, quote_or_description: "TEAM_LEADER: \"We can give fluids, she's dehydrated most likely... Pulm, cardiology should be consulted. I would get an EKG, CT head, chest X-ray to confirm the ET tube and everything.\""}`
+2. `negative_evidence[]`:
+   - `{t: 351.0, quote_or_description: "TEAM_LEADER: \"Could do an amp of sodium bicarbonate, I'm sure she's got some acidosis going on.\" — Verbalized right before a pulse check without ordering preparation or administration."}`
+3. `relative_placement`: No consensus-rated anchor cases exist for this department (Q-015); placed in the middle range on an absolute basis.
+4. `score`: `3`
+5. `justification`: The team anticipated diagnostic and therapeutic needs across the resuscitation, including early exploration of H's and T's (`t: 119.0`), laboratory panels (`t: 270.0`), potential buffer therapy for acidosis (`t: 351.0`), and post-ROSC fluid resuscitation, imaging, and specialty consultations (`t: 393.0`). However, the anticipated sodium bicarbonate intervention at `t: 351.0` was not operationalized into a preparatory action. With no calibration anchors available, uncertainty is explicitly stated and a score of `3` is assigned.
+
+---
+
+### Item 10: Teamwork — Prioritizing Tasks
+*(The team prioritized tasks)*
+
+1. `positive_evidence[]`:
+   - `{t: 75.0, quote_or_description: "TEAM_LEADER: \"So compressions... start compressions.\" — Prioritizes immediate chest compressions at the start of the case."}`
+   - `{t: 82.5, quote_or_description: "TEAM_LEADER: \"We don't have an airway, so we want to get an airway. She's currently in PEA still, so we can't shock. We need to push 1 of epinephrine while we're getting the airway.\" — Prioritizes epinephrine and airway management for non-shockable PEA."}`
+   - `{t: 238.0, quote_or_description: "TEAM_LEADER: \"Continue compressions, she's still in PEA. We can give another push of epinephrine.\" — Prioritizes immediate resumption of chest compressions 2.0 seconds after pulse absence is confirmed at t=236.0."}`
+2. `negative_evidence[]`:
+   - `{t: 191.0, quote_or_description: "COMPRESSOR: \"Maybe we could listen to lung sounds to confirm placement.\" — Primary confirmation of airway placement was deferred behind an extended differential diagnosis discussion (t=119.0–182.0)."}`
+3. `relative_placement`: No consensus-rated anchor cases exist for this department (Q-015); placed in the middle-to-upper-middle range on an absolute basis.
+4. `score`: `3`
+5. `justification`: Core arrest priorities—initiating compressions (`t: 75.0`), withholding defibrillation in PEA while ordering epinephrine and airway placement (`t: 82.5`), and immediately resuming compressions after pulse check (`t: 238.0`)—were properly sequenced. However, confirming airway placement via auscultation (`t: 191.0`) was deferred until after a lengthy H's and T's discussion (`t: 119.0–182.0`). Due to this mitigated negative and the absence of department calibration anchors, a middle-of-the-scale score of `3` is assigned.
+
+---
+
+### Item 11: Teamwork — Following Approved Standards/Guidelines
+*(The team followed approved standards/guidelines)*
+
+1. `positive_evidence[]`:
+   - `{t: 82.5, quote_or_description: "TEAM_LEADER: \"She's currently in PEA still, so we can't shock. We need to push 1 of epinephrine while we're getting the airway.\""}`
+   - `{t: 119.0, quote_or_description: "TEAM_LEADER: \"As far as H's and T's, she could be hypoxic, she could have any type of clot or thrombus with her emphysema breathing history, PE.\""}`
+   - `{t: 225.0, quote_or_description: "TEAM_LEADER: \"We can say it's about two minutes, so let's do a pulse check and see where rhythm's at. Does she have a pulse?\" followed at t=238.0 by \"Continue compressions, she's still in PEA. We can give another push of epinephrine.\""}`
+   - `{t: 351.0, quote_or_description: "TEAM_LEADER: \"It's about two minutes, we can check a pulse again. Do we have a pulse?\""}`
+2. `negative_evidence[]`:
+   - `{t: 204.0, quote_or_description: "Airway placement confirmation by auscultation (t=204.0) was delayed 94.0 seconds after airway insertion at t=110.0."}`
+3. `relative_placement`: No consensus-rated anchor cases exist for this department (Q-015); placed in the middle-to-upper-middle range on an absolute basis.
+4. `score`: `3`
+5. `justification`: The team adhered to standard PEA arrest coordination principles by recognizing the non-shockable rhythm and ordering early epinephrine (`t: 82.5`), conducting two-minute rhythm/pulse checks with immediate compression resumption (`t: 225.0`, `t: 238.0`, `t: 351.0`), and systematically evaluating H's and T's (`t: 119.0`). Because primary confirmation of airway placement (`t: 204.0`) was delayed following insertion (`t: 110.0`) and no calibration anchors exist for comparative placement, uncertainty is explicitly noted and a score of `3` is assigned.

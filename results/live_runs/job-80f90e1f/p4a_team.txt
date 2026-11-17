@@ -1,0 +1,138 @@
+```json
+{
+  "contract_version": 1,
+  "dict_version": "e7c08437adcef4a5",
+  "metric_definition_version": "unknown",
+  "leader_evaluated": {
+    "speaker_id": "SPK_01",
+    "directive_utterances": "0 of 0",
+    "presence_pct": 100.0,
+    "role_stability": "stable",
+    "leadership_change_noted": false,
+    "note": "SPK_01 held leadership for 100% of the case with stable role stability; however, 0 of 0 directive utterances and no transcript, video, or event log were provided in the input payload."
+  },
+  "team_ratings": [
+    {
+      "item_number": 1,
+      "item_name": "The team leader let the team know what was expected of them through direction and command",
+      "positive_evidence": [],
+      "negative_evidence": [],
+      "relative_placement": null,
+      "score": null,
+      "abstain": true,
+      "abstain_reason": "No video frames, audio tracks, speech transcript, or forensic event log were provided in the prompt payload (0 of 0 directive utterances recorded; objective metrics unpopulated or NULL).",
+      "justification": "Abstained per the Prime Directive and Evidence Gates. No timestamped speech or visual observations are present in the input payload to evaluate leader direction and command, and scoring low on absence of evidence alone is prohibited."
+    },
+    {
+      "item_number": 2,
+      "item_name": "The team leader maintained a global perspective",
+      "positive_evidence": [],
+      "negative_evidence": [],
+      "relative_placement": null,
+      "score": null,
+      "abstain": true,
+      "abstain_reason": "No video frames, audio tracks, speech transcript, or forensic event log were provided in the prompt payload to observe leader positioning, delegation, or situational oversight.",
+      "justification": "Abstained per the Prime Directive and Evidence Gates. Without visual or audio observations in the input payload, maintenance of a global perspective cannot be verified or refuted."
+    },
+    {
+      "item_number": 3,
+      "item_name": "The team communicated effectively",
+      "positive_evidence": [],
+      "negative_evidence": [],
+      "relative_placement": null,
+      "score": null,
+      "abstain": true,
+      "abstain_reason": "No speech transcript or audio track was provided in the prompt payload, and closed_loop_completion_rate is NULL (requires S7 diarized ASR).",
+      "justification": "Abstained per the Prime Directive and Evidence Gates. Verbal and non-verbal team communication cannot be evaluated without a transcript, audio track, or populated communication metrics."
+    },
+    {
+      "item_number": 4,
+      "item_name": "The team worked together to complete tasks in a timely manner",
+      "positive_evidence": [],
+      "negative_evidence": [],
+      "relative_placement": null,
+      "score": null,
+      "abstain": true,
+      "abstain_reason": "No video frames, audio tracks, or timestamped task events were provided in the prompt payload, and chest_compression_fraction contains an unpopulated placeholder (<value>).",
+      "justification": "Abstained per the Prime Directive and Evidence Gates. Task coordination and timeliness cannot be assessed without observable timestamped events or resolved objective metrics."
+    },
+    {
+      "item_number": 5,
+      "item_name": "The team acted with composure and control",
+      "positive_evidence": [],
+      "negative_evidence": [],
+      "relative_placement": null,
+      "score": null,
+      "abstain": true,
+      "abstain_reason": "No video frames, audio tracks, or speech transcript were provided in the prompt payload to observe team demeanor, vocal tone, or behavioral control.",
+      "justification": "Abstained per the Prime Directive and Evidence Gates. Composure and control are unobservable given the absence of multimodal input data."
+    },
+    {
+      "item_number": 6,
+      "item_name": "The team morale was positive",
+      "positive_evidence": [],
+      "negative_evidence": [],
+      "relative_placement": null,
+      "score": null,
+      "abstain": true,
+      "abstain_reason": "No video frames, audio tracks, or speech transcript were provided in the prompt payload to observe interpersonal interactions or supportive statements.",
+      "justification": "Abstained per the Prime Directive and Evidence Gates. Team morale cannot be evaluated without observable audio or visual evidence."
+    },
+    {
+      "item_number": 7,
+      "item_name": "The team adapted to changing situations",
+      "positive_evidence": [],
+      "negative_evidence": [],
+      "relative_placement": null,
+      "score": null,
+      "abstain": true,
+      "abstain_reason": "No video frames, audio tracks, clinical state transitions, or event logs were provided in the prompt payload.",
+      "justification": "Abstained per the Prime Directive and Evidence Gates. Adaptation to changing situations cannot be evaluated without timestamped evidence of clinical changes and team responses."
+    },
+    {
+      "item_number": 8,
+      "item_name": "The team monitored and reassessed the situation",
+      "positive_evidence": [],
+      "negative_evidence": [],
+      "relative_placement": null,
+      "score": null,
+      "abstain": true,
+      "abstain_reason": "No video frames, audio tracks, monitor readouts, or reassessment events were provided in the prompt payload.",
+      "justification": "Abstained per the Prime Directive and Evidence Gates. Situation monitoring and reassessment cannot be verified without observable events or transcript data."
+    },
+    {
+      "item_number": 9,
+      "item_name": "The team anticipated potential actions",
+      "positive_evidence": [],
+      "negative_evidence": [],
+      "relative_placement": null,
+      "score": null,
+      "abstain": true,
+      "abstain_reason": "No video frames, audio tracks, speech transcript, or preparatory task events were provided in the prompt payload.",
+      "justification": "Abstained per the Prime Directive and Evidence Gates. Anticipation of potential actions cannot be evaluated without timestamped observations of preparatory behavior or discussion."
+    },
+    {
+      "item_number": 10,
+      "item_name": "The team prioritized tasks",
+      "positive_evidence": [],
+      "negative_evidence": [],
+      "relative_placement": null,
+      "score": null,
+      "abstain": true,
+      "abstain_reason": "No video frames, audio tracks, task timeline, or populated objective metrics were provided in the prompt payload.",
+      "justification": "Abstained per the Prime Directive and Evidence Gates. Task prioritization cannot be evaluated without an observable sequence of tasks or resolved objective metrics."
+    },
+    {
+      "item_number": 11,
+      "item_name": "The team followed approved standards/guidelines",
+      "positive_evidence": [],
+      "negative_evidence": [],
+      "relative_placement": null,
+      "score": null,
+      "abstain": true,
+      "abstain_reason": "No video frames, audio tracks, event timeline, or resolved objective metrics (chest_compression_fraction is unpopulated placeholder <value>; median_peri_shock_pause_s is NULL) were provided in the prompt payload.",
+      "justification": "Abstained per the Prime Directive and Evidence Gates. Coordination around approved guidelines cannot be assessed without observable events or populated objective metrics."
+    }
+  ]
+}
+```

@@ -87,6 +87,55 @@ def blank_when_null(val: Any) -> Any:
     return val
 
 
+def to_redcap_mm_ss(
+    t_s: float | int | str | None,
+    t_sim_start_s: float = 0.0,
+    indicated_not_done: bool = False,
+) -> str | None:
+    """
+    Formats elapsed video offset seconds as REDCap `time_mm_ss` string (`MM:SS`).
+    Per Northwell AI-CARES protocol (IRB #25-1097):
+    - '00:00' is reserved as a clinical sentinel for 'intervention indicated by case scenario
+      but not administered/performed'.
+    - None / '' represents 'not applicable to this case scenario'.
+    - Raises ValueError on negative elapsed offset (aligning with I6).
+    """
+    if indicated_not_done:
+        return "00:00"
+    if t_s is None or str(t_s).strip() == "":
+        return None
+    s_raw = str(t_s).strip()
+    if ":" in s_raw:
+        return s_raw
+    try:
+        elapsed = float(s_raw) - float(t_sim_start_s)
+    except (ValueError, TypeError):
+        return None
+    if elapsed < 0.0:
+        raise ValueError(f"Negative elapsed video offset {elapsed}s is out of range [0, ...]")
+    total_sec = int(round(elapsed))
+    # Avoid accidental '00:00' sentinel collision when a valid event occurs at t=0s unless explicitly at 0:00 start
+    mins, secs = divmod(total_sec, 60)
+    return f"{mins:02d}:{secs:02d}"
+
+
+def mm_ss_to_seconds(mm_ss: str | None) -> float | None:
+    """Parses a REDCap `MM:SS` string into float seconds (returns None for empty or '00:00' sentinel if requested)."""
+    if mm_ss is None:
+        return None
+    s = str(mm_ss).strip()
+    if not s or ":" not in s:
+        return None
+    parts = s.split(":")
+    if len(parts) != 2:
+        return None
+    try:
+        return float(int(parts[0]) * 60 + int(parts[1]))
+    except ValueError:
+        return None
+
+
+
 def main() -> None:
     raise NotImplementedError("reducer.transforms is a library module. See docs/tasks/D06.md")
 

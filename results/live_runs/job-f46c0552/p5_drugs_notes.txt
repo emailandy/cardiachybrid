@@ -1,0 +1,5 @@
+1. Clinically notable observations: Epinephrine 1 mg IV was administered at 106.0s (verbalized at 103.5s, confirmed by team leader at 108.5s) and again at 243.5s (ordered at 238.0s, confirmed by medication nurse at 244.0s) via the left arm IV port. The team leader also discussed or suggested sodium bicarbonate (at 245.0s and 351.0s) and IV fluids (post-ROSC at 393.0s), but neither was administered or verbally confirmed.
+2. Abstentions: None.
+3. Adjudication flags: Unconfirmed orders flagged from 245.0s–442.0s for sodium bicarbonate (245.0s, 351.0s) and IV fluids (393.0s) without physical administration or verbal confirmation.
+4. Coverage limitations: Medication administration is partially mimed and verbalized on a simulation manikin per facilitator instructions (0.0s–13.0s).
+5. Truncation: None.

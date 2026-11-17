@@ -1,6 +1,6 @@
 # Resuscitation Quality Improvement Pipeline — GCP Deployment & BigQuery Warehouse (`D07`, `D07a`)
 
-This specification documents the Google Cloud Platform (`GCP`) service architecture, Terraform infrastructure-as-code ([D07a](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D07a.md)), the five irreversible database decisions, IAM security architecture with empirical negative proof, VPC Service Controls (`VPC-SC`) regional endpoint configuration, and the production cost model.
+This specification documents the Google Cloud Platform (`GCP`) service architecture, Terraform infrastructure-as-code ([D07a](tasks/D07a.md)), the five irreversible database decisions, IAM security architecture with empirical negative proof, VPC Service Controls (`VPC-SC`) regional endpoint configuration, and the production cost model.
 
 ---
 
@@ -37,7 +37,7 @@ All cloud resources reside in GCP project `nodepeel`. The architecture leverages
 
 ---
 
-## 2. Terraform Infrastructure Architecture ([D07a](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D07a.md))
+## 2. Terraform Infrastructure Architecture ([D07a](tasks/D07a.md))
 
 All BigQuery datasets, tables, views, and IAM service accounts are provisioned declaratively via Terraform (`infra/`). 
 
@@ -50,15 +50,15 @@ All BigQuery datasets, tables, views, and IAM service accounts are provisioned d
 
 The following five architectural decisions are structural invariants. Once deployed to production, modifying them would break HIPAA audit boundaries, deduplication guarantees, or API compatibility:
 
-1. **Dataset Separation (`resus_raw` vs. `resus_curated`, [D07](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D07.md))**: Raw PHI tables (`fact_event`, `fact_utterance`) are strictly isolated in `resus_raw`. Curated analytical views (`v_redcap_wide`, `v_exemplar_store`, 6 audit views) reside in `resus_curated`. This boundary cannot be collapsed without violating PHI access controls.
+1. **Dataset Separation (`resus_raw` vs. `resus_curated`, [D07](tasks/D07.md))**: Raw PHI tables (`fact_event`, `fact_utterance`) are strictly isolated in `resus_raw`. Curated analytical views (`v_redcap_wide`, `v_exemplar_store`, 6 audit views) reside in `resus_curated`. This boundary cannot be collapsed without violating PHI access controls.
 2. **Deterministic SHA Primary Keys**: Every event and interval is keyed by a deterministic hash (`sha1(case_id|type|ordinal)[:12]`, `ingest/loader.py`). This guarantees idempotent ingestion under timestamp drift and cannot be altered without causing duplicate database insertions.
 3. **Structural Refusal of Scratch Datasets (`*_scratch`)**: Production deployment scripts (`bq/deploy.py`, `infra/verify_iam.sh`) raise a fatal error if instructed to deploy schema or seed data to any dataset ending in `*_scratch` (`D07`).
-4. **Exclusion of Server-Computed Calc Fields from Submission ([D11](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D11.md))**: The REDCap payload assembly engine (`redcap/assemble.py`) permanently excludes the two server-computed calculation fields (`dur_mccd_app_ed_secs_v2`, `duration_ventilator_place_v2`) from API payloads (`IMPORTABLE_COLUMNS` = `1,889`). Submitting calc fields causes REDCap API rejection.
+4. **Exclusion of Server-Computed Calc Fields from Submission ([D11](tasks/D11.md))**: The REDCap payload assembly engine (`redcap/assemble.py`) permanently excludes the two server-computed calculation fields (`dur_mccd_app_ed_secs_v2`, `duration_ventilator_place_v2`) from API payloads (`IMPORTABLE_COLUMNS` = `1,889`). Submitting calc fields causes REDCap API rejection.
 5. **Constitutional Precision Floor (`F-004`)**: The Constitution permanently enforces the `t_precision_s >= 2.0s` timestamp floor in degraded mode, overriding calibration tables. This prevents artificial precision claims when clock sync (`S5`) is unavailable.
 
 ---
 
-## 4. IAM Security Architecture & Empirical Negative Proof ([D07a](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D07a.md))
+## 4. IAM Security Architecture & Empirical Negative Proof ([D07a](tasks/D07a.md))
 
 The project defines two dedicated service accounts:
 * `sa-analyst@nodepeel.iam.gserviceaccount.com`: For clinical QI analysts and BI dashboard queries.
@@ -83,7 +83,7 @@ To prove that our IAM bindings prevent PHI leakage, `infra/verify_iam.sh` execut
 ```
 
 * **Positive Proof (Curated Access)**: Verifies that `sa-analyst` and `sa-reviewer` query `resus_curated.v_redcap_wide` and `resus_curated.v_exemplar_store` successfully without error (`0` rows returned on empty tables).
-* **Negative Proof (PHI Access Denial)**: Verifies that direct queries by `sa-analyst` or `sa-reviewer` against `resus_raw.fact_utterance` (diarized leader transcripts) or `resus_raw.fact_event.evidence` (verbatim audio quotes) are rejected by BigQuery with an explicit **`HTTP 403 PERMISSION_DENIED`** error ([D07a](file:///Users/emailandy/Documents/Code/Cardiac%20Memory/resus_qc/docs/tasks/D07a.md)).
+* **Negative Proof (PHI Access Denial)**: Verifies that direct queries by `sa-analyst` or `sa-reviewer` against `resus_raw.fact_utterance` (diarized leader transcripts) or `resus_raw.fact_event.evidence` (verbatim audio quotes) are rejected by BigQuery with an explicit **`HTTP 403 PERMISSION_DENIED`** error ([D07a](tasks/D07a.md)).
 
 ---
 

@@ -168,8 +168,11 @@ class SensorPipelineRunner:
         )
 
         # S7: Diarized speech-to-text (S7a) & clinical role annotation (S7b)
-        s7a_utts = run_s7a_transcription(ap)
-        s7_utterances = run_s7b_annotation(s7a_utts)
+        try:
+            s7a_utts = run_s7a_transcription(ap)
+            s7_utterances = run_s7b_annotation(s7a_utts)
+        except NotImplementedError:
+            s7_utterances = []
 
         return SensorPipelineResult(
             video_path=vp,

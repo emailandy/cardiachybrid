@@ -1,0 +1,1007 @@
+```json
+{
+  "events": [
+    {
+      "type": "patient_enters_room",
+      "t_start_s": 14.5,
+      "t_end_s": 62.0,
+      "t_precision_s": 2.0,
+      "t_anchor_desc": "Facilitator delivers EMS handoff and clinical vignette for the patient.",
+      "evidence": [
+        {
+          "modality": "speech",
+          "t": 14.5,
+          "speaker_id": "OTHER",
+          "quote": "So, this man is a 57, or this woman is a 57-year-old woman who has emphysema and is on oxygen at home... We started CPR and we placed an IV... her heart rhythm was sinus tachycardia with a PEA.",
+          "desc": null
+        }
+      ],
+      "attributes": {},
+      "confidence": 0.93,
+      "abstain": false,
+      "abstain_reason": null,
+      "in_overlap_zone": false,
+      "contradicting_evidence": []
+    },
+    {
+      "type": "cpr_initiated_ed",
+      "t_start_s": 80.0,
+      "t_end_s": null,
+      "t_precision_s": 2.0,
+      "t_anchor_desc": "Compressor places hands on mannequin chest and begins first downward compression in the simulation room.",
+      "evidence": [
+        {
+          "modality": "speech",
+          "t": 75.5,
+          "speaker_id": "TEAM_LEADER",
+          "quote": "So, compressions. Start compressions.",
+          "desc": null
+        },
+        {
+          "modality": "visual",
+          "t": 80.0,
+          "speaker_id": null,
+          "quote": null,
+          "desc": "Provider in black scrubs places both hands on the center of the mannequin's chest at 79.0s and initiates downward manual chest compressions at 80.0s."
+        }
+      ],
+      "attributes": {
+        "t_start_s": 80.0,
+        "n_draws": 3,
+        "t_median_s": 80.0,
+        "t_spread_s": 0.0,
+        "draw_timestamps": [
+          80.0,
+          80.0,
+          80.0
+        ]
+      },
+      "confidence": 0.95,
+      "abstain": false,
+      "abstain_reason": null,
+      "in_overlap_zone": false,
+      "contradicting_evidence": []
+    },
+    {
+      "type": "compression_active_start",
+      "t_start_s": 80.0,
+      "t_end_s": null,
+      "t_precision_s": 2.0,
+      "t_anchor_desc": "Compressor places hands on mannequin chest and begins first downward compression in the simulation room.",
+      "evidence": [
+        {
+          "modality": "speech",
+          "t": 75.5,
+          "speaker_id": "TEAM_LEADER",
+          "quote": "So, compressions. Start compressions.",
+          "desc": null
+        },
+        {
+          "modality": "visual",
+          "t": 80.0,
+          "speaker_id": null,
+          "quote": null,
+          "desc": "Provider in black scrubs places hands on the mannequin's sternum and initiates manual chest compressions."
+        }
+      ],
+      "attributes": {
+        "t_start_s": 80.0,
+        "n_draws": 3,
+        "t_median_s": 80.0,
+        "t_spread_s": 0.0,
+        "draw_timestamps": [
+          80.0,
+          80.0,
+          80.0
+        ]
+      },
+      "confidence": 0.95,
+      "abstain": false,
+      "abstain_reason": null,
+      "in_overlap_zone": false,
+      "contradicting_evidence": []
+    },
+    {
+      "type": "rhythm_check",
+      "t_start_s": 91.0,
+      "t_end_s": null,
+      "t_precision_s": 2.0,
+      "t_anchor_desc": "Team leader verbalizes current cardiac rhythm as PEA.",
+      "evidence": [
+        {
+          "modality": "speech",
+          "t": 91.0,
+          "speaker_id": "TEAM_LEADER",
+          "quote": "she's currently in PEA still, so we can't shock.",
+          "desc": null
+        },
+        {
+          "modality": "visual",
+          "t": 91.0,
+          "speaker_id": null,
+          "quote": null,
+          "desc": "No defibrillation pads or cables are visibly attached to the mannequin."
+        }
+      ],
+      "attributes": {
+        "t_start_s": 91.0,
+        "pads_source": "unable_to_determine",
+        "rhythm": "pea",
+        "n_draws": 1,
+        "t_median_s": 91.0,
+        "t_spread_s": "n/a",
+        "draw_timestamps": [
+          91.0
+        ],
+        "aicares_rhythm_code": 3
+      },
+      "confidence": 0.9,
+      "abstain": false,
+      "abstain_reason": null,
+      "in_overlap_zone": false,
+      "contradicting_evidence": []
+    },
+    {
+      "type": "airway_attempt",
+      "t_start_s": 91.0,
+      "t_end_s": 115.0,
+      "t_precision_s": 2.0,
+      "t_anchor_desc": "Airway placement ordered at 91.0s and confirmed in place with bagging at 108.5s–115.0s.",
+      "evidence": [
+        {
+          "modality": "speech",
+          "t": 91.0,
+          "speaker_id": "TEAM_LEADER",
+          "quote": "we don't have an airway, so we want to get an airway.",
+          "desc": null
+        },
+        {
+          "modality": "speech",
+          "t": 108.5,
+          "speaker_id": "TEAM_LEADER",
+          "quote": "We have our airway. We're currently bagging. We're doing CPR. Um, airway's in.",
+          "desc": null
+        }
+      ],
+      "attributes": {},
+      "confidence": 0.75,
+      "abstain": false,
+      "abstain_reason": null,
+      "in_overlap_zone": false,
+      "contradicting_evidence": []
+    },
+    {
+      "type": "medication_administration",
+      "t_start_s": 106.0,
+      "t_end_s": null,
+      "t_precision_s": 2.5,
+      "t_anchor_desc": "Med RN administers 1 mg epinephrine at the left arm IV port and Team Leader confirms administration.",
+      "evidence": [
+        {
+          "modality": "speech",
+          "t": 100.5,
+          "speaker_id": "MED_RN",
+          "quote": "So I'm going to give meds, 1 milligram of epinephrine.",
+          "desc": null
+        },
+        {
+          "modality": "visual",
+          "t": 106.0,
+          "speaker_id": null,
+          "quote": null,
+          "desc": "Provider in grey fleece reaches to the mannequin's left arm IV site to administer epinephrine."
+        },
+        {
+          "modality": "speech",
+          "t": 108.5,
+          "speaker_id": "TEAM_LEADER",
+          "quote": "Okay, so one of epi's given.",
+          "desc": null
+        }
+      ],
+      "attributes": {
+        "drug": "epinephrine",
+        "drug_name_text": null,
+        "t_decision_s": null,
+        "pads_source": null,
+        "rhythm": null,
+        "n_draws": 3,
+        "t_median_s": 106.0,
+        "t_spread_s": 0.0,
+        "draw_timestamps": [
+          106.0,
+          106.0,
+          106.0
+        ]
+      },
+      "confidence": 0.95,
+      "abstain": false,
+      "abstain_reason": null,
+      "in_overlap_zone": false,
+      "contradicting_evidence": []
+    },
+    {
+      "type": "airway_confirmation",
+      "t_start_s": 192.0,
+      "t_end_s": 208.0,
+      "t_precision_s": 2.0,
+      "t_anchor_desc": "Compressor requests lung auscultation at 191.5s and facilitator confirms bilateral breath sounds at 204.5s.",
+      "evidence": [
+        {
+          "modality": "speech",
+          "t": 191.5,
+          "speaker_id": "COMPRESSOR",
+          "quote": "Um, if we could listen to lung sounds to confirm placement.",
+          "desc": null
+        },
+        {
+          "modality": "speech",
+          "t": 204.5,
+          "speaker_id": "OTHER",
+          "quote": "You hear bilateral breath sounds.",
+          "desc": null
+        }
+      ],
+      "attributes": {},
+      "confidence": 0.93,
+      "abstain": false,
+      "abstain_reason": null,
+      "in_overlap_zone": false,
+      "contradicting_evidence": []
+    },
+    {
+      "type": "compression_interruption",
+      "t_start_s": 229.0,
+      "t_end_s": 235.5,
+      "t_precision_s": 2.0,
+      "t_anchor_desc": "Compressor stops manual chest compressions for pulse and rhythm check at 229.0s and resumes at 235.5s.",
+      "evidence": [
+        {
+          "modality": "visual",
+          "t": 228.5,
+          "speaker_id": null,
+          "quote": null,
+          "desc": "Compressor in black scrubs stops chest compressions and palpates carotid pulse at 229.0s before resuming compressions at 235.5s."
+        },
+        {
+          "modality": "speech",
+          "t": 225.5,
+          "speaker_id": "TEAM_LEADER",
+          "quote": "We can say it's about two minutes, so let's do a pulse check and see where our rhythm's at. Does she have a pulse?",
+          "desc": null
+        },
+        {
+          "modality": "speech",
+          "t": 233.5,
+          "speaker_id": "OTHER",
+          "quote": "You do not feel a pulse.",
+          "desc": null
+        },
+        {
+          "modality": "speech",
+          "t": 235.5,
+          "speaker_id": "TEAM_LEADER",
+          "quote": "So continue compressions. She's still in PEA.",
+          "desc": null
+        }
+      ],
+      "attributes": {
+        "t_start_s": 228.5,
+        "t_end_s": 235.5,
+        "reasons": [
+          "pulse_check",
+          "rhythm_determination"
+        ],
+        "other_reason_text": null,
+        "sono_window": null,
+        "echo_success": null,
+        "us_pulse_site": null,
+        "us_pulse_present": null,
+        "aline_present": false,
+        "aline_sbp": null,
+        "aline_dbp": null,
+        "pulse_check_locations": [
+          "carotid"
+        ],
+        "pocus_other_used": false,
+        "rhythm_code": "pea",
+        "mccd_adjust_reasons": [],
+        "n_draws": 3,
+        "t_median_s": 229.0,
+        "t_spread_s": 0.5
+      },
+      "confidence": 0.95,
+      "abstain": false,
+      "abstain_reason": null,
+      "in_overlap_zone": false,
+      "contradicting_evidence": []
+    },
+    {
+      "type": "pulse_check",
+      "t_start_s": 229.5,
+      "t_end_s": 232.0,
+      "t_precision_s": 2.0,
+      "t_anchor_desc": "Provider in maroon scrubs places fingers on left carotid artery during compression pause",
+      "evidence": [
+        {
+          "modality": "speech",
+          "t": 225.5,
+          "speaker_id": "TEAM_LEADER",
+          "quote": "We can say it's about two minutes, so let's do a pulse check and see where our rhythm's at. Does she have a pulse?",
+          "desc": null
+        },
+        {
+          "modality": "visual",
+          "t": 229.5,
+          "speaker_id": null,
+          "quote": null,
+          "desc": "Provider in maroon scrubs places right hand fingers on the mannequin's left anterior neck lateral to the trachea while chest compressions are paused."
+        },
+        {
+          "modality": "speech",
+          "t": 233.5,
+          "speaker_id": "OTHER",
+          "quote": "You do not feel a pulse.",
+          "desc": null
+        }
+      ],
+      "attributes": {
+        "t_start_s": 229.5,
+        "locations": [
+          "carotid"
+        ],
+        "n_draws": 3,
+        "t_median_s": 229.5,
+        "t_spread_s": 1.0,
+        "draw_timestamps": [
+          229.0,
+          229.5,
+          230.0
+        ]
+      },
+      "confidence": 0.95,
+      "abstain": false,
+      "abstain_reason": null,
+      "in_overlap_zone": false,
+      "contradicting_evidence": []
+    },
+    {
+      "type": "rhythm_check",
+      "t_start_s": 234.5,
+      "t_end_s": null,
+      "t_precision_s": 2.0,
+      "t_anchor_desc": "Team leader verbalizes underlying PEA rhythm during compression pause.",
+      "evidence": [
+        {
+          "modality": "speech",
+          "t": 225.5,
+          "speaker_id": "TEAM_LEADER",
+          "quote": "We can say it's about two minutes, so let's do a pulse check and see where our rhythm's at.",
+          "desc": null
+        },
+        {
+          "modality": "speech",
+          "t": 235.5,
+          "speaker_id": "TEAM_LEADER",
+          "quote": "So continue compressions. She's still in PEA.",
+          "desc": null
+        },
+        {
+          "modality": "visual",
+          "t": 234.5,
+          "speaker_id": null,
+          "quote": null,
+          "desc": "Hands are off the chest during the rhythm and pulse check; no defibrillation pads or cables are visible on the mannequin."
+        }
+      ],
+      "attributes": {
+        "t_start_s": 234.5,
+        "pads_source": "unable_to_determine",
+        "rhythm": "pea",
+        "n_draws": 3,
+        "t_median_s": 234.5,
+        "t_spread_s": 0.0,
+        "draw_timestamps": [
+          234.5,
+          234.5,
+          234.5
+        ],
+        "aicares_rhythm_code": 3
+      },
+      "confidence": 0.9,
+      "abstain": false,
+      "abstain_reason": null,
+      "in_overlap_zone": false,
+      "contradicting_evidence": []
+    },
+    {
+      "type": "compression_active_start",
+      "t_start_s": 235.5,
+      "t_end_s": null,
+      "t_precision_s": 2.0,
+      "t_anchor_desc": "Compressor places hands back on chest and resumes manual chest compressions after pulse and rhythm check.",
+      "evidence": [
+        {
+          "modality": "speech",
+          "t": 235.5,
+          "speaker_id": "TEAM_LEADER",
+          "quote": "So continue compressions. She's still in PEA.",
+          "desc": null
+        },
+        {
+          "modality": "visual",
+          "t": 235.5,
+          "speaker_id": null,
+          "quote": null,
+          "desc": "Provider in black scrubs places both hands back onto the mannequin's chest and resumes manual compressions."
+        }
+      ],
+      "attributes": {
+        "n_draws": 3,
+        "t_median_s": 235.5,
+        "t_spread_s": 0.0,
+        "draw_timestamps": [
+          235.5,
+          235.5,
+          235.5
+        ]
+      },
+      "confidence": 0.95,
+      "abstain": false,
+      "abstain_reason": null,
+      "in_overlap_zone": false,
+      "contradicting_evidence": []
+    },
+    {
+      "type": "medication_administration",
+      "t_start_s": 243.5,
+      "t_end_s": null,
+      "t_precision_s": 2.0,
+      "t_anchor_desc": "Med RN administers second dose of epinephrine at the left arm IV site and verbally confirms.",
+      "evidence": [
+        {
+          "modality": "speech",
+          "t": 235.5,
+          "speaker_id": "TEAM_LEADER",
+          "quote": "Um, we can give another push of epinephrine.",
+          "desc": null
+        },
+        {
+          "modality": "visual",
+          "t": 242.0,
+          "speaker_id": null,
+          "quote": null,
+          "desc": "Provider in grey fleece reaches to the mannequin's left arm IV site to administer epinephrine."
+        },
+        {
+          "modality": "speech",
+          "t": 243.5,
+          "speaker_id": "MED_RN",
+          "quote": "Gave epinephrine.",
+          "desc": null
+        }
+      ],
+      "attributes": {
+        "t_start_s": 243.5,
+        "drug": "epinephrine",
+        "n_draws": 3,
+        "t_median_s": 243.5,
+        "t_spread_s": 0.5,
+        "draw_timestamps": [
+          243.0,
+          243.5,
+          243.5
+        ]
+      },
+      "confidence": 0.95,
+      "abstain": false,
+      "abstain_reason": null,
+      "in_overlap_zone": false,
+      "contradicting_evidence": []
+    },
+    {
+      "type": "pulse_check",
+      "t_start_s": 366.0,
+      "t_end_s": 372.0,
+      "t_precision_s": 2.0,
+      "t_anchor_desc": "Airway provider palpates the mannequin's carotid artery during compression pause.",
+      "evidence": [
+        {
+          "modality": "speech",
+          "t": 351.0,
+          "speaker_id": "TEAM_LEADER",
+          "quote": "Um, it's about two minutes, we can check a pulse again. So we're going to do a pulse check. Do we have a pulse?",
+          "desc": null
+        },
+        {
+          "modality": "visual",
+          "t": 366.0,
+          "speaker_id": null,
+          "quote": null,
+          "desc": "Provider in maroon scrubs places fingers of left hand on the mannequin's left anterior neck to palpate carotid pulse while compressions are paused."
+        },
+        {
+          "modality": "speech",
+          "t": 367.5,
+          "speaker_id": "OTHER",
+          "quote": "You guys have a pulse.",
+          "desc": null
+        }
+      ],
+      "attributes": {
+        "t_start_s": 366.0,
+        "locations": [
+          "carotid"
+        ],
+        "n_draws": 3,
+        "t_median_s": 366.0,
+        "t_spread_s": 1.0,
+        "draw_timestamps": [
+          365.5,
+          366.0,
+          366.5
+        ]
+      },
+      "confidence": 0.95,
+      "abstain": false,
+      "abstain_reason": null,
+      "in_overlap_zone": false,
+      "contradicting_evidence": []
+    },
+    {
+      "type": "rosc_detected",
+      "t_start_s": 367.5,
+      "t_end_s": 395.0,
+      "t_precision_s": 2.0,
+      "t_anchor_desc": "Facilitator announces palpable pulse and full vital signs at 367.5s.",
+      "evidence": [
+        {
+          "modality": "speech",
+          "t": 367.5,
+          "speaker_id": "OTHER",
+          "quote": "You guys have a pulse. Um, so now her repeat vitals are: she is tachycardic to 110, blood pressure is 95 over 77, respiratory rate 14, SpO2 is 94, and her pCO2 is 40.",
+          "desc": null
+        }
+      ],
+      "attributes": {},
+      "confidence": 0.93,
+      "abstain": false,
+      "abstain_reason": null,
+      "in_overlap_zone": false,
+      "contradicting_evidence": []
+    },
+    {
+      "type": "rhythm_check",
+      "t_start_s": 368.0,
+      "t_end_s": null,
+      "t_precision_s": 2.0,
+      "t_anchor_desc": "Facilitator announces return of spontaneous circulation with a pulse and tachycardia to 110.",
+      "evidence": [
+        {
+          "modality": "speech",
+          "t": 367.5,
+          "speaker_id": "OTHER",
+          "quote": "You guys have a pulse. Um, so now her repeat vitals are: she is tachycardic to 110, blood pressure is 95 over 77, respiratory rate 14, SpO2 is 94, and her pCO2 is 40.",
+          "desc": null
+        },
+        {
+          "modality": "visual",
+          "t": 368.0,
+          "speaker_id": null,
+          "quote": null,
+          "desc": "Hands remain off the chest following ROSC confirmation; no pads or cables are visible on the mannequin."
+        }
+      ],
+      "attributes": {
+        "t_start_s": 368.0,
+        "pads_source": "unable_to_determine",
+        "rhythm": "rosc",
+        "n_draws": 1,
+        "t_median_s": 368.0,
+        "t_spread_s": "n/a",
+        "draw_timestamps": [
+          368.0
+        ],
+        "aicares_rhythm_code": 3
+      },
+      "confidence": 0.95,
+      "abstain": false,
+      "abstain_reason": null,
+      "in_overlap_zone": false,
+      "contradicting_evidence": []
+    },
+    {
+      "type": "rosc",
+      "t_start_s": 368.0,
+      "t_end_s": 455.8,
+      "t_precision_s": 2.0,
+      "t_anchor_desc": "ROSC interval persisting from pulse detection at 368.0s through the end of the video at 455.8s.",
+      "evidence": [
+        {
+          "modality": "visual",
+          "t": 366.0,
+          "speaker_id": null,
+          "quote": null,
+          "desc": "Compressor stops compressions at 365.5s and airway provider palpates carotid pulse at 366.0s; compressions remain off for the rest of the simulation."
+        },
+        {
+          "modality": "speech",
+          "t": 367.5,
+          "speaker_id": "OTHER",
+          "quote": "You guys have a pulse. Um, so now her repeat vitals are: she is tachycardic to 110, blood pressure is 95 over 77, respiratory rate 14, SpO2 is 94, and her pCO2 is 40.",
+          "desc": null
+        },
+        {
+          "modality": "speech",
+          "t": 389.0,
+          "speaker_id": "TEAM_LEADER",
+          "quote": "So do we know what rhythm she's in? Normal sinus? Okay.",
+          "desc": null
+        }
+      ],
+      "attributes": {
+        "t_start_s": 368.0,
+        "t_end_s": 455.8,
+        "rhythm": "sinus",
+        "detection_methods": [
+          "manual"
+        ],
+        "n_draws": 3,
+        "t_median_s": 368.0,
+        "t_spread_s": 0.0
+      },
+      "confidence": 0.95,
+      "abstain": false,
+      "abstain_reason": null,
+      "in_overlap_zone": false,
+      "contradicting_evidence": []
+    },
+    {
+      "type": "rhythm_check",
+      "t_start_s": 390.8,
+      "t_end_s": null,
+      "t_precision_s": 2.0,
+      "t_anchor_desc": "Facilitator and Team Leader confirm normal sinus rhythm following ROSC.",
+      "evidence": [
+        {
+          "modality": "speech",
+          "t": 389.0,
+          "speaker_id": "TEAM_LEADER",
+          "quote": "So do we know what rhythm she's in? Normal sinus? Okay.",
+          "desc": null
+        },
+        {
+          "modality": "visual",
+          "t": 390.5,
+          "speaker_id": null,
+          "quote": null,
+          "desc": "All provider hands are off the chest post-ROSC while rhythm is confirmed verbally."
+        }
+      ],
+      "attributes": {
+        "t_start_s": 390.5,
+        "pads_source": "unable_to_determine",
+        "rhythm": "rosc",
+        "n_draws": 2,
+        "t_median_s": 390.75,
+        "t_spread_s": 0.5,
+        "draw_timestamps": [
+          390.5,
+          391.0
+        ],
+        "aicares_rhythm_code": 3
+      },
+      "confidence": 0.9,
+      "abstain": false,
+      "abstain_reason": null,
+      "in_overlap_zone": false,
+      "contradicting_evidence": []
+    }
+  ],
+  "case_fields": {
+    "arrest_location": {
+      "value": "out_of_hospital",
+      "abstain": false,
+      "abstain_reason": null,
+      "evidence": [
+        {
+          "modality": "speech",
+          "t": 14.5,
+          "speaker_id": "OTHER",
+          "quote": "She was found by EMS unresponsive and cyanotic at home... We started CPR and we placed an IV.",
+          "desc": null
+        }
+      ]
+    },
+    "recording_started_late": {
+      "value": true,
+      "abstain": false,
+      "abstain_reason": null,
+      "evidence": [
+        {
+          "modality": "visual",
+          "t": 0.0,
+          "speaker_id": null,
+          "quote": null,
+          "desc": "Mannequin and resuscitation team are already positioned in the room at 0.0s when the recording begins; physical arrival into the room is not in the recording."
+        }
+      ]
+    },
+    "time_first_team_member_ent": {
+      "value": null,
+      "abstain": true,
+      "abstain_reason": "recording_started_late is true; team members and mannequin are already in the room at 0.0s.",
+      "evidence": []
+    },
+    "time_pt_enters_room": {
+      "value": null,
+      "abstain": true,
+      "abstain_reason": "recording_started_late is true; mannequin is already on the bed at 0.0s.",
+      "evidence": []
+    },
+    "backboard_preplaced": {
+      "value": null,
+      "abstain": true,
+      "abstain_reason": "recording_started_late is true; pre-arrival backboard state cannot be observed.",
+      "evidence": []
+    },
+    "cpr_in_progress_upon_arrival": {
+      "value": false,
+      "abstain": false,
+      "abstain_reason": null,
+      "evidence": [
+        {
+          "modality": "visual",
+          "t": 62.0,
+          "speaker_id": null,
+          "quote": null,
+          "desc": "Although EMS verbally reported prior field CPR during the vignette, no physical chest compressions are underway on the mannequin until 80.0s."
+        }
+      ]
+    },
+    "brought_by_ems": {
+      "value": true,
+      "abstain": false,
+      "abstain_reason": null,
+      "evidence": [
+        {
+          "modality": "speech",
+          "t": 0.0,
+          "speaker_id": "OTHER",
+          "quote": "...EMS, I'm also your facilitator... She was found by EMS unresponsive and cyanotic at home... We started CPR and we placed an IV.",
+          "desc": null
+        }
+      ]
+    },
+    "adv_airway_on_arrival": {
+      "value": false,
+      "abstain": false,
+      "abstain_reason": null,
+      "evidence": [
+        {
+          "modality": "speech",
+          "t": 81.5,
+          "speaker_id": "TEAM_LEADER",
+          "quote": "Um, we don't have an airway, so we want to get an airway.",
+          "desc": null
+        }
+      ]
+    },
+    "ems_pads_switched": {
+      "value": null,
+      "abstain": true,
+      "abstain_reason": "No defibrillation pads or cables are ever attached to the mannequin during the simulation.",
+      "evidence": [
+        {
+          "modality": "visual",
+          "t": 91.0,
+          "speaker_id": null,
+          "quote": null,
+          "desc": "No defibrillation pads or cables are visibly attached to the mannequin."
+        }
+      ]
+    },
+    "mccd_ed_provenance": {
+      "value": "not_used",
+      "abstain": false,
+      "abstain_reason": null,
+      "evidence": [
+        {
+          "modality": "visual",
+          "t": 80.0,
+          "speaker_id": null,
+          "quote": null,
+          "desc": "Only manual chest compressions are performed throughout the resuscitation; no mechanical chest compression device is present or used."
+        }
+      ]
+    },
+    "ed_mccd_outcome": {
+      "value": "not_applicable",
+      "abstain": false,
+      "abstain_reason": null,
+      "evidence": [
+        {
+          "modality": "visual",
+          "t": 80.0,
+          "speaker_id": null,
+          "quote": null,
+          "desc": "No MCCD was applied during the case."
+        }
+      ]
+    },
+    "dnr_basis": {
+      "value": "none",
+      "abstain": false,
+      "abstain_reason": null,
+      "evidence": [
+        {
+          "modality": "speech",
+          "t": 367.5,
+          "speaker_id": "OTHER",
+          "quote": "You guys have a pulse.",
+          "desc": "Resuscitation ended with ROSC, not DNR or termination of resuscitation."
+        }
+      ]
+    },
+    "review_trigger_metadata": null
+  },
+  "coverage_summary": {
+    "consolidated_intervals": [
+      {
+        "issue_code": "sensor_dispute_compression_track",
+        "t_start_s": 0.0,
+        "t_end_s": 455.8,
+        "summary": "S1 optical flow sensor track is absent. S2 compressions_active audio track only captured brief 2-4s acoustic artifacts (271.1-273.2s, 366.9-371.2s, 432.7-435.7s, two of which occurred post-ROSC when no provider was touching the chest) while missing continuous manual chest compressions visible on video from 80.0-229.0s and 235.5-365.5s."
+      },
+      {
+        "issue_code": "sensor_dispute_device_audio",
+        "t_start_s": 0.0,
+        "t_end_s": 455.8,
+        "summary": "All 13 device_audio detections (defib_charge_aborted and defibrillation_shock at ~30s intervals) are false positives caused by periodic simulation monitor alarm chimes and room acoustics; no defibrillator pads were applied and no charging or shocks occurred."
+      },
+      {
+        "issue_code": "monitor_not_legible",
+        "t_start_s": 0.0,
+        "t_end_s": 455.8,
+        "summary": "Wall monitors above the bed are powered off and the portable monitor screen on the left cart is static/disconnected and too small/low-contrast for OCR (contrast 0.00); vital signs and rhythms are verbally supplied by the simulation facilitator."
+      },
+      {
+        "issue_code": "foreground_occlusion",
+        "t_start_s": 0.0,
+        "t_end_s": 62.0,
+        "summary": "Facilitator stands in the foreground reading the clinical vignette, partially occluding the mannequin prior to scenario start."
+      },
+      {
+        "issue_code": "simulation_suspended_disbelief",
+        "t_start_s": 0.0,
+        "t_end_s": 455.8,
+        "summary": "Per facilitator pre-brief instructions (0.0-14.5s), LMA airway placement, BVM bagging, and medication pushes are verbalized/mimed without physical pads, monitor cables, airway tubes, or IV syringes attached to the mannequin."
+      }
+    ],
+    "channel_adequacy": {
+      "speech": {
+        "adequate": true,
+        "reason": "Clear, uninterrupted audio capture of facilitator instructions, team leader orders, medication announcements, and vital sign readbacks throughout 0.0-455.8s."
+      },
+      "visual": {
+        "adequate": false,
+        "reason": "While manual chest compressions and pulse check hand placements are clearly visible from 62.0-455.8s, the mannequin is partially occluded by the facilitator from 0.0-62.0s, and physical equipment (defibrillator pads, cables, IV syringes) is absent/mimed per simulation rules."
+      },
+      "monitor": {
+        "adequate": false,
+        "reason": "Wall monitors are powered off and the portable monitor screen is disconnected and illegible (0.00 OCR contrast) for the entire case (0.0-455.8s); all rhythms and vital signs rely solely on speech."
+      },
+      "airway": {
+        "adequate": false,
+        "reason": "Per facilitator pre-brief at 0.0-14.5s ('when I ask you guys to intubate with the LMA, just bag, or say, verbalize bagging'), physical airway placement and BVM ventilation are verbalized/simulated rather than physically observable on video."
+      }
+    }
+  },
+  "merges": [],
+  "repairs": [
+    {
+      "event_type": "patient_enters_room",
+      "t_start_s": 14.5,
+      "field": "t_precision_s",
+      "old_value": null,
+      "new_value": 2.0,
+      "reason": "Applied mandatory >= 2.0s precision floor for degraded/self-detection mode."
+    },
+    {
+      "event_type": "compression_active_start",
+      "t_start_s": 80.0,
+      "field": "t_precision_s",
+      "old_value": null,
+      "new_value": 2.0,
+      "reason": "Applied mandatory >= 2.0s precision floor for degraded/self-detection mode."
+    },
+    {
+      "event_type": "airway_attempt",
+      "t_start_s": 91.0,
+      "field": "t_precision_s",
+      "old_value": null,
+      "new_value": 2.0,
+      "reason": "Applied mandatory >= 2.0s precision floor for degraded/self-detection mode."
+    },
+    {
+      "event_type": "airway_confirmation",
+      "t_start_s": 192.0,
+      "field": "t_precision_s",
+      "old_value": null,
+      "new_value": 2.0,
+      "reason": "Applied mandatory >= 2.0s precision floor for degraded/self-detection mode."
+    },
+    {
+      "event_type": "rosc_detected",
+      "t_start_s": 367.5,
+      "field": "t_precision_s",
+      "old_value": null,
+      "new_value": 2.0,
+      "reason": "Applied mandatory >= 2.0s precision floor for degraded/self-detection mode."
+    },
+    {
+      "event_type": "rhythm_check",
+      "t_start_s": 390.75,
+      "field": "t_start_s",
+      "old_value": 390.75,
+      "new_value": 390.8,
+      "reason": "Enforced TIMESTAMP DISCIPLINE requiring float rounded to one decimal place."
+    }
+  ],
+  "flags": [
+    {
+      "flag_type": "DEGRADED_MODALITY_ASSERTION",
+      "rule": "JOB 3g",
+      "event_type": "airway_attempt",
+      "t_start_s": 91.0,
+      "t_end_s": 115.0,
+      "description": "Airway attempt asserted during a simulation where physical airway placement is degraded/absent (verbalized only per facilitator instructions at 0.0-14.5s, and contradistinguished as LMA in pre-brief vs ET tube by Team Leader at 208.0s). Confidence downgraded from 0.93 to 0.75."
+    },
+    {
+      "flag_type": "CLINICAL_REVIEW_PROPOSED_MEDICATION_NOT_GIVEN",
+      "rule": "JOB 3c",
+      "event_type": "medication_administration",
+      "t_start_s": 393.5,
+      "t_end_s": 400.0,
+      "description": "Team Leader proposes IV fluids inside the ROSC window at 393.5s ('We can give fluids. She's dehydrated most likely'), and previously proposed sodium bicarbonate at 245.5s and 351.0s, but no physical or verbal confirmation of administration occurred."
+    },
+    {
+      "flag_type": "TEMPORAL_BOUNDARY_NOTE",
+      "rule": "JOB 2",
+      "event_type": "patient_enters_room",
+      "t_start_s": 14.5,
+      "t_end_s": 62.0,
+      "description": "Recording started with mannequin and team already in the room at 0.0s; `patient_enters_room` at 14.5-62.0s represents the facilitator's verbal EMS handoff rather than physical entry."
+    }
+  ],
+  "unresolved": [
+    {
+      "concept": "airway_attempt.device_type_and_physical_execution",
+      "affected_attribute": "airway_attempt",
+      "reason": "Facilitator pre-brief at 0.0-14.5s instructs team to verbalize LMA intubation and bagging, whereas Team Leader at 108.5s states 'airway's in' and at 208.0s states 'ET tube is in, we're bagging'. Because physical airway placement was suspended/verbalized, the exact device type (LMA vs ETT) and physical insertion timestamp cannot be visually resolved.",
+      "review_interval_s": [
+        81.5,
+        225.5
+      ]
+    },
+    {
+      "concept": "rhythm_check.pads_source",
+      "affected_attribute": "pads_source",
+      "reason": "No defibrillation pads or ECG cables are physically attached to the mannequin during the simulation, and monitors are off/disconnected; rhythm assessments rely exclusively on facilitator/team leader verbalization.",
+      "review_interval_s": [
+        81.5,
+        393.5
+      ]
+    },
+    {
+      "concept": "cpr_in_progress_upon_arrival.simulation_vs_visual_discrepancy",
+      "affected_attribute": "cpr_in_progress_upon_arrival",
+      "reason": "Facilitator playing EMS states at 14.5-62.0s 'We started CPR and we placed an IV', but visually no compressions are being performed on the mannequin until 80.0s.",
+      "review_interval_s": [
+        14.5,
+        80.0
+      ]
+    }
+  ]
+}
+```

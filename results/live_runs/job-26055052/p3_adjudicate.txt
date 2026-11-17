@@ -1,0 +1,115 @@
+```json
+{
+  "events": [],
+  "case_fields": {
+    "arrest_location": {
+      "value": null,
+      "abstain": true,
+      "abstain_reason": "No input events, sensor tracks, or coverage annotations were supplied in the adjudication input.",
+      "evidence": []
+    },
+    "recording_started_late": {
+      "value": null,
+      "abstain": true,
+      "abstain_reason": "No input events, sensor tracks, or coverage annotations were supplied in the adjudication input.",
+      "evidence": []
+    },
+    "cpr_in_progress_upon_arrival": {
+      "value": null,
+      "abstain": true,
+      "abstain_reason": "No input events, sensor tracks, or coverage annotations were supplied in the adjudication input.",
+      "evidence": []
+    },
+    "brought_by_ems": {
+      "value": null,
+      "abstain": true,
+      "abstain_reason": "No input events, sensor tracks, or coverage annotations were supplied in the adjudication input.",
+      "evidence": []
+    },
+    "adv_airway_on_arrival": {
+      "value": null,
+      "abstain": true,
+      "abstain_reason": "No input events, sensor tracks, or coverage annotations were supplied in the adjudication input.",
+      "evidence": []
+    },
+    "ems_pads_switched": {
+      "value": null,
+      "abstain": true,
+      "abstain_reason": "No input events, sensor tracks, or coverage annotations were supplied in the adjudication input.",
+      "evidence": []
+    },
+    "mccd_ed_provenance": {
+      "value": null,
+      "abstain": true,
+      "abstain_reason": "No input events, sensor tracks, or coverage annotations were supplied in the adjudication input.",
+      "evidence": []
+    },
+    "ed_mccd_outcome": {
+      "value": null,
+      "abstain": true,
+      "abstain_reason": "No input events, sensor tracks, or coverage annotations were supplied in the adjudication input.",
+      "evidence": []
+    },
+    "dnr_basis": {
+      "value": null,
+      "abstain": true,
+      "abstain_reason": "No input events, sensor tracks, or coverage annotations were supplied in the adjudication input.",
+      "evidence": []
+    },
+    "time_first_team_member_ent": {
+      "value": null,
+      "abstain": true,
+      "abstain_reason": "No input events or arrival observations were supplied in the adjudication input.",
+      "evidence": []
+    },
+    "time_pt_enters_room": {
+      "value": null,
+      "abstain": true,
+      "abstain_reason": "No input events or arrival observations were supplied in the adjudication input.",
+      "evidence": []
+    },
+    "backboard_preplaced": {
+      "value": null,
+      "abstain": true,
+      "abstain_reason": "No input events or pre-arrival room observations were supplied in the adjudication input.",
+      "evidence": []
+    }
+  },
+  "coverage_summary": {
+    "intervals_by_issue": {},
+    "channels": {
+      "speech": {
+        "adequate": false,
+        "reason": "No per-window coverage notes were supplied; cannot verify adequate speech coverage."
+      },
+      "visual": {
+        "adequate": false,
+        "reason": "No per-window coverage notes were supplied; cannot verify adequate visual coverage."
+      },
+      "monitor": {
+        "adequate": false,
+        "reason": "No per-window coverage notes were supplied; cannot verify adequate monitor coverage."
+      },
+      "airway": {
+        "adequate": false,
+        "reason": "No per-window coverage notes were supplied; cannot verify adequate airway coverage."
+      }
+    }
+  },
+  "merges": [],
+  "repairs": [],
+  "flags": [
+    {
+      "flag_type": "EMPTY_INPUT_PAYLOAD",
+      "description": "The Inputs section of the case-level adjudication prompt was empty (no chunk events, sensor tracks, or coverage notes provided)."
+    }
+  ],
+  "unresolved": [
+    {
+      "attribute": "all_case_fields_and_events",
+      "reason": "No input annotations, coverage windows, or sensor tracks were provided for adjudication.",
+      "review_interval_s": null
+    }
+  ]
+}
+```

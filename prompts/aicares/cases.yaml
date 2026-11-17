@@ -1,0 +1,309 @@
+# prompts/aicares/cases.yaml — Northwell Health AI-CARES (IRB #25-1097)
+# Authoritative 10 Pre-Defined Cardiac Arrest Simulation Case Protocol Cards
+# Extracted verbatim from uploaded Northwell `Cases.zip` (Case 1.docx .. Case 10.docx,
+# `Cases/Case Specific Additional Questions- REDCap.docx`, `Cases/Meds needed for sims.docx`,
+# and `Cases/Pre Simulation Script.docx`) and aligned to `dictionary/aicares_instrument.csv`.
+version: 2
+irb_number: "25-1097"
+study_title: "Artificial Intelligence Coaching of Cardiac Arrest RESuscitation (AI-CARES)"
+source_archive: "Cases.zip (Northwell Health Emergency Medicine Simulation Cases 1–10)"
+
+cases:
+  "1":
+    case_number: "1"
+    difficulty_tier: "Easy"
+    complexity: "Easy"
+    title: "Case 1 (Easy PEA) — Carin W, 57F COPD & Severe Dehydration PEA Arrest"
+    patient_name: "Carin W"
+    patient_age_sex: "57yo Female"
+    setting: "OHCA at Home → ED Resuscitation Bay (EMS CPR in progress, IV placed)"
+    clinical_vignette: "57yo woman with emphysema on home O2; 48h of severe nausea/vomiting/diarrhea and unable to eat or drink; found unresponsive & cyanotic on floor by partner."
+    initial_vitals: "HR 116 bpm (pulseless) · RR 0 · BP -/- · SpO2 No signal · PetCO2 0 mmHg"
+    initial_rhythm: "Sinus tachycardia with PEA"
+    rhythm_trajectory: "Sinus Tachycardia PEA → High-Quality CPR + Epinephrine + IV Fluid Bolus → ROSC / TOR"
+    zoll_monitor_note: "No Zoll monitor needed (uses manikin defibrillator/monitor)"
+    expected_first_rhythm_code: "3" # PEA/ Asystole
+    expected_first_rhythm_label: "3 · PEA / Asystole (Sinus Tachy PEA)"
+    shockable_case: false
+    antiarrhythmic_indicated: false
+    appropriate_drug_codes: ["9"] # PEA/ Asystole = epinephrine
+    required_meds: ["Epinephrine 1 mg IV/IO q3–5m", "NS / LR IV Fluid Bolus (Hypovolemia)", "Supplemental O2 / Advanced Airway (Hypoxia)"]
+    critical_triggers:
+      - "Recognize cardiopulmonary arrest and start compressions immediately"
+      - "Identify non-shockable Sinus Tachycardia PEA rhythm on first check"
+      - "Administer Epinephrine 1 mg IV/IO and treat reversible causes (Hypovolemia + Hypoxia)"
+    redcap_branching_gates: []
+    case_specific_fields: []
+    clinical_targets: {}
+
+  "2":
+    case_number: "2"
+    difficulty_tier: "Easy"
+    complexity: "Easy"
+    title: "Case 2 (Easy Asystole) — Tammy Khull, 84F Metastatic Renal Cancer Asystole & DNAR at 6m"
+    patient_name: "Tammy Khull"
+    patient_age_sex: "84yo Female"
+    setting: "OHCA at Home → ED Resuscitation Bay (BLS CPR in progress, no IV obtained by EMS)"
+    clinical_vignette: "84yo woman with metastatic renal cancer and cardiac disease found unresponsive on living room floor by neighbor; valid DNAR order arrives with partner after 6 minutes of high-quality CPR."
+    initial_vitals: "HR 0 bpm · RR 0 · BP -/- · SpO2 No signal · PetCO2 0 mmHg"
+    initial_rhythm: "Asystole"
+    rhythm_trajectory: "Asystole → 6 min High-Quality CPR + Epinephrine → Partner Arrives with DNAR → Termination of Resuscitation (TOR)"
+    zoll_monitor_note: "No Zoll monitor needed"
+    expected_first_rhythm_code: "3" # PEA/ Asystole
+    expected_first_rhythm_label: "3 · PEA / Asystole (Asystole)"
+    shockable_case: false
+    antiarrhythmic_indicated: false
+    appropriate_drug_codes: ["9"] # PEA/ Asystole = epinephrine
+    required_meds: ["Epinephrine 1 mg IV/IO q3–5m"]
+    critical_triggers:
+      - "Recognize Asystole and follow non-shockable ACLS pathway (CPR + IV/IO access + Epinephrine)"
+      - "After 6 minutes of high-quality CPR, partner presents valid DNAR order -> team terminates resuscitation (time_death_v2)"
+    redcap_branching_gates: []
+    case_specific_fields: []
+    clinical_targets: {}
+
+  "3":
+    case_number: "3"
+    difficulty_tier: "Easy"
+    complexity: "Easy"
+    title: "Case 3 (Easy PEA) — Christoffer Black, 64M ESRD Severe Hyperkalemic PEA Arrest"
+    patient_name: "Christoffer Black"
+    patient_age_sex: "64yo Male"
+    setting: "ED Triage / Resuscitation Bay (Witnessed IHCA immediately after initial triage)"
+    clinical_vignette: "64yo man with ESRD and newly placed dialysis catheter (has not yet had first dialysis) presents with chest discomfort & SOB; becomes unresponsive and cyanotic right after triage."
+    initial_vitals: "HR 80 bpm (pulseless) · RR 0 · BP -/- · SpO2 No signal · PetCO2 0 mmHg"
+    initial_rhythm: "Sinus hyperkalemia with PEA (wide bizarre sine-wave/peaked T complex)"
+    rhythm_trajectory: "Hyperkalemic PEA → CPR (<20s) + Epi (<1m) + CaCl2 / NaHCO3 / Insulin+D50 (<6m) → ROSC"
+    zoll_monitor_note: "No Zoll monitor needed"
+    expected_first_rhythm_code: "3" # PEA/ Asystole
+    expected_first_rhythm_label: "3 · PEA / Asystole (Sinus Hyperkalemia PEA)"
+    shockable_case: false
+    antiarrhythmic_indicated: false
+    appropriate_drug_codes: ["9"] # PEA/ Asystole = epinephrine (+ hyperkalemia meds)
+    required_meds: ["Epinephrine 1 mg IV/IO", "Calcium Chloride / Gluconate IV", "Sodium Bicarbonate 50 mEq IV", "Regular Insulin + Dextrose (D50) IV"]
+    critical_triggers:
+      - "Start chest compressions within 20s (or degrades to idioventricular/asystole)"
+      - "Administer Epinephrine 1 mg IV within 1 min of starting compressions"
+      - "Identify Hyperkalemia (case3_q1_v2) and give Calcium, Bicarbonate, and Insulin+Glucose within 6 min (case3_q2_v2) for ROSC"
+    redcap_branching_gates: ["case3_q1_v2", "case3_q2_v2"]
+    case_specific_fields: ["case3_q1_v2", "case3_q2_v2"]
+    clinical_targets:
+      case3_q1_v2: "Was hyperkalemia identified by the team?"
+      case3_q2_v2: "If Y ([case3_q1_v2]=1), were meds for hyperkalemia administered (insulin, glucose, calcium, bicarb)?"
+
+  "4":
+    case_number: "4"
+    difficulty_tier: "Hard"
+    complexity: "Hard"
+    title: "Case 4 (Hard Brady→VF→Asystole→PCAC) — Ryan Gosling, 28M Diltiazem (CCB) Overdose"
+    patient_name: "Ryan Gosling"
+    patient_age_sex: "28yo Male"
+    setting: "Emergency Department Resuscitation Bay (Intentional Diltiazem Overdose)"
+    clinical_vignette: "28yo male brought to ED after intentional Diltiazem overdose (empty pill bottle found beside him); initially drowsy and slurring words with profound bradycardia and hypotension."
+    initial_vitals: "HR 30 bpm · RR 8–10/min · BP 80/48 mmHg · SpO2 98% (3L NC) · Temp 36.5°C · Glucose 195 mg/dL"
+    initial_rhythm: "Ventricular escape rhythm at 30 bpm (wide QRS, long QT) → VF → Asystole → ROSC"
+    rhythm_trajectory: "Unstable Bradycardia (30 bpm) → VF Arrest (2 Shocks) → Asystole (Epi 1 mg) → ROSC (PCAC)"
+    zoll_monitor_note: "No Zoll monitor needed"
+    expected_first_rhythm_code: "2" # Bradycardia
+    expected_first_rhythm_label: "2 · Unstable Bradycardia (30 bpm) → VF → Asystole → PCAC"
+    shockable_case: true
+    external_pacing_indicated: true
+    antiarrhythmic_indicated: true
+    appropriate_drug_codes: ["8", "9", "10", "12", "14"] # Bradycardia=atropine; PEA/Asystole=epi; VF=amio/lido; Diltiazem OD=insulin, calcium, lipid emulsion
+    required_meds: ["Atropine 1 mg IV", "Epinephrine 1 mg IV", "Amiodarone 300 mg / Lidocaine", "Calcium", "High-Dose IV Insulin + Dextrose", "Lipid Emulsion Therapy / ECMO consult"]
+    critical_triggers:
+      - "Treat initial unstable bradycardia (Atropine -> prepare 2nd-line bradycardia infusion or transcutaneous pacing [case4_q1_v2])"
+      - "Recognize transition to VF arrest (rhythm_recognized_v2) and deliver 2 safe defibrillation shocks (shocks_admin_v2, time_defib_v2)"
+      - "Administer/consider CCB overdose reversal: IV insulin, calcium, lipid emulsion therapy, or ECMO (case4_q2_v2)"
+      - "Recognize post-shock Asystole, give Epinephrine 1 mg IV, and manage Post-Cardiac Arrest Care (PCAC) after ROSC"
+    redcap_branching_gates: ["rhythm_recognized_v2", "shocks_admin_v2", "time_defib_v2", "clears_before_analyzing_an_v2", "anti_arrythmic_given_v2", "external_pacing_indicated_v2", "case4_q1_v2", "case4_q2_v2"]
+    case_specific_fields: ["case4_q1_v2", "case4_q2_v2"]
+    clinical_targets:
+      case4_q1_v2: "Did they prepare a second line bradycardia treatment after administering atropine or consider pacing?"
+      case4_q2_v2: "Did the team administer or consider reversal treatment for the overdose with any of the following: IV insulin, calcium, lipid emulsion therapy, or ECMO?"
+
+  "5":
+    case_number: "5"
+    difficulty_tier: "Hard"
+    complexity: "Hard"
+    title: "Case 5 (Hard Brady→VF→PEA→PCAC) — 51yo Conscious Sedation (Fentanyl/Midazolam) Overdose"
+    patient_name: "ED Sedation Patient (51yo)"
+    patient_age_sex: "51yo Adult"
+    setting: "Emergency Department Procedure Room (Closed Shoulder Reduction under Conscious Sedation)"
+    clinical_vignette: "51yo patient undergoing conscious sedation (fentanyl + midazolam) for closed shoulder reduction; 15 min after last med dose, RR drops to 4/min, PetCO2 rises to 55 mmHg, and patient becomes unresponsive."
+    initial_vitals: "Slow narrow-complex bradycardia with hypotension · RR 4/min · PetCO2 55 mmHg"
+    initial_rhythm: "Hypoxic/Sedative Unstable Bradycardia → VF → Narrow-Complex PEA → ROSC"
+    rhythm_trajectory: "Unstable Bradycardia (Atropine x2 + Pacing/Dopamine) → VF Arrest (Shocks + Epi + Amiodarone) → PEA (Epi #2) → ROSC (PCAC)"
+    zoll_monitor_note: "Zoll monitor required (pacing & rhythm transitions)"
+    expected_first_rhythm_code: "2" # Bradycardia
+    expected_first_rhythm_label: "2 · Unstable Bradycardia → VF → PEA → PCAC"
+    shockable_case: true
+    external_pacing_indicated: true
+    antiarrhythmic_indicated: true
+    appropriate_drug_codes: ["8", "9", "10", "11", "13", "14"] # Atropine, Epi, Amiodarone, Flumazenil, Naloxone
+    required_meds: ["Naloxone (Narcan)", "Flumazenil", "Atropine 1 mg IV (x2)", "Dopamine Infusion", "Epinephrine 1 mg IV (x2)", "Amiodarone 300 mg IV"]
+    critical_triggers:
+      - "Recognize oversedation respiratory depression and consider Naloxone (Narcan) or Flumazenil (case5_q1_v2)"
+      - "Administer Atropine 1 mg IV x2 and prepare 2nd-line bradycardia therapy (Dopamine) or transcutaneous pacing (case5_q2_v2, external_pacing_indicated_v2)"
+      - "Recognize VF arrest (rhythm_recognized_v2), deliver defibrillation shocks, Epinephrine, and Amiodarone (anti_arrythmic_given_v2)"
+      - "Transition to PEA pathway on next rhythm check, administer 2nd Epinephrine dose, and manage PCAC after ROSC"
+    redcap_branching_gates: ["rhythm_recognized_v2", "shocks_admin_v2", "time_defib_v2", "clears_before_analyzing_an_v2", "anti_arrythmic_given_v2", "external_pacing_indicated_v2", "case5_q1_v2", "case5_q2_v2"]
+    case_specific_fields: ["case5_q1_v2", "case5_q2_v2"]
+    clinical_targets:
+      case5_q1_v2: "Did the team consider administering Narcan or flumazenil?"
+      case5_q2_v2: "Did the team consider a second line bradycardia treatment or consider pacing after administering atropine?"
+
+  "6":
+    case_number: "6"
+    difficulty_tier: "Hard"
+    complexity: "Hard"
+    title: "Case 6 (Hard Tachy→VF→PEA→PCAC) — Symptomatic Wide-Complex VT Requiring Synchronized Cardioversion"
+    patient_name: "ED Angina Patient"
+    patient_age_sex: "Adult Male"
+    setting: "Emergency Department Bay (Admitted for Worsening Angina; Son Summons Team for Acute Chest Pain)"
+    clinical_vignette: "Patient admitted to ED for worsening stable angina develops acute severe chest pain and diaphoresis; monitor shows monomorphic wide-complex rapid ventricular tachycardia at 160 bpm."
+    initial_vitals: "HR 160 bpm · RR 22/min · BP 156/92 mmHg (rapidly deteriorating) · SpO2 93%"
+    initial_rhythm: "Monomorphic Wide-Complex Ventricular Tachycardia (160 bpm) → VF → PEA (2nd-Degree AV Block) → ROSC"
+    rhythm_trajectory: "Symptomatic VT (160 bpm) → Synchronized Cardioversion → Pulseless VF (Defib + Epi + Amio) → PEA → ROSC (PCAC)"
+    zoll_monitor_note: "Zoll monitor required (synchronized cardioversion & VF conversion)"
+    expected_first_rhythm_code: "1" # Tachycardia
+    expected_first_rhythm_label: "1 · Wide-Complex Tachycardia (VT 160 bpm) → VF → PEA → PCAC"
+    shockable_case: true
+    synchronized_cardioversion_indicated: true
+    antiarrhythmic_indicated: true
+    appropriate_drug_codes: ["7", "9", "10", "14"]
+    required_meds: ["Epinephrine 1 mg IV", "Amiodarone 300 mg IV / Lidocaine", "Post-ROSC Vasopressor (Cardiogenic Shock)"]
+    critical_triggers:
+      - "Perform immediate Synchronized Cardioversion for symptomatic wide-complex VT without delaying for drugs (synchronized_cardioversion_v2)"
+      - "Recognize immediate post-cardioversion conversion to pulseless VF (rhythm_recognized_v2) and switch to unsynchronized Defibrillation (shocks_admin_v2)"
+      - "Administer Epinephrine and antiarrhythmic (anti_arrythmic_given_v2) during VF, then manage PEA and post-ROSC cardiogenic shock"
+    redcap_branching_gates: ["rhythm_recognized_v2", "shocks_admin_v2", "time_defib_v2", "clears_before_analyzing_an_v2", "anti_arrythmic_given_v2", "synchronized_cardioversion_v2"]
+    case_specific_fields: []
+    clinical_targets: {}
+
+  "7":
+    case_number: "7"
+    difficulty_tier: "Moderate"
+    complexity: "Moderate"
+    title: "Case 7 (Moderate Brady→VF→Asystole/PEA→PCAC) — 67F Mobitz II AV Block in Surgical Waiting Room"
+    patient_name: "Surgical Waiting Room Patient (67F)"
+    patient_age_sex: "67yo Female"
+    setting: "Hospital Surgical Waiting Room (Rapid Response Team Activation)"
+    clinical_vignette: "67yo woman (history of breast cancer in remission and diabetes) collapses with dizziness in Surgical Waiting Room while awaiting husband's surgery."
+    initial_vitals: "HR 28 bpm · RR 18/min · BP 68/P mmHg · SpO2 96% · Glucose 90 mg/dL"
+    initial_rhythm: "2nd-Degree Type II (Mobitz II) AV Block at 28 bpm → VF → Asystole → Narrow-Complex PEA → ROSC"
+    rhythm_trajectory: "Mobitz II Bradycardia (28 bpm, Atropine x2 + Pacing/Dopamine) → VF (2 Shocks + Epi + Amio/Lido) → Asystole/PEA (Epi #2 & #3) → ROSC"
+    zoll_monitor_note: "Zoll monitor required"
+    expected_first_rhythm_code: "2" # Bradycardia
+    expected_first_rhythm_label: "2 · Mobitz II Bradycardia (28 bpm) → VF → Asystole/PEA → PCAC"
+    shockable_case: true
+    external_pacing_indicated: true
+    antiarrhythmic_indicated: true
+    appropriate_drug_codes: ["8", "9", "10", "14"]
+    required_meds: ["Atropine 1 mg IV (x2)", "Dopamine / Epinephrine Infusion", "Epinephrine 1 mg IV (x3)", "Amiodarone 300 mg IV or Lidocaine 1–1.5 mg/kg"]
+    critical_triggers:
+      - "Recognize unstable 2nd-degree Type II AV block (HR 28, BP 68/P), give Atropine 1 mg IV x2, and prepare 2nd-line Dopamine infusion or Transcutaneous Pacing (case7_q1_v2, external_pacing_indicated_v2)"
+      - "Recognize transition to pulseless VF (rhythm_recognized_v2), deliver 2 defibrillation shocks, Epinephrine, and Amiodarone/Lidocaine (anti_arrythmic_given_v2)"
+      - "Manage subsequent Asystole and PEA cycles with Epinephrine #2 and #3 until ROSC and PCAC"
+    redcap_branching_gates: ["rhythm_recognized_v2", "shocks_admin_v2", "time_defib_v2", "clears_before_analyzing_an_v2", "anti_arrythmic_given_v2", "external_pacing_indicated_v2", "case7_q1_v2"]
+    case_specific_fields: ["case7_q1_v2"]
+    clinical_targets:
+      case7_q1_v2: "Did they prepare a second line bradycardia treatment (ie dopamine) after administering atropine or consider pacing?"
+
+  "8":
+    case_number: "8"
+    difficulty_tier: "Moderate"
+    complexity: "Moderate"
+    title: "Case 8 (Moderate Refractory VF→STEMI) — Victor Vernan, 64M Refractory VF Arrest & Post-ROSC STEMI"
+    patient_name: "Victor Vernan"
+    patient_age_sex: "64yo Male"
+    setting: "OHCA at Home → ED Resuscitation Bay (Re-arrested in VF upon ED arrival after 1 EMS shock)"
+    clinical_vignette: "64yo man with sudden cardiac arrest at home; achieved brief ROSC after 1 EMS shock, then re-arrested in VF upon arrival in ED resuscitation bay."
+    initial_vitals: "HR 0 bpm (VF) · RR 0 · BP -/- · SpO2 No signal · PetCO2 0 mmHg"
+    initial_rhythm: "Refractory Ventricular Fibrillation (VF) requiring ≥3 Defibrillation Shocks → ROSC with STEMI"
+    rhythm_trajectory: "Refractory VF (3+ Shocks + Epi after 2nd Shock + Amiodarone/Lidocaine) → ROSC → Post-ROSC 12-Lead EKG STEMI + Norepinephrine"
+    zoll_monitor_note: "No Zoll monitor needed"
+    expected_first_rhythm_code: "4" # Vfib/ Pulseless vtach
+    expected_first_rhythm_label: "4 · Refractory Ventricular Fibrillation (VF) → Post-ROSC STEMI"
+    shockable_case: true
+    antiarrhythmic_indicated: true
+    appropriate_drug_codes: ["9", "10", "14"]
+    required_meds: ["Epinephrine 1 mg IV (after 2nd shock)", "Amiodarone 300 mg IV or Lidocaine", "Aspirin + Heparin / Cath Lab Activation", "Norepinephrine (Levo) + IV Fluid Bolus"]
+    critical_triggers:
+      - "Recognize VF immediately (rhythm_recognized_v2) and deliver 3 defibrillation shocks every 2 min (shocks_admin_v2, time_defib_v2)"
+      - "Administer Epinephrine 1 mg IV after 2nd shock and Amiodarone/Lidocaine for refractory VF (anti_arrythmic_given_v2)"
+      - "Upon ROSC: obtain post-ROSC 12-lead EKG (case8_q1_v2), recognize STEMI (case8_q2_v2), initiate STEMI treatment/Cath Lab (case8_q3_v2), and start vasopressors for SBP < 90 mmHg (case8_q4_v2)"
+    redcap_branching_gates: ["rhythm_recognized_v2", "shocks_admin_v2", "time_defib_v2", "clears_before_analyzing_an_v2", "anti_arrythmic_given_v2", "case8_q1_v2", "case8_q2_v2", "case8_q3_v2", "case8_q4_v2"]
+    case_specific_fields: ["case8_q1_v2", "case8_q2_v2", "case8_q3_v2", "case8_q4_v2"]
+    clinical_targets:
+      case8_q1_v2: "Did the team obtain a post ROSC EKG?"
+      case8_q2_v2: "Did the team recognize STEMI on the post ROSC EKG?"
+      case8_q3_v2: "If Y ([case8_q2_v2]=1), did the team administer treatment (tPA, streptokinase, activate cath lab, aspirin loading, heparin infusion) for the STEMI?"
+      case8_q4_v2: "Did the team administer blood pressure support (vasopressors)?"
+
+  "9":
+    case_number: "9"
+    difficulty_tier: "Moderate"
+    complexity: "Moderate"
+    title: "Case 9 (Moderate STEMI Brady→pVT→PEA→VF DSD) — 72F Inferior STEMI & Dual Sequential Defibrillation"
+    patient_name: "Inpatient Telemetry Patient (72F)"
+    patient_age_sex: "72yo Female"
+    setting: "Hospital Inpatient Telemetry / ED Bay (Admitted for Palpitations, Now Acute Chest Discomfort)"
+    clinical_vignette: "72yo woman admitted with palpitations develops chest discomfort, mild hypoxia (SpO2 90%), and sinus bradycardia (50 bpm, BP 150/70) with Inferior STEMI on 12-lead ECG, then arrests in pVT → PEA → Refractory VF."
+    initial_vitals: "HR 50 bpm · RR 24/min · BP 150/70 mmHg · SpO2 90% on RA · Temp 37.1°C"
+    initial_rhythm: "Sinus Bradycardia (50 bpm) with Acute Inferior STEMI → Pulseless VT (pVT) → PEA → Refractory VF (Dual Sequential Defib) → ROSC"
+    rhythm_trajectory: "Inferior STEMI + Sinus Bradycardia (O2 + ASA/Heparin; Avoid Nitro & Atropine) → pVT (2 Shocks) → PEA (Epi) → Refractory VF (Dual Sequential Defib) → ROSC"
+    zoll_monitor_note: "Zoll monitor required (Dual Sequential Defibrillation setup)"
+    expected_first_rhythm_code: "2" # Bradycardia -> pVT/VF
+    expected_first_rhythm_label: "2 · Sinus Bradycardia (Inferior STEMI) → pVT → PEA → VF (DSD)"
+    shockable_case: true
+    external_pacing_indicated: true
+    antiarrhythmic_indicated: true
+    appropriate_drug_codes: ["8", "9", "10", "14"]
+    required_meds: ["Supplemental O2", "Aspirin + Heparin (Avoid Nitroglycerin & Atropine)", "Epinephrine 1 mg IV", "Amiodarone 300 mg / Lidocaine"]
+    critical_triggers:
+      - "Request 12-lead EKG (case9_q1_v2), identify Inferior STEMI with sinus bradycardia (case9_q2_v2), administer STEMI treatment (case9_q3_v2), start supplemental O2 (case9_q4_v2), and AVOID nitroglycerin and atropine (case9_q5_v2)"
+      - "Recognize sudden arrest in pVT (rhythm_recognized_v2), deliver shocks, transition to PEA (give Epinephrine), then recognize Refractory VF"
+      - "Consider or attempt Dual Sequential Defibrillation (DSD) for refractory VF (case9_q6_v2) to achieve ROSC"
+    redcap_branching_gates: ["rhythm_recognized_v2", "shocks_admin_v2", "time_defib_v2", "clears_before_analyzing_an_v2", "anti_arrythmic_given_v2", "external_pacing_indicated_v2", "case9_q1_v2", "case9_q2_v2", "case9_q3_v2", "case9_q4_v2", "case9_q5_v2", "case9_q6_v2"]
+    case_specific_fields: ["case9_q1_v2", "case9_q2_v2", "case9_q3_v2", "case9_q4_v2", "case9_q5_v2", "case9_q6_v2"]
+    clinical_targets:
+      case9_q1_v2: "Did the team request an EKG?"
+      case9_q2_v2: "Did the team identify the STEMI with sinus bradycardia?"
+      case9_q3_v2: "Did the team administer treatment for the STEMI (tPA, streptokinase, activate cath lab, aspirin loading, heparin infusion)?"
+      case9_q4_v2: "Did the team start supplemental oxygen?"
+      case9_q5_v2: "Did the team avoid giving nitro and atropine?"
+      case9_q6_v2: "Did the team consider or attempt dual sequential defibrillation?"
+
+  "10":
+    case_number: "10"
+    difficulty_tier: "Moderate"
+    complexity: "Moderate"
+    title: "Case 10 (Moderate Asthma SVT→Auto-PEEP PEA→VF→PCAC) — 42F Severe Asthma, SVT & Auto-PEEP"
+    patient_name: "Inpatient Asthma/Pneumonia Patient (42F)"
+    patient_age_sex: "42yo Female"
+    setting: "Hospital Inpatient / ED Bay (Lupus & Asthma Patient Admitted with Pneumonia)"
+    clinical_vignette: "42yo woman with lupus and asthma admitted with pneumonia develops SVT (160 bpm) and severe bronchospasm while on albuterol; progresses to respiratory failure, intubation-induced Auto-PEEP PEA, and VF arrest."
+    initial_vitals: "HR 160 bpm (SVT) · BP 140/70 mmHg · Severe wheezing & respiratory distress"
+    initial_rhythm: "Supraventricular Tachycardia (SVT 160 bpm) → Post-Intubation Auto-PEEP PEA → VF → ROSC"
+    rhythm_trajectory: "SVT 160 bpm (Avoid Adenosine/Metoprolol) → Respiratory Failure (BiPAP/Intubation) → Auto-PEEP PEA (Disconnect Vent + Epi) → VF (Defib) → ROSC"
+    zoll_monitor_note: "Zoll monitor required"
+    expected_first_rhythm_code: "1" # Tachycardia
+    expected_first_rhythm_label: "1 · SVT (160 bpm) + Status Asthmaticus → Auto-PEEP PEA → VF"
+    shockable_case: true
+    synchronized_cardioversion_indicated: true
+    antiarrhythmic_indicated: true
+    appropriate_drug_codes: ["7", "9", "10", "14"]
+    required_meds: ["Epinephrine 1 mg IV", "Albuterol / Bronchodilators (AVOID Adenosine & Metoprolol)", "Amiodarone / Lidocaine"]
+    critical_triggers:
+      - "Acknowledge severe asthma exacerbation as a contraindication to Adenosine and Metoprolol (case10_q1_v2)"
+      - "Recognize impending/acute respiratory failure (case10_q2_v2) and provide respiratory support: BiPAP, BVM bagging, or endotracheal intubation (case10_q3_v2)"
+      - "Recognize post-intubation Auto-PEEP (dynamic hyperinflation) causing PEA and mitigate by disconnecting/lowering ventilation rate + giving Epinephrine (case10_q4_v2)"
+      - "Recognize subsequent conversion to VF (rhythm_recognized_v2) and deliver immediate defibrillation shock (shocks_admin_v2) to achieve ROSC"
+    redcap_branching_gates: ["rhythm_recognized_v2", "shocks_admin_v2", "time_defib_v2", "clears_before_analyzing_an_v2", "anti_arrythmic_given_v2", "synchronized_cardioversion_v2", "case10_q1_v2", "case10_q2_v2", "case10_q3_v2", "case10_q4_v2"]
+    case_specific_fields: ["case10_q1_v2", "case10_q2_v2", "case10_q3_v2", "case10_q4_v2"]
+    clinical_targets:
+      case10_q1_v2: "Did the team acknowledge that asthma exacerbation would be a contraindication to adenosine and metoprolol?"
+      case10_q2_v2: "Does the team recognize respiratory failure?"
+      case10_q3_v2: "Did the team provide respiratory support (bipap, intubation, bagging)?"
+      case10_q4_v2: "Did the team recognize the auto-PEEP in the asthmatic and attempt to mitigate or fix?"

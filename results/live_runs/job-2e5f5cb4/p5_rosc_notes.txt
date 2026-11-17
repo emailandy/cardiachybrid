@@ -1,0 +1,5 @@
+1. Notable observations: At 365.5s, compressions were paused and a provider palpated the radial site. At 369.0s, the simulation facilitator verbally announced the presence of a pulse ("You guys have a pulse") and read out post-ROSC vital signs at 372.0s (HR 110, BP 95/77, RR 14, SpO2 94%, PCO2 40). At 389.0s, the team leader queried the rhythm and normal sinus rhythm was verbally confirmed. ROSC persisted until the simulation ended at 455.8s without re-arrest.
+2. Abstentions: The post-ROSC rhythm check at 389.0s abstained on pads_source because no physical defibrillator pads or ECG leads were applied to the simulation mannequin.
+3. Adjudication flags: None.
+4. Coverage limitations: Low-fidelity mannequin simulation in self-detection mode (t_precision_s >= 2.0s); wall monitors were off and portable monitor OCR was unavailable, so pulse detection, vital signs, and post-ROSC rhythm were established via facilitator verbalization.
+5. Truncation: None.

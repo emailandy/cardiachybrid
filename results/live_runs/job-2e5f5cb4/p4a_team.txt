@@ -1,0 +1,325 @@
+```json
+{
+  "contract_version": 1,
+  "dict_version": "e7c08437adcef4a5",
+  "metric_definition_version": "unknown",
+  "leader_evaluated": "TEAM_LEADER (held leadership 100% of the case; 9 of 11 directive utterances; role stability stable)",
+  "items": [
+    {
+      "item_number": 1,
+      "item_name": "The team leader let the team know what was expected of them through direction and command",
+      "positive_evidence": [
+        {
+          "t": 62.0,
+          "quote_or_description": "TEAM_LEADER [DIRECTIVE]: \"You like compressions or airway? Okay, you can do compressions, I'll do airway. Meds? And I will be the provider.\""
+        },
+        {
+          "t": 75.5,
+          "quote_or_description": "TEAM_LEADER [DIRECTIVE]: \"So compressions. Start compressions.\""
+        },
+        {
+          "t": 82.0,
+          "quote_or_description": "TEAM_LEADER [DIRECTIVE]: \"Um we don't have an airway, so we want to get an airway... we need to push one of epinephrine while we're getting the airway.\""
+        },
+        {
+          "t": 207.5,
+          "quote_or_description": "TEAM_LEADER [DIRECTIVE]: \"Um we can say it's about two minutes, so let's do a pulse check and see where the rhythm's at. Does she have a pulse?\""
+        }
+      ],
+      "negative_evidence": [
+        {
+          "t": 246.0,
+          "quote_or_description": "TEAM_LEADER: \"Um we can give sodium bicarbonate.\" (Stated as a tentative suggestion rather than a clear directed order; no team member acknowledges or executes)."
+        },
+        {
+          "t": 351.0,
+          "quote_or_description": "TEAM_LEADER [DIRECTIVE]: \"Could do an amp of sodium bicarbonate, I'm sure she's got like some acidosis going on.\" (Again phrased tentatively without assigning or confirming execution)."
+        }
+      ],
+      "relative_placement": "No calibration anchors available (absolute scoring).",
+      "score": 3,
+      "abstain": false,
+      "abstain_reason": null,
+      "justification": "Scoring in absolute terms without comparative reference anchors carries calibration uncertainty. The team leader clearly assigned roles at the outset (62.0s) and issued explicit commands for compressions (75.5s), initial epinephrine and airway management (82.0s), and 2-minute pulse checks (207.5s, 351.0s). However, secondary medication ideas like sodium bicarbonate (246.0s, 351.0s) and lab/post-ROSC orders (267.0s, 420.0s) were voiced as open-ended musings ('we can give', 'could do') rather than directed commands, preventing a score of 4."
+    },
+    {
+      "item_number": 2,
+      "item_name": "The team leader maintained a global perspective",
+      "positive_evidence": [
+        {
+          "t": 119.0,
+          "quote_or_description": "TEAM_LEADER steps back mentally to review H's and T's and history: \"Um so we know that she was found unresponsive. She has a history of what, was it emphysema?... as far as like H's and T's, she could be hypoxic, um she could have any type of like clot or thrombus...\""
+        },
+        {
+          "t": 173.0,
+          "quote_or_description": "TEAM_LEADER integrates team input and solicits further ideas: \"Okay, so that makes sense for electrolyte derangements... does anybody have any other suggestions?\""
+        },
+        {
+          "t": 207.5,
+          "quote_or_description": "TEAM_LEADER tracks time intervals and coordinates rhythm/pulse checks: \"Okay, tube is in, we're bagging. Um we can say it's about two minutes, so let's do a pulse check...\""
+        }
+      ],
+      "negative_evidence": [
+        {
+          "t": 62.0,
+          "quote_or_description": "TEAM_LEADER assigns self to hands-on airway task while also acting as provider: \"Okay, you can do compressions, I'll do airway. Meds? And I will be the provider.\""
+        },
+        {
+          "t": 108.5,
+          "quote_or_description": "TEAM_LEADER is directly involved in performing airway/bagging (\"We have our airway, we're currently bagging\") and misses confirming bilateral breath sounds until prompted by AIRWAY_MD at 190.5s."
+        }
+      ],
+      "relative_placement": "No calibration anchors available (absolute scoring).",
+      "score": 3,
+      "abstain": false,
+      "abstain_reason": null,
+      "justification": "Scoring in absolute terms without comparative reference anchors carries calibration uncertainty. Despite taking on the hands-on airway role initially (62.0s, 108.5s) in a small team, the leader maintained strong situational awareness—tracking 2-minute CPR cycles (173.0s, 207.5s, 351.0s), synthesizing H's and T's aloud (119.0s), and actively soliciting team suggestions (173.0s). Because the leader was hands-on with the airway and needed a teammate prompt to confirm lung sounds (190.5s), a 3 is appropriate rather than a 4."
+    },
+    {
+      "item_number": 3,
+      "item_name": "The team communicated effectively",
+      "positive_evidence": [
+        {
+          "t": 103.5,
+          "quote_or_description": "MED_RN verbalizes action clearly: \"So I'm going to give meds, one milligram of epinephrine,\" and TEAM_LEADER acknowledges at 108.5s: \"Okay, so one of epi's given.\""
+        },
+        {
+          "t": 190.5,
+          "quote_or_description": "AIRWAY_MD speaks up to suggest airway confirmation: \"Um if we could listen to lung sounds to confirm placement,\" which MED_RN immediately executes at 197.0s (\"All right, listening\")."
+        },
+        {
+          "t": 235.0,
+          "quote_or_description": "TEAM_LEADER directs epinephrine: \"Um we can give another push of epinephrine,\" and MED_RN closes the loop at 243.0s: \"Gave epinephrine.\""
+        }
+      ],
+      "negative_evidence": [
+        {
+          "t": 246.0,
+          "quote_or_description": "TEAM_LEADER states \"Um we can give sodium bicarbonate\" and repeats at 351.0s \"Could do an amp of sodium bicarbonate\", with zero verbal acknowledgment or readback from MED_RN."
+        },
+        {
+          "t": 267.0,
+          "quote_or_description": "TEAM_LEADER lists multiple diagnostic orders (\"We can do like CBC, CMP, um I would do a troponin, um VBG, lactate...\") without directing them to a specific person or receiving confirmation."
+        }
+      ],
+      "relative_placement": "No calibration anchors available (absolute scoring).",
+      "score": 3,
+      "abstain": false,
+      "abstain_reason": null,
+      "justification": "Scoring in absolute terms without comparative reference anchors carries calibration uncertainty. Communication was clear and closed-loop for primary resuscitation actions, such as both epinephrine doses (103.5s–108.5s, 235.0s–243.0s) and lung sound auscultation (190.5s–207.5s). However, several statements regarding sodium bicarbonate (246.0s, 351.0s) and laboratory/imaging orders (267.0s, 420.0s) went unacknowledged without closed-loop readbacks, supporting a score of 3."
+    },
+    {
+      "item_number": 4,
+      "item_name": "The team worked together to complete tasks in a timely manner",
+      "positive_evidence": [
+        {
+          "t": 80.0,
+          "quote_or_description": "Simultaneous task execution early in the case: compressions initiated at 80.0s, rhythm assessed at 82.0s, 1st epinephrine given at 103.5s, and airway placed/bagging by 110.0s."
+        },
+        {
+          "t": 190.5,
+          "quote_or_description": "Prompt cross-role assistance: when AIRWAY_MD suggests listening to lung sounds (190.5s), MED_RN immediately auscultates at 197.0s."
+        },
+        {
+          "t": 232.0,
+          "quote_or_description": "Rapid coordination during first pulse/rhythm check: pause at 232.0s, pulse checked (232.0s), PEA identified (235.0s), compressions resumed by 236.0s (4-second pause), and epi given at 243.0s."
+        }
+      ],
+      "negative_evidence": [
+        {
+          "t": 197.0,
+          "quote_or_description": "Airway placement confirmation via bilateral breath sounds occurred at 197.0s, 87 seconds after airway placement was announced at 110.0s."
+        }
+      ],
+      "relative_placement": "No calibration anchors available (absolute scoring).",
+      "score": 3,
+      "abstain": false,
+      "abstain_reason": null,
+      "justification": "Scoring in absolute terms without comparative reference anchors carries calibration uncertainty. The team worked smoothly in parallel during the opening minute to start CPR, secure the airway, and administer epinephrine within 30 seconds of starting compressions (80.0s–110.0s), and executed a crisp 4-second rhythm check pause at 232.0s–236.0s. A delay of 87 seconds between placing the airway (110.0s) and auscultating breath sounds (197.0s), as well as unexecuted bicarbonate mentions, keeps this at 3 rather than 4."
+    },
+    {
+      "item_number": 5,
+      "item_name": "The team acted with composure and control",
+      "positive_evidence": [
+        {
+          "t": 62.0,
+          "quote_or_description": "Calm, orderly role assignment by TEAM_LEADER immediately after facilitator handoff."
+        },
+        {
+          "t": 119.0,
+          "quote_or_description": "Controlled, methodical discussion of differential diagnosis (H's and T's) and patient history between TEAM_LEADER and AIRWAY_MD (119.0s–190.0s) while CPR and bagging proceed."
+        },
+        {
+          "t": 232.0,
+          "quote_or_description": "Measured, composed execution of pulse checks and post-ROSC transition (366.0s–443.0s) with zero overlapping shouting or panic."
+        }
+      ],
+      "negative_evidence": [],
+      "relative_placement": "No calibration anchors available (absolute scoring).",
+      "score": 4,
+      "abstain": false,
+      "abstain_reason": null,
+      "justification": "Scoring in absolute terms without comparative reference anchors carries calibration uncertainty. Across the entire 455.8s recording, the team demonstrated calm, composed verbal exchanges, orderly turn-taking during clinical reasoning (119.0s–190.0s), and controlled transitions during pulse checks (232.0s, 366.0s) and post-ROSC care (389.0s) with no evidence of agitation, conflict, or loss of control."
+    },
+    {
+      "item_number": 6,
+      "item_name": "The team morale was positive",
+      "positive_evidence": [
+        {
+          "t": 62.0,
+          "quote_or_description": "TEAM_LEADER politely accommodates teammate preference during role assignment: \"You like compressions or airway? Okay, you can do compressions, I'll do airway.\""
+        },
+        {
+          "t": 173.0,
+          "quote_or_description": "TEAM_LEADER validates teammate input positively: \"Okay, so that makes sense for electrolyte derangements... does anybody have any other suggestions?\""
+        },
+        {
+          "t": 197.0,
+          "quote_or_description": "MED_RN willingly and promptly responds to AIRWAY_MD's suggestion to check lung sounds: \"All right, listening.\""
+        }
+      ],
+      "negative_evidence": [],
+      "relative_placement": "No calibration anchors available (absolute scoring).",
+      "score": 4,
+      "abstain": false,
+      "abstain_reason": null,
+      "justification": "Scoring in absolute terms without comparative reference anchors carries calibration uncertainty. The team displayed a collaborative, respectful tone throughout, offering role choice at 62.0s, explicitly validating a teammate's diagnostic input at 173.0s, inviting open suggestions, and assisting one another without friction (197.0s), with zero negative interpersonal interactions."
+    },
+    {
+      "item_number": 7,
+      "item_name": "The team adapted to changing situations",
+      "positive_evidence": [
+        {
+          "t": 82.0,
+          "quote_or_description": "Team immediately adapts to EMS handoff of PEA by initiating compressions (80.0s), withholding defibrillation (\"she's currently in PEA still, so we can't shock\"), and prioritizing epinephrine and airway."
+        },
+        {
+          "t": 235.0,
+          "quote_or_description": "Upon finding no pulse at the first check (233.0s), TEAM_LEADER immediately resumes compressions and orders second epinephrine (235.0s)."
+        },
+        {
+          "t": 389.0,
+          "quote_or_description": "Following ROSC detection at 369.0s, TEAM_LEADER transitions from arrest algorithm to post-ROSC stabilization: checks rhythm (\"Normal sinus\"), orders IV fluids for dehydration (389.0s), checks consciousness, and orders EKG, CT head, chest X-ray, and specialist consults (420.0s)."
+        }
+      ],
+      "negative_evidence": [],
+      "relative_placement": "No calibration anchors available (absolute scoring).",
+      "score": 4,
+      "abstain": false,
+      "abstain_reason": null,
+      "justification": "Scoring in absolute terms without comparative reference anchors carries calibration uncertainty. The team adapted appropriately at each clinical transition: initiating non-shockable PEA management at 82.0s, continuing ACLS cycles when pulseless at 235.0s, and promptly shifting to post-resuscitation care (rhythm verification, fluids, neurological assessment, imaging, and consults) once ROSC was achieved at 369.0s–420.0s."
+    },
+    {
+      "item_number": 8,
+      "item_name": "The team monitored and reassessed the situation",
+      "positive_evidence": [
+        {
+          "t": 190.5,
+          "quote_or_description": "Team reassesses airway placement via bilateral breath sound auscultation (190.5s–204.0s)."
+        },
+        {
+          "t": 232.0,
+          "quote_or_description": "Team performs scheduled 2-minute pulse and rhythm reassessment (232.0s–235.0s) and checks point-of-care glucose / lab status (250.0s)."
+        },
+        {
+          "t": 366.0,
+          "quote_or_description": "Team performs second 2-minute pulse check (366.0s), identifies ROSC (369.0s), reassesses cardiac rhythm (389.0s), and reassesses patient consciousness level (420.0s)."
+        }
+      ],
+      "negative_evidence": [],
+      "relative_placement": "No calibration anchors available (absolute scoring).",
+      "score": 4,
+      "abstain": false,
+      "abstain_reason": null,
+      "justification": "Scoring in absolute terms without comparative reference anchors carries calibration uncertainty. The team consistently monitored time intervals and patient status, conducting structured 2-minute pulse and rhythm checks (232.0s, 366.0s), verifying airway placement (190.5s), checking point-of-care glucose (250.0s), and reassessing rhythm and neurological status after ROSC (389.0s, 420.0s) with no unmitigated monitoring lapses."
+    },
+    {
+      "item_number": 9,
+      "item_name": "The team anticipated potential actions",
+      "positive_evidence": [
+        {
+          "t": 119.0,
+          "quote_or_description": "TEAM_LEADER anticipates reversible causes (H's and T's: hypoxia, PE/thrombus) early during the first CPR cycle."
+        },
+        {
+          "t": 173.0,
+          "quote_or_description": "TEAM_LEADER anticipates the upcoming 2-minute rhythm check well in advance: \"it's probably we'll say two minutes, we can do a pulse check\" and considers electrolyte derangements from diarrhea."
+        },
+        {
+          "t": 420.0,
+          "quote_or_description": "Post-ROSC, TEAM_LEADER anticipates downstream diagnostic and disposition needs: \"Pulm, cardiology should be consulted... I would get an EKG, CT head to rule out strokes, chest X-ray to confirm the ET tube and everything.\""
+        }
+      ],
+      "negative_evidence": [
+        {
+          "t": 246.0,
+          "quote_or_description": "Anticipated interventions for acidosis (sodium bicarbonate mentioned at 246.0s and 351.0s) were floated verbally without preparing or administering the medication."
+        }
+      ],
+      "relative_placement": "No calibration anchors available (absolute scoring).",
+      "score": 3,
+      "abstain": false,
+      "abstain_reason": null,
+      "justification": "Scoring in absolute terms without comparative reference anchors carries calibration uncertainty. The team demonstrated good forward thinking by reviewing H's and T's early (119.0s, 166.5s), preparing for upcoming 2-minute checks (173.0s), requesting POC glucose and labs (250.0s, 267.0s), and planning post-arrest imaging and consults (420.0s). Because anticipated bicarbonate therapy (246.0s, 351.0s) was never converted into action, a score of 3 is assigned."
+    },
+    {
+      "item_number": 10,
+      "item_name": "The team prioritized tasks",
+      "positive_evidence": [
+        {
+          "t": 80.0,
+          "quote_or_description": "Immediate prioritization of chest compressions (80.0s), recognition of non-shockable PEA rhythm (82.0s), first epinephrine (103.5s), and airway placement (110.0s) within 30 seconds of starting CPR."
+        },
+        {
+          "t": 119.0,
+          "quote_or_description": "Secondary tasks (reviewing history, H's and T's, lab orders) are deferred until after continuous CPR, airway ventilation, and epinephrine are established."
+        },
+        {
+          "t": 235.0,
+          "quote_or_description": "During the first pulse check (232.0s–236.0s), resuming chest compressions is prioritized immediately upon confirming absence of a pulse (\"Okay, so continue compressions, she's still in PEA\"), keeping the pause to 4 seconds."
+        }
+      ],
+      "negative_evidence": [
+        {
+          "t": 62.0,
+          "quote_or_description": "After EMS handoff concluded at 61.5s, role negotiation took until 75.5s, resulting in chest compressions starting at 80.0s (18.5s after handoff completion)."
+        }
+      ],
+      "relative_placement": "No calibration anchors available (absolute scoring).",
+      "score": 3,
+      "abstain": false,
+      "abstain_reason": null,
+      "justification": "Scoring in absolute terms without comparative reference anchors carries calibration uncertainty. Task prioritization followed core resuscitation principles: compressions, airway, and epinephrine were completed first (80.0s–110.0s) before diagnostic brainstorming (119.0s), and resuming compressions took immediate priority at the 232.0s pulse check. A minor 18.5-second delay between the end of handoff (61.5s) and starting compressions (80.0s) while negotiating roles keeps the score at 3."
+    },
+    {
+      "item_number": 11,
+      "item_name": "The team followed approved standards and guidelines",
+      "positive_evidence": [
+        {
+          "t": 82.0,
+          "quote_or_description": "Correctly applies ACLS PEA pathway: recognizes PEA is non-shockable (\"she's currently in PEA still, so we can't shock\"), prioritizes CPR and early 1 mg epinephrine (103.5s)."
+        },
+        {
+          "t": 232.0,
+          "quote_or_description": "Performs rhythm/pulse checks at simulated 2-minute intervals (232.0s and 366.0s) with minimal interruption (4.0s pause at 232.0s–236.0s) and administers repeat epinephrine (243.0s)."
+        },
+        {
+          "t": 389.0,
+          "quote_or_description": "Follows post-cardiac arrest care guidelines upon ROSC: verifies rhythm (389.0s), orders IV fluids for hypotension/dehydration (389.0s), assesses neurological responsiveness, and orders 12-lead EKG, chest X-ray, and CT head (420.0s)."
+        }
+      ],
+      "negative_evidence": [
+        {
+          "t": 197.0,
+          "quote_or_description": "Delayed confirmation of airway placement by auscultation of bilateral breath sounds until 197.0s (87 seconds after airway placement at 110.0s)."
+        }
+      ],
+      "relative_placement": "No calibration anchors available (absolute scoring).",
+      "score": 3,
+      "abstain": false,
+      "abstain_reason": null,
+      "justification": "Scoring in absolute terms without comparative reference anchors carries calibration uncertainty. The team adhered closely to ACLS PEA and post-ROSC guidelines, including appropriate rhythm recognition (82.0s), timely epinephrine dosing (103.5s, 243.0s), 2-minute pulse checks with a brief 4-second pause (232.0s–236.0s), H's and T's evaluation (119.0s), and comprehensive post-ROSC stabilization (389.0s–420.0s). The 87-second delay in confirming bilateral breath sounds after airway insertion (110.0s to 197.0s) prevents a 4."
+    }
+  ]
+}
+```

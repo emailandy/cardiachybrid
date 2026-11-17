@@ -1,0 +1,4 @@
+1. Notable observations: The patient remained in non-shockable PEA throughout the arrest until achieving ROSC in sinus tachycardia at 368.0s (06:08). The team leader verbally noted at 91.0s (01:31) and 234.5s (03:54) that the rhythm was PEA and non-shockable. No defibrillation, synchronized cardioversion, or external pacing occurred.
+2. Abstentions: Rhythm check pad source (`pads_source`) was marked `unable_to_determine` at 91.0s, 234.5s, 368.0s, and 390.8s because no physical defibrillator pads or monitor cables were attached to the mannequin during this simulation.
+3. Flags: All 13 acoustic device detections for defibrillator charging and shock delivery were disputed as false positives caused by periodic 30s monitor alarm chimes.
+4. Coverage limitations: Wall monitors were off and the portable monitor on the left cart was static/unreadable via OCR; all cardiac rhythms were supplied verbally by the facilitator.

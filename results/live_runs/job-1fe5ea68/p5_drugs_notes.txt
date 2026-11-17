@@ -1,0 +1,4 @@
+1. Epinephrine 1 mg IV was administered at 106.0s (Med RN stated "1 milligram of epinephrine" at 100.5s, reached to the left arm IV port at 106.0s, and the Team Leader confirmed at 108.5s) and again at 243.5s (ordered by the Team Leader at 235.5s, physical reach to the left arm IV site at 242.0s, and confirmed "Gave epinephrine" by the Med RN at 243.5s). The Team Leader also proposed sodium bicarbonate at 245.5s and 351.0s and IV fluids post-ROSC at 393.5s, but neither was physically or verbally administered prior to simulation end.
+2. No abstentions in this section.
+3. No adjudication flags raised for this section.
+4. Coverage limitation (0.0s–455.8s): Per facilitator pre-brief instructions, no physical IV lines or syringes are attached to the mannequin; medication pushes are mimed at the left arm IV port and confirmed verbally.

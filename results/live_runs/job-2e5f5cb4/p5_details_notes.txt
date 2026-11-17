@@ -1,0 +1,5 @@
+Simulation scenario on a mannequin; facilitator instructs team at 0.0s to verbalize LMA bagging and medication administration rather than physically using live equipment. Handoff concludes at 55.0s–61.5s; manual chest compressions start at 81.0s. At 82.0s, the team leader verbalizes the rhythm as PEA from handoff. Compression pauses for pulse/rhythm checks occur at 228.5s–235.5s (carotid palpation; no pulse, rhythm PEA) and 365.5s–371.5s (radial palpation; pulse detected at 369.0s).
+
+Abstentions: `pads_source` is `unable_to_determine` across rhythm checks (82.0s, 235.0s, 389.0s; abstained at 235.0s) because no defibrillator pads or ECG leads were physically applied to the mannequin.
+
+Coverage: Sensor tracks (S1, S2, S4) are absent (self-detection mode, `t_precision_s` >= 2.0s); wall monitors are off and the portable monitor is static and unconnected.

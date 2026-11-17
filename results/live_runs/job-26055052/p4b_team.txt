@@ -1,0 +1,8 @@
+{"score": null,
+ "abstain": true,
+ "abstain_reason": "Both the CASE section and the OBJECTIVE METRICS section are empty in the provided input; no video, audio, sensor tracks, or event annotations are present to observe.",
+ "placement": "No consensus-rated calibration anchor cases are available for this department (Q-015), so comparative placement between two anchors cannot be performed and evaluation would ordinarily proceed in absolute terms (which is less well calibrated). However, because no case data or objective metrics were supplied, placement and scoring must be abstained.",
+ "strengths": [],
+ "deficiencies": [],
+ "justification": "Abstained from assigning a global teamwork score because the CASE and OBJECTIVE METRICS sections contain no data. Under the Prime Directive, events, timestamps, and team behaviours cannot be inferred or fabricated when absent from the record, and null/missing metrics represent absence of information rather than poor performance. In addition, no departmental calibration anchors exist (Q-015), which further widens uncertainty.",
+ "one_point_higher": "Observable timestamped evidence of team coordination, communication, adaptability, or composure in the CASE record (and/or populated coordination outcome metrics) would need to be present in the input to establish a baseline score and evaluate specific behavioural improvements."}

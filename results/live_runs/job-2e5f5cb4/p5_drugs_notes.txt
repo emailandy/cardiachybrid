@@ -1,0 +1,5 @@
+Notable observations: Two epinephrine 1 mg IV doses were simulated and verbally confirmed by the medication nurse (ordered at 82.0s and administered/confirmed at 103.5s–108.5s; ordered at 235.0s and administered at 243.0s). The team leader suggested sodium bicarbonate at 246.0s and 351.0s and ordered IV fluids post-ROSC at 389.0s, but neither was physically simulated or verbally confirmed as administered.
+
+Abstentions: Pre-administration DBP and EtCO2 were not recorded because wall monitors were powered off, the portable monitor was not connected or legible, and facilitator vitals were only announced post-ROSC at 369.0s.
+
+Coverage: Manikin simulation with empty sensor tracks (t_precision_s >= 2.0s). Per facilitator instructions at 0.0s, IV pushes were mimed and verbalized.
