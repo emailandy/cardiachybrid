@@ -74,19 +74,22 @@ for diff, count in manifest.get('by_difficulty', {}).items():
 
 log_ok('docs/02_DATA_MODEL.md numbers match generated/coverage_manifest.json.')
 
-# 3. Check finding IDs cited exist in DEMO_FINDINGS.md
-with open('docs/DEMO_FINDINGS.md') as f:
-    valid_findings = set(re.findall(r'F-\d{3}', f.read()))
+# 3. Check finding IDs cited exist in DEMO_FINDINGS.md or SENSOR_FINDINGS.md
+valid_findings = set()
+for findings_doc in ('docs/DEMO_FINDINGS.md', 'docs/SENSOR_FINDINGS.md'):
+    fp = Path(findings_doc)
+    if fp.exists():
+        valid_findings.update(re.findall(r'F-\d{3}', fp.read_text()))
 
 for p in Path('docs').glob('*.md'):
-    if p.name == 'DEMO_FINDINGS.md': continue
+    if p.name in ('DEMO_FINDINGS.md', 'SENSOR_FINDINGS.md'): continue
     content = p.read_text()
     cited = set(re.findall(r'F-\d{3}', content))
     invalid = cited - valid_findings
     if invalid:
         log_err(f'docs/{p.name} cites undefined finding IDs: {invalid}')
 
-log_ok(f'All finding citations across docs/*.md valid against DEMO_FINDINGS.md ({len(valid_findings)} findings).')
+log_ok(f'All finding citations across docs/*.md valid against DEMO_FINDINGS.md & SENSOR_FINDINGS.md ({len(valid_findings)} findings).')
 
 # 4. Check every task file referenced exists in docs/tasks/
 for p in Path('docs').glob('*.md'):

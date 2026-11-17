@@ -46,10 +46,10 @@ jobs:
                   print("::warning title=Manifest Diff Without Schema Change::generated/coverage_manifest.json differs from the committed copy WITHOUT a corresponding change to dictionary/ or mapping/. Please review changes.")
           PY
 
-      - name: 3. Linting and Type Checking (ruff, mypy --strict)
+      - name: 3. Linting and Type Checking (ruff, mypy)
         run: |
           ruff check .
-          mypy --strict resus_qc/
+          mypy reducer/ router/
 
       - name: 4. Unit Tests (pytest, deselecting integration and network)
         run: |

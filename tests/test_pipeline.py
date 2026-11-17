@@ -23,6 +23,11 @@ from pipeline.sensor_runner import (
     verify_p1_placeholder_wiring,
 )
 
+pytestmark = pytest.mark.skipif(
+    not Path("simvideo2.mp4").exists(),
+    reason="Requires local simvideo2.mp4 video file (not committed to git)",
+)
+
 
 def test_pipeline_runner_returns_all_seven_sensors() -> None:
     """Verifies that SensorPipelineRunner executes S1 through S7 on simvideo2 reference."""

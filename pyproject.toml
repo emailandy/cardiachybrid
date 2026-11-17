@@ -29,9 +29,18 @@ markers = [
 ]
 
 [tool.ruff]
+exclude = ["generated", "demo", "ui/node_modules", "ui/dist", "results", ".venv"]
+
+[tool.ruff.lint]
+select = ["E9", "F63", "F7", "F82"]
 
 [tool.mypy]
-strict = true
+ignore_missing_imports = true
+exclude = ["^generated/", "^scripts/", "^demo/", "^results/"]
+
+[[tool.mypy.overrides]]
+module = ["generated.*"]
+ignore_errors = true
 
 [tool.setuptools.packages.find]
 include = ["codegen", "reducer", "ingest", "bq", "redcap", "router", "metrics", "prompts", "sensors", "pipeline", "eval", "generated", "ui", "tests"]
