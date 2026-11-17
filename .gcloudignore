@@ -1,0 +1,42 @@
+# Explicit .gcloudignore for Cloud Build / `gcloud run deploy --source .`
+# IMPORTANT: Do NOT `#!include:.gitignore` because `.gitignore` excludes `generated/*`
+# and `.video_cache/` posters/review clips used by the hosted demo.
+
+.git/
+.github/
+.venv/
+venv/
+env/
+ENV/
+.env
+.env.*
+
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.resus_qc_tmp/
+calls.jsonl
+
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+ui/node_modules/
+ui/dist/
+
+tests/
+_inbox/
+demo/*.html
+demo/*_data.js
+.video_cache/*.MOV
+.video_cache/*.mov
+.video_cache/*.m4a
+.video_cache/*.wav
+.video_cache/uploads/
+.DS_Store

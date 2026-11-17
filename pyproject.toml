@@ -7,9 +7,15 @@ dependencies = [
     "pyyaml",
     "pydantic>=2",
     "httpx",
+    "requests>=2.31.0",
+    "google-auth>=2.0.0",
     "google-cloud-bigquery",
+    "google-cloud-storage>=2.0.0",
+    "google-genai>=1.0.0",
     "opencv-python-headless",
     "numpy",
+    "scipy>=1.11.0",
+    "soundfile>=0.12.0",
 ]
 
 [project.optional-dependencies]
@@ -28,4 +34,4 @@ markers = [
 strict = true
 
 [tool.setuptools.packages.find]
-include = ["codegen", "reducer", "ingest", "bq", "redcap", "router", "metrics", "prompts", "sensors", "tests"]
+include = ["codegen", "reducer", "ingest", "bq", "redcap", "router", "metrics", "prompts", "sensors", "pipeline", "eval", "generated", "ui", "tests"]

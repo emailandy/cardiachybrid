@@ -37,3 +37,33 @@ variable "vpc_sc_perimeter_name" {
   type        = string
   default     = ""
 }
+
+variable "ui_service_name" {
+  description = "Cloud Run service name for the Interactive Control Center UI."
+  type        = string
+  default     = "cardiachybrid-control-center"
+}
+
+variable "ui_container_image" {
+  description = "Optional explicit Artifact Registry image URI for the Control Center service."
+  type        = string
+  default     = ""
+}
+
+variable "ui_ingress" {
+  description = "Cloud Run ingress traffic policy (INGRESS_TRAFFIC_ALL, INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER, INGRESS_TRAFFIC_INTERNAL_ONLY)."
+  type        = string
+  default     = "INGRESS_TRAFFIC_ALL"
+}
+
+variable "ui_min_instances" {
+  description = "Minimum warm instances for the Control Center UI (set to 1 during live executive demos to eliminate cold starts)."
+  type        = number
+  default     = 0
+}
+
+variable "allow_unauthenticated_ui" {
+  description = "Whether to grant roles/run.invoker to allUsers. Keep false for clinical/PHI environments (use IAM or IAP)."
+  type        = bool
+  default     = false
+}

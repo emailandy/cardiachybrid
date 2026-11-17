@@ -40,3 +40,13 @@ output "clinical_video_bucket_name" {
   description = "The name of the GCS bucket storing raw clinical video."
   value       = google_storage_bucket.clinical_video.name
 }
+
+output "control_center_service_url" {
+  description = "HTTPS endpoint URL of the deployed Cloud Run Control Center UI."
+  value       = google_cloud_run_v2_service.control_center.uri
+}
+
+output "sa_ui_email" {
+  description = "Email of the Cloud Run Control Center service account."
+  value       = google_service_account.sa_ui.email
+}

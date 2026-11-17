@@ -63,7 +63,7 @@ resource "google_cloud_run_v2_job" "pipeline_job" {
         # to run the pipeline workload.
       }
       # The service account that the Cloud Run job will execute as
-      service_account = google_service_account.ingest.email
+      service_account = google_service_account.sa_ingest.email
       timeout = "3600s" # 1 hour max runtime
     }
   }
@@ -71,6 +71,6 @@ resource "google_cloud_run_v2_job" "pipeline_job" {
   depends_on = [
     google_project_service.run,
     google_artifact_registry_repository.pipeline_repo,
-    google_service_account.ingest
+    google_service_account.sa_ingest
   ]
 }

@@ -1,0 +1,45 @@
+# Version control & local environments
+.git/
+.github/
+.venv/
+venv/
+env/
+ENV/
+.env
+.env.*
+
+# Python / tool caches
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.resus_qc_tmp/
+calls.jsonl
+
+# Terraform local state
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# Node build inputs/outputs (ui/dist is built cleanly inside Stage 1 of Dockerfile)
+ui/node_modules/
+ui/dist/
+
+# Large local test videos & offline single-file HTML snapshots
+# (Note: demo/*.json and demo/*.csv ARE kept because eval/aicares_concordance.py reads them at startup;
+#  .video_cache/*.review.mp4 and .video_cache/posters/*.jpg ARE kept for instant Cloud Run demo playback.)
+tests/
+_inbox/
+demo/*.html
+demo/*_data.js
+.video_cache/*.MOV
+.video_cache/*.mov
+.video_cache/*.m4a
+.video_cache/*.wav
+.video_cache/uploads/
+.DS_Store
