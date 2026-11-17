@@ -28,8 +28,13 @@ jobs:
         run: |
           bash scripts/hash_dict.sh --check || (echo "FAIL: dict_version.txt is stale" && exit 1)
 
-      - name: 2. Check Codegen & Manifest Schema Diff
+      - name: 2. Run Codegen & Check Manifest Schema Diff
         run: |
+          python -m codegen.emit_python
+          python -m codegen.emit_branching
+          python -m codegen.emit_aicares
+          python -m codegen.emit_contract
+          python -m codegen.emit_sql
           python - <<'PY'
           import os, json, subprocess
           from pathlib import Path
